@@ -54,7 +54,7 @@ public class Example1 {
         // alice fulfills its obl
         facts.setBValue(-1);
         
-        Thread.sleep(2000);
+        Thread.sleep(4000);
         System.exit(0);
     }
     
@@ -87,27 +87,27 @@ public class Example1 {
     class MyListener extends DefaultNormativeListener {
         @Override
         public void created(Obligation o) {
-            System.out.println("Obligation "+o+" created.");
+            System.out.println("Obligation created: "+o);
         }
         
         @Override
         public void fulfilled(Obligation o) {
-            System.out.println("Obligation "+o+" fulfilled!");
+            System.out.println("Obligation fulfilled: "+o);
         }
         
         @Override
         public void unfulfilled(Obligation o) {
-            System.out.println("Obligation "+o+" unfulfilled!");
+            System.out.println("Obligation unfulfilled: "+o);
         }
         
         @Override
         public void inactive(Obligation o) {
-            System.out.println("Obligation "+o+" is inactive");
+            System.out.println("Obligation inactive: "+o);
         }
         
         @Override
         public void failure(Structure f) {
-            System.out.println("failure "+f);
+            System.out.println("failure: "+f);
         }
     }
 }

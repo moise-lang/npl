@@ -226,8 +226,7 @@ public class NPLInterpreter implements ToDOM {
                 while (i.hasNext()) {
                     Unifier u = i.next();
                     //System.out.println("    solution "+u+" for "+n.getCondition());
-                    Obligation obl = new Obligation((Literal)n.getConsequence().capply(u), n);
-                    obl.restoreMaintenanceCondition(); // undo capply effects on maintenance condition
+                    Obligation obl = new Obligation((Literal)n.getConsequence(), u, n);
                     // check if already in BB
                     if (!containsIgnoreDeadline(activeObl, obl) // is it a new obligation?  
                         //!containsIgnoreDeadline(unfulObl, head) &&
@@ -319,7 +318,7 @@ public class NPLInterpreter implements ToDOM {
     }
 
     
-    private boolean activationConditionHolds(Obligation obl) {
+    private boolean maintenanceConditionHolds(Obligation obl) {
         //Norm n = obl.getNorm(); // TODO: review
         // if the condition of the norm still holds
         Iterator<Unifier> i = obl.getMaitenanceCondition().logicalConsequence(ag, new Unifier());
@@ -526,7 +525,7 @@ public class NPLInterpreter implements ToDOM {
                     //System.out.println("fulfilled "+o);
                     bb.add(createObligationState(NormativeProgram.FFFunctor, o));
                     notifyOblFulfilled(o);
-                } else if (!activationConditionHolds(o)) {
+                } else if (!maintenanceConditionHolds(o)) {
                     // transition active -> inactive
                     if (!bb.remove(oasinbb)) System.out.println("ooops obligation should be removed 1");
                     o.addAnnot(ASSyntax.createStructure("inactive", new TimeTerm(0,null)));
