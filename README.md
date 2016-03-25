@@ -1,2 +1,2 @@
 # npl
-Normative Programming Language (NPL). A language to program norms of a multi-agent system.
+Normative Programming Language (NPL). A language to program norms for multi-agent systems.

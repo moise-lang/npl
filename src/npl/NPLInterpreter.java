@@ -32,7 +32,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /** 
- * Interprets a NP for a particular scope (group, scheme, ...)
+ * Interprets a NP for a particular scope 
  * 
  * @author jomi
  */
@@ -55,7 +55,7 @@ public class NPLInterpreter implements ToDOM {
     public final static Atom NormAtom = new Atom("npli");
 
     public void init() {
-        ag    = new Agent();
+        ag        = new Agent();
         normsFail = new HashMap<String,Norm>();
         normsObl  = new HashMap<String,Norm>();
         ag.initAg();
@@ -131,40 +131,6 @@ public class NPLInterpreter implements ToDOM {
             bb.remove(b);
     }
     
-    
-    /** replace all dynamic facts by those informed in the parameter ll  */
-    /*
-    public void setDynamicFacts(List<Literal> ll)  {
-        synchronized (syncTransState) {
-            //int x = ag.getBB().size();
-            clearDynamicFacts();
-            //int y = ag.getBB().size();
-            loadDynamicFacts(ll);
-            //System.out.println("***"+x+"/"+y+"/"+ag.getBB().size()+"/"+ll.size()+":"+ll);
-        }
-    }
-    */
-    
-    /** include new dynamic facts */
-    /*
-    public void loadDynamicFacts(Collection<Literal> ll) {
-        BeliefBase bb = ag.getBB();
-        for (Literal l: ll) {
-            l = l.copy();
-            l.addSource(DynAtom);
-            bb.add(l);
-        }
-    }
-    */
-    
-    /** remove all dynamic facts/rules */
-    /*
-    public void clearDynamicFacts() {
-        BeliefBase bb = ag.getBB();
-        for (Literal b: getSource(DynAtom))
-            bb.remove(b);
-    }
-    */
     
     /** get active obligations (those not fulfilled) */
     public List<Literal> getActiveObligations() {
@@ -252,34 +218,6 @@ public class NPLInterpreter implements ToDOM {
             }            
             
             List<Literal> activeObl = getActiveObligations();
-            //List<Literal> unfulObl  = getUnFulfilledObligations();
-            
-            /*
-            // -- transition active -> inactive, fulfilled
-            for (Literal o: activeObl) { 
-                Literal oasinbb = createObligationState(NormativeProgram.ActFunctor, o);
-                boolean done = holds((Literal)o.getTerm(2));
-                long ttf = System.currentTimeMillis()-(long)((NumberTerm)o.getTerm(3)).solve();
-                if (done) {
-                    // transition active -> fulfilled
-                    if (!bb.remove(oasinbb)) System.out.println("ooops obligation should be removed 2");
-                    o = o.copy();
-                    o.addAnnot(ASSyntax.createStructure("done", new TimeTerm(ttf, "milliseconds")));
-                    o.addAnnot(ASSyntax.createStructure("fulfilled", new TimeTerm(0,null)));
-                    //System.out.println("fulfilled "+o);
-                    bb.add(createObligationState(NormativeProgram.FFFunctor, o));
-                    notifyOblFulfilled(o);
-                } else if (!activationConditionHolds(o)) {
-                    // transition active -> inactive
-                    if (!bb.remove(oasinbb)) System.out.println("ooops obligation should be removed 1");
-                    remObl.add(o);
-                    o.addAnnot(ASSyntax.createStructure("inactive", new TimeTerm(0,null)));
-                    if (!bb.add(createObligationState(NormativeProgram.InactFunctor, o))) System.out.println("ooops inactive obligation should be added");
-                    notifyOblInactive(o);
-                }
-            }
-            activeObl = getActiveObligations(); // update active obl
-            */
             
             // -- computes new obligations
             for (Norm n: normsObl.values()) {
@@ -308,51 +246,6 @@ public class NPLInterpreter implements ToDOM {
                 }
             }
             
-            // The code below was moved to another thread
-            
-            // -- transition unfulfilled -> inactive
-            /*
-            for (Literal o: getUnFulfilledObligations()) {
-                boolean done = holds((Literal)o.getTerm(2));
-                if (done) { // if the agent did, even latter...
-                    long ttf = System.currentTimeMillis()-(long)((NumberTerm)o.getTerm(3)).solve();
-                    o.addAnnot(ASSyntax.createStructure("done", new TimeTerm(ttf, "milliseconds")));                
-                }
-                if (!activationConditionHolds(o)) {
-                    Literal oasinbb = createObligationState(NormativeProgram.UFFFunctor, o);
-                    if (!bb.remove(oasinbb)) System.out.println("ooops obligation should be removed 4");
-                    o.addAnnot(ASSyntax.createStructure("inactive", new TimeTerm(0,null)));
-                    bb.add(createObligationState(NormativeProgram.InactFunctor, o));
-                    for (ObligationListener l: listeners)
-                        l.inactive(o);
-                }
-            }
-            */
-            
-            // -- transition fulfilled -> inactive
-            /*
-            for (Literal o: getFulfilledObligations()) {
-                //boolean done = holds((Literal)o.getTerm(2));
-                if (!activationConditionHolds(o)) {
-                    Literal oasinbb = createObligationState(NormativeProgram.FFFunctor, o);
-                    if (!bb.remove(oasinbb)) System.out.println("ooops obligation should be removed 5");
-                    o.addAnnot(ASSyntax.createStructure("inactive", new TimeTerm(0,null)));
-                    bb.add(createObligationState(NormativeProgram.InactFunctor, o));
-                    for (ObligationListener l: listeners)
-                        l.inactive(o);
-                }
-            }
-            */
-            
-            // check done for unfulfilled and inactive
-            /*List<Literal> unfulPlusInactObls = getInactiveObligations();
-            unfulPlusInactObls.addAll(unfulObl);
-            for (Literal o: unfulPlusInactObls) {
-                if (holds((Literal)o.getTerm(2)) && o.getAnnots("done").isEmpty()) { // if the agent did, even latter...
-                    long ttf = System.currentTimeMillis()-(long)((NumberTerm)o.getTerm(3)).solve();
-                    o.addAnnot(ASSyntax.createStructure("done", new TimeTerm(ttf, "milliseconds")));                
-                }            
-            }*/
         }
         oblUpdateThread.update();
         return newObl;
@@ -373,27 +266,6 @@ public class NPLInterpreter implements ToDOM {
         scheduler.schedule(new Runnable() {
             public void run() {
                 oblUpdateThread.checkUnfulfilled(o);
-                /* Moved to the update thread
-                 
-                // if the obligation is still active, if becomes unfulfilled
-                synchronized (syncTransState) {            
-                    if (containsIgnoreDeadline(getActiveObligations(), o)) {
-                        BeliefBase bb = ag.getBB();
-                        //System.out.println("*** unfulfilled "+o);
-                        o.addAnnot(ASSyntax.createStructure("unfulfilled", new TimeTerm(0,null)));
-                        Literal oasinbb = createObligationState(NormativeProgram.ActFunctor, o);
-                        if (!bb.remove(oasinbb)) System.out.println("ooops 3 obligation "+o+" should be removed, becomes unfulfilled, but it is not in the set of facts.");
-                        bb.add(createObligationState(NormativeProgram.UFFFunctor, o));
-                        notifyOblUnfulfilled(o);
-                        try {
-                            verifyNorms();
-                        } catch (NormativeFailureException e) {
-                            //System.err.println("Error to set obligation "+o+" to unfulfilled!");
-                            //e.printStackTrace();
-                        }
-                    }
-                }
-                */
             }
         }, ttf, TimeUnit.MILLISECONDS);
     }
