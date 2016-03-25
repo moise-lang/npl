@@ -1,5 +1,6 @@
 package npl;
 
+import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import jason.asSyntax.LogicalFormula;
 
@@ -8,8 +9,14 @@ public class Norm {
     // used by the parser
     public static NormFactory getFactory() {
         return new NormFactory() {
-            public Norm createNorm(String id, Literal head, LogicalFormula body) {
-                return new Norm(id,head,body);
+            public Norm createNorm(String id, Literal consequence, LogicalFormula activationCondition) {
+                if (consequence.getFunctor().equals("obligation")) {
+                    if ( ((Literal)consequence.getTerm(1)).getFunctor().toString().equals(id)) {
+                        consequence.addAnnot(ASSyntax.createStructure("norm", consequence.getTerm(1)));
+                        consequence.setTerm(1, activationCondition);
+                    }
+                }
+                return new Norm(id,consequence,activationCondition);
             }
         };
     }    

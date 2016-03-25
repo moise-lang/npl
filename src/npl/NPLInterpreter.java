@@ -133,34 +133,35 @@ public class NPLInterpreter implements ToDOM {
     
     
     /** get active obligations (those not fulfilled) */
-    public List<Literal> getActiveObligations() {
+    public List<Obligation> getActiveObligations() {
         return getObligationsByState(NormativeProgram.ACTPI);
     }
 
     /** get fulfilled obligations */
-    public List<Literal> getFulfilledObligations() {
+    public List<Obligation> getFulfilledObligations() {
         return getObligationsByState(NormativeProgram.FFPI);
     }
     
     /** get unfulfilled obligations */
-    public List<Literal> getUnFulfilledObligations() {
+    public List<Obligation> getUnFulfilledObligations() {
         return getObligationsByState(NormativeProgram.UFPI);
     }
     
     /** get fulfilled obligations */
-    public List<Literal> getInactiveObligations() {
+    public List<Obligation> getInactiveObligations() {
         return getObligationsByState(NormativeProgram.INACPI);
     }
     
-    private List<Literal> getObligationsByState(PredicateIndicator state) {
-        List<Literal> ol = new ArrayList<Literal>();
+    private List<Obligation> getObligationsByState(PredicateIndicator state) {
+        List<Obligation> ol = new ArrayList<Obligation>();
         synchronized (syncTransState) {
             Iterator<Literal> i = ag.getBB().getCandidateBeliefs(state);
             if (i != null) {
                 while (i.hasNext()) {
                     Literal b = i.next();
-                    if (b.hasSource(NormAtom))
-                        ol.add((Literal)b.getTerm(0));
+                    if (b.hasSource(NormAtom)) {
+                        ol.add((Obligation)b.getTerm(0));
+                    }
                 }
             }
         }
@@ -217,7 +218,7 @@ public class NPLInterpreter implements ToDOM {
                 }
             }            
             
-            List<Literal> activeObl = getActiveObligations();
+            List<Obligation> activeObl = getActiveObligations();
             
             // -- computes new obligations
             for (Norm n: normsObl.values()) {
@@ -225,13 +226,14 @@ public class NPLInterpreter implements ToDOM {
                 while (i.hasNext()) {
                     Unifier u = i.next();
                     //System.out.println("    solution "+u+" for "+n.getCondition());
-                    Literal obl = (Literal)n.getConsequence().capply(u);
+                    Obligation obl = new Obligation((Literal)n.getConsequence().capply(u), n);
+                    obl.restoreMaintenanceCondition(); // undo capply effects on maintenance condition
                     // check if already in BB
                     if (!containsIgnoreDeadline(activeObl, obl) // is it a new obligation?  
                         //!containsIgnoreDeadline(unfulObl, head) &&
                         //!containsIgnoreDeadline(fulObl, head)
                         //) {
-                        && !holds((Literal)obl.getTerm(2))) { // that is not achieved yet
+                        && !holds(obl.getAim())) { // that is not achieved yet
                         
                         obl.addAnnot(ASSyntax.createStructure("created", new TimeTerm(0,null)));
                         if (bb.add(createObligationState(NormativeProgram.ActFunctor, obl))) {
@@ -260,8 +262,8 @@ public class NPLInterpreter implements ToDOM {
         }
     }
     
-    private void addObligationInSchedule(final Literal o) {
-        long ttf = getOblTTF(o,3) - System.currentTimeMillis();
+    private void addObligationInSchedule(final Obligation o) {
+        long ttf = o.getDeadline() - System.currentTimeMillis();
 
         scheduler.schedule(new Runnable() {
             public void run() {
@@ -270,19 +272,19 @@ public class NPLInterpreter implements ToDOM {
         }, ttf, TimeUnit.MILLISECONDS);
     }
     
-    private void notifyOblCreated(Literal o) {
+    private void notifyOblCreated(Obligation o) {
         for (NormativeListener l: listeners)
             try {
-                l.created((Structure)o.clone());                
+                l.created(o.copy());                
             } catch (Exception e) {
                 System.err.println("Error notifying normative listener "+l);
                 e.printStackTrace();
             }
     }
-    private void notifyOblFulfilled(Literal o) {
+    private void notifyOblFulfilled(Obligation o) {
         for (NormativeListener l: listeners)
             try {
-                l.fulfilled((Structure)o.clone());
+                l.fulfilled(o.copy());
             } catch (Exception e) {
                 System.err.println("Error notifying normative listener "+l);
                 e.printStackTrace();
@@ -297,19 +299,19 @@ public class NPLInterpreter implements ToDOM {
                 e.printStackTrace();
             }
     }
-    private void notifyOblUnfulfilled(Literal o) {
+    private void notifyOblUnfulfilled(Obligation o) {
         for (NormativeListener l: listeners)
             try {
-                l.unfulfilled((Structure)o.clone());
+                l.unfulfilled(o.copy());
             } catch (Exception e) {
                 System.err.println("Error notifying normative listener "+l);
                 e.printStackTrace();
             }
     }
-    private void notifyOblInactive(Literal o) {
+    private void notifyOblInactive(Obligation o) {
         for (NormativeListener l: listeners)
             try {
-                l.inactive((Structure)o.clone());
+                l.inactive(o.copy());
             } catch (Exception e) {
                 System.err.println("Error notifying normative listener "+l);
                 e.printStackTrace();
@@ -317,36 +319,34 @@ public class NPLInterpreter implements ToDOM {
     }
 
     
-    private boolean activationConditionHolds(Literal obl) {
-        Norm n = getNorm( ((Literal)obl.getTerm(1)).getFunctor() );
+    private boolean activationConditionHolds(Obligation obl) {
+        //Norm n = obl.getNorm(); // TODO: review
         // if the condition of the norm still holds
-        Iterator<Unifier> i = n.getCondition().logicalConsequence(ag, new Unifier());
+        Iterator<Unifier> i = obl.getMaitenanceCondition().logicalConsequence(ag, new Unifier());
+        /*
         while (i.hasNext()) {
             Unifier u = i.next();
-            Literal head = (Literal)n.getConsequence().capply(u);
-            if (equalsIgnoreDeadline(head, obl)) {
+            Obligation head = new Obligation((Literal)n.getConsequence().capply(u), n);
+            if (head.equalsIgnoreDeadline(obl)) {
                 return true;
             }
         }
         return false;
+        */
+        return i.hasNext();
     }
     
-    private Literal createObligationState(String state, Literal o) {
+    private Literal createObligationState(String state, Obligation o) {
         Literal s = ASSyntax.createLiteral(state, o);
         s.addSource(NormAtom);
         return s;
     }
     
-    private boolean containsIgnoreDeadline(Collection<Literal> list, Literal obl) {
-        for (Literal l: list)
-            if (equalsIgnoreDeadline(l, obl))
+    private boolean containsIgnoreDeadline(Collection<Obligation> list, Obligation obl) {
+        for (Obligation l: list)
+            if (l.equalsIgnoreDeadline(obl))
                 return true;
         return false;
-    }
-    private boolean equalsIgnoreDeadline(Literal o1, Literal o2) {
-        return o1.getTerm(0).equals(o2.getTerm(0)) && // agent
-               o1.getTerm(1).equals(o2.getTerm(1)) && // reason
-               o1.getTerm(2).equals(o2.getTerm(2));   // goal
     }
     
     public String getStateString() {
@@ -367,11 +367,11 @@ public class NPLInterpreter implements ToDOM {
     }
     private String wellFormatTime(Literal l) {
         if (l.getFunctor().equals(NormativeProgram.OblFunctor)) {
-            long t = getOblTTF(l,3);
+            long t = ((Obligation)l).getDeadline();
             return l.getFunctor()+"("+l.getTerm(0)+","+l.getTerm(1)+","+l.getTerm(2)+","+TimeTerm.toRelTimeStr(t)+")";
         } else if (l.getFunctor().equals(NormativeProgram.FFFunctor)) {
-            Literal o = (Literal)l.getTerm(0);
-            long t = getOblTTF(o,3);
+            Obligation o = (Obligation)l.getTerm(0);
+            long t = o.getDeadline();
             String so = o.getFunctor()+"("+o.getTerm(0)+","+o.getTerm(1)+","+o.getTerm(2)+","+TimeTerm.toTimeStamp(t)+")";
             t = getOblTTF(l,1);
             return l.getFunctor()+"("+so+","+TimeTerm.toAbsTimeStr(t)+")";            
@@ -383,24 +383,24 @@ public class NPLInterpreter implements ToDOM {
         Element ele = (Element) document.createElement("normative-state");
         if (scope != null)
             ele.setAttribute("id", scope.getId().toString());
-        for (Literal l: getUnFulfilledObligations())
+        for (Obligation l: getUnFulfilledObligations())
             ele.appendChild( obligation2dom(document, l, "unfulfilled", true));
-        for (Literal l: getActiveObligations())
+        for (Obligation l: getActiveObligations())
             ele.appendChild( obligation2dom(document, l, "active", true));
-        for (Literal l: getFulfilledObligations()) 
+        for (Obligation l: getFulfilledObligations()) 
             ele.appendChild( obligation2dom(document, l, "fulfilled", false));
-        for (Literal l: getInactiveObligations()) 
+        for (Obligation l: getInactiveObligations()) 
             ele.appendChild( obligation2dom(document, l, "inactive", false));
         return ele;
     }
-    private Element obligation2dom(Document document, Literal l, String state, boolean reltime) {
+    private Element obligation2dom(Document document, Obligation l, String state, boolean reltime) {
         Element oblele = (Element) document.createElement("obligation");
         try {            
             oblele.setAttribute("state", state);
-            oblele.setAttribute("agent", l.getTerm(0).toString());
-            oblele.setAttribute("reason", l.getTerm(1).toString());
-            oblele.setAttribute("object", l.getTerm(2).toString());
-            long ttf = getOblTTF(l,3);
+            oblele.setAttribute("agent", l.getAg().toString());
+            oblele.setAttribute("maintenance", l.getMaitenanceCondition().toString());
+            oblele.setAttribute("adim", l.getAim().toString());
+            long ttf = l.getDeadline();
             if (reltime)
                 oblele.setAttribute("ttf", TimeTerm.toRelTimeStr(ttf));
             else
@@ -460,10 +460,10 @@ public class NPLInterpreter implements ToDOM {
         each second (by default) */
     class ObligationStateTransition extends Thread {
         
-        private boolean        update = false;
-        private List<Literal>  activeObl = null;            
-        private BeliefBase     bb;
-        private Queue<Literal> toCheckUnfulfilled = new ConcurrentLinkedQueue<Literal>();
+        private boolean           update = false;
+        private List<Obligation>  activeObl = null;            
+        private BeliefBase        bb;
+        private Queue<Obligation> toCheckUnfulfilled = new ConcurrentLinkedQueue<Obligation>();
                         
         /** update the state of the obligations */
         void update() {
@@ -474,7 +474,7 @@ public class NPLInterpreter implements ToDOM {
             updateInterval = miliseconds;
         }
         
-        void checkUnfulfilled(Literal o) {
+        void checkUnfulfilled(Obligation o) {
             toCheckUnfulfilled.offer(o);
             update = true;
         }
@@ -513,10 +513,10 @@ public class NPLInterpreter implements ToDOM {
         // -- transition active -> inactive, fulfilled
         private void updateActive() {
             activeObl = getActiveObligations();  
-            for (Literal o: activeObl) { 
+            for (Obligation o: activeObl) { 
                 Literal oasinbb = createObligationState(NormativeProgram.ActFunctor, o);
-                boolean done = holds((Literal)o.getTerm(2));
-                long ttf = System.currentTimeMillis()-getOblTTF(o,3);
+                boolean done = holds(o.getAim());
+                long ttf = System.currentTimeMillis()-o.getDeadline();
                 if (done) {
                     // transition active -> fulfilled
                     if (!bb.remove(oasinbb)) System.out.println("ooops obligation should be removed 2");
@@ -539,7 +539,7 @@ public class NPLInterpreter implements ToDOM {
         
         // -- transition active -> unfulfilled
         private void updateUnfulfilled() {
-            Literal o = toCheckUnfulfilled.poll();
+            Obligation o = toCheckUnfulfilled.poll();
             while (o != null) {
                 if (containsIgnoreDeadline(activeObl, o)) {
                     //System.out.println("*** unfulfilled "+o);
@@ -561,12 +561,12 @@ public class NPLInterpreter implements ToDOM {
         
         private void updateDoneForUnfulfilled() {
             // check done for unfulfilled and inactive
-            List<Literal> unfulObl  = getUnFulfilledObligations();
-            List<Literal> unfulPlusInactObls = getInactiveObligations();
+            List<Obligation> unfulObl  = getUnFulfilledObligations();
+            List<Obligation> unfulPlusInactObls = getInactiveObligations();
             unfulPlusInactObls.addAll(unfulObl);
-            for (Literal o: unfulPlusInactObls) {
-                if (holds((Literal)o.getTerm(2)) && o.getAnnots("done").isEmpty()) { // if the agent did, even latter...
-                    long ttf = System.currentTimeMillis()-getOblTTF(o,3);
+            for (Obligation o: unfulPlusInactObls) {
+                if (holds(o.getAim()) && o.getAnnots("done").isEmpty()) { // if the agent did, even latter...
+                    long ttf = System.currentTimeMillis()-o.getDeadline();
                     o.addAnnot(ASSyntax.createStructure("done", new TimeTerm(ttf, "milliseconds")));                
                 }            
             }

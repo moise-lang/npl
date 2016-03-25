@@ -39,8 +39,8 @@ public class NormativeProgram {
         return root;
     }
     public void setRoot(Scope root) throws ParseException {
-        if (!root.getId().getFunctor().equals("organisation"))
-            throw new ParseException("the root scope must be named 'organisation'");
+        //if (!root.getId().getFunctor().equals("organisation"))
+        //    throw new ParseException("the root scope must be named 'organisation'");
         this.root = root;
     }
     

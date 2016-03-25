@@ -23,9 +23,9 @@
         <tr style="{$trh-style}"> 
         <th valign="top" style="{$th-style}">state</th>
         <th valign="top" style="{$th-style}">agent</th>
-        <th valign="top" style="{$th-style}">reason (norm)</th> 
-        <th valign="top" style="{$th-style}">goal</th>
-        <th valign="top" style="{$th-style}">time to fulfil</th>
+        <th valign="top" style="{$th-style}">maintenance</th> 
+        <th valign="top" style="{$th-style}">aim</th>
+        <th valign="top" style="{$th-style}">deadline</th>
         <th valign="top" style="{$th-style}">done at</th>
         <th valign="top" style="{$th-style}">annotations</th>
         </tr>
@@ -56,8 +56,8 @@
         </xsl:if>
     </td>
     <td style="{$td-style}"><xsl:value-of select="@agent" /></td>
-    <td style="{$td-style}"><xsl:value-of select="@reason" /></td>
-    <td style="{$td-style}"><xsl:value-of select="@object" /></td>
+    <td style="{$td-style}"><xsl:value-of select="@maintenance" /></td>
+    <td style="{$td-style}"><xsl:value-of select="@aim" /></td>
     <td style="{$td-style}"><xsl:value-of select="@ttf" /></td>    
     <td style="{$td-style}"><xsl:value-of select="@done" /></td>
     <td style="{$td-style}"><xsl:apply-templates /></td>

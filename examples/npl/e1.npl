@@ -1,0 +1,16 @@
+
+// AMAI paper example
+
+scope main {
+
+    a(2). 
+    vl(X) :- a(A) & b(B) & A<B & X=A*B.
+    
+    // alice has 4 seconds to achieve a value of b < 0
+    norm n1: vl(X) & X >= 5
+       -> obligation(alice,n1, b(Y) & Y<0, `now`+`4 seconds`).
+    
+    // bob is obliged to sanction alice in case X > 10
+    norm n2: vl(X) & X > 10
+       -> obligation(bob,n2,sanction(alice),`now`+`1 day`).    
+}
