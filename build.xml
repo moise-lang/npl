@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="npl" basedir="." default="usage">
+
+    <property environment="env"/>
+
+    <property name="nplJar"         value="${basedir}/lib/npl.jar"/>
+
+    <property name="dist.properties" value="${basedir}/bin/dist.properties"/>
+    <property name="build.dir"       value="${basedir}/bin/classes"/>
+    <property name="version"         value="0"/>
+    <property name="release"         value="1"/>
+    <property name="distDir"         value="${env.HOME}/tmp/npl-${version}.${release}" />
+    <property name="distFile"        value="${env.HOME}/npl-${version}.${release}" />
+          
+	<target name="usage">
+        <echo>
+TARGETS:
+    compile -- compiles the source files
+    jar     -- generates moise.jar
+    apidoc  -- generates javadoc
+    dist    -- genetares distribution file
+    clean   -- cleans the project
+    test    -- run jUnit tests
+        </echo>
+	</target>
+	
+    <path id="project.classpath">
+        <pathelement location="${moiseJar}"/>
+        <pathelement location="lib/junit.jar"/>
+        <pathelement location="lib/jason.jar"/>
+    </path>
+
+    <path id="test.classpath">
+        <path refid="project.classpath" />
+    </path>
+
+    <target name="init">
+        <mkdir dir="${build.dir}" />
+    </target>
+
+    <condition property="parsers-ok" value="ok">
+        <and>
+            <uptodate property="parsers-ok" targetfile="${basedir}/src/npl/parser/nplp.java" srcfile="${basedir}/src/npl/parser/npl.jcc" />
+        </and>
+    </condition>
+
+    <target name="parsers" depends="init" unless="parsers-ok">
+        <delete failonerror="no">
+            <fileset dir="${basedir}/src/npl/parser" includes="*.java" />
+        </delete>
+
+        <java dir="${basedir}/src/npl/parser" classname="javacc" fork="yes">
+            <classpath location="${basedir}/lib/javacc.jar" />
+            <arg line="npl.jcc" />
+        </java>
+
+        <java dir="${basedir}/src/npl/parser" classname="jjdoc" fork="yes">
+            <classpath location="${basedir}/lib/javacc.jar" />
+            <arg line="npl.jcc" />
+        </java>
+        <move file="${basedir}/src/npl/parser/npl.html" todir="${basedir}/doc" />
+    </target>
+	
+    
+    <target name="compile" depends="init,parsers">
+        <javac debug="true" 
+        	   optimize="true" 
+        	   deprecation="true" 
+          	   destdir="${build.dir}"
+		       source="1.7" target="1.7"
+        	   srcdir="src"
+        	   includeantruntime="false">
+            <classpath refid="project.classpath" />
+        </javac>
+    </target>
+
+    
+    <target name="jar" depends="compile">
+        <jar jarfile="${nplJar}">
+            <fileset dir="${build.dir}">
+                <include name="npl/**/*.class"/>
+            </fileset>
+            <fileset dir="${basedir}/src">
+                <include name="images/**/*"/>
+                <include name="xml/**/*"/>
+            </fileset>
+            <manifest>
+            	<attribute name="Built-By" value="${user.name}"/>
+            	<!-- attribute name="Main-Class" value="moise.tools.SimOE"/ -->
+            </manifest>
+        </jar>
+    	<!--signjar jar="${moiseJar}" alias="jomi" storepass="fred3271" keystore="${basedir}/src/jomiKeystore" /-->
+    </target>
+
+	<target name="test" depends="jar">
+		<!-- junit printsummary="yes" failureProperty="test.failure">
+			<classpath refid="test.classpath" />
+			<formatter type="plain" usefile="false" />
+			<batchtest>
+				<fileset dir="${basedir}/src" includes="moise/test/*Test.java" />
+                <fileset dir="${basedir}/src" includes="ora4mas/nopl/test/*Test.java" />
+                <fileset dir="${basedir}/src" includes="ora4mas/nopl/test/*TestSubGroups.java" />
+			</batchtest>
+		</junit>
+		<fail message="test failed" if="test.failure" / -->
+	</target>
+	
+    <target name="apidoc" depends="compile" >
+        <javadoc 
+           packagenames="npl.*"
+           sourcepath="src"
+           destdir="${basedir}/doc/api"
+           author="true"
+           version="true"
+           use="true"
+           windowtitle="Normative Programming Language (NPL)">
+            <classpath refid="project.classpath" />
+        	<doclet name="org.umlgraph.doclet.UmlGraphDoc" path="lib/UmlGraph.jar">
+                    <!--param name="-inferrel"/ -->
+                    <!--param name="-inferdep"/-->
+                    <param name="-enumconstants" />
+                    <!--param name="-collpackages" value="java.util.*"/-->
+                    <param name="-qualify"/>
+                    <!--param name="-collapsible"/-->
+                    <param name="-postfixpackage"/>
+                    <param name="-nodefontsize" value="14"/>
+                    <param name="-nodefontpackagesize" value="8"/>
+                    <param name="-edgefontsize" value="10"/>
+                    <!--param name="-link" value="http://java.sun.com/j2se/1.5.0/docs/guide/javadoc/doclet/spec"/>
+                    <param name="-link" value="http://java.sun.com/j2se/1.5/docs/api"/-->
+            </doclet> 
+        </javadoc>    
+    </target>
+
+    
+    <target name="dist" description="Build distribution.">
+          <!-- depends="clean, jar, compileExamples, apidoc" -->
+
+          <propertyfile file="${dist.properties}" > 
+              <entry  key="version" value="${version}" />
+              <entry  key="release" value="${release}" />
+              <entry  key="build"   type="int" default="0" operation="+" />
+              <entry  key="build.date" type="date" value="now" />
+          </propertyfile>
+          <property file="${dist.properties}"/>
+          
+          <echo message="Generating NPL ${version}.${release}" />
+          
+          <fixcrlf srcdir="${basedir}"  eol="crlf" includes="**/*.txt,**/*.bat"  />
+          <fixcrlf tab="remove" tablength="4" javafiles="true" includes="**/*.java" srcdir="${basedir}/src" />
+          
+          <delete failonerror="no" includeEmptyDirs="true" >
+              <fileset dir="${distDir}" />
+          </delete>
+          
+          <mkdir dir="${distDir}" />
+          
+          <copy todir="${distDir}">
+            <fileset dir="${basedir}" includes="build.xml" />
+            <fileset dir="${basedir}" includes="LICENSE" />
+            <fileset dir="${basedir}" includes="README*" />
+            <fileset dir="${basedir}" includes="doc/api/**/*" />
+            <fileset dir="${basedir}" includes="lib/**/*" />
+            <fileset dir="${basedir}" includes="bin/*.*" />
+            <!-- fileset dir="${basedir}" includes="examples/auction/**/*" / -->
+            <fileset dir="${basedir}" includes="src/**/*" />
+          </copy>
+
+          <copy todir="${distDir}/doc">
+            <fileset dir="doc" includes="npl.html" />
+          </copy>
+    	
+          <tar compression="gzip" destfile="${distFile}.tgz">
+              <!--tarfileset dir="${distDir}/.." mode="755" >
+                  <include name="moise*/**/*.sh"/>
+              </tarfileset -->
+              <tarfileset dir="${distDir}/.."  >
+                 <include name="npl*/**/*"/>
+                 <!-- exclude name="moise*/**/*.sh"/ -->
+              </tarfileset>
+          </tar>
+
+          <zip basedir="${distDir}/.." includes="moise*/**/*" zipfile="${distFile}.zip"/>
+
+    </target>
+
+    <target name="all" depends="jar,apidoc" description="Build everything.">
+        <echo message="Application built."/>
+    </target>
+
+    <target name="clean" >
+        <delete verbose="true" failonerror="no" includeEmptyDirs="true" >
+            <fileset dir="${basedir}"  includes="**/*~" defaultexcludes="no"  />
+            <fileset dir="${basedir}"  includes="**/*.class" />
+            <fileset dir="${basedir}"  includes="**/core" />
+        </delete>
+    </target>
+    
+</project>
