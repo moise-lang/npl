@@ -97,9 +97,10 @@ TOKEN : {
 
 // Identifiers
 |  <NP        : "np">
-|  <OS        : "os">
 |  <SCOPE     : "scope">
 |  <NORM      : "norm">
+|  <FAIL      : "fail">
+|  <OBLIGATION : "obligation">
 |  <ATOM      : (<LC_LETTER> | "." <CHAR>) (<CHAR> | "." <CHAR>)*>
 |  <UNNAMEDVAR: ("_" (<CHAR>)*) >
 |  <CHAR      : (<LETTER> | <DIGIT> | "_")>
@@ -114,13 +115,9 @@ TOKEN : {
 void program(NormativeProgram np, DynamicFactsProvider dfp) : 
 { Token k; }  
 
-{ //<NP> k = <ATOM>             { npSource = np.getSrc(); np.setId(k.image); } 
-  //"{"
-  //[ osf(np) ]
-                                { this.dfp  = dfp;
+{                               { this.dfp  = dfp;
                                 }
   scope(np, null) 
-  //"}" 
   <EOF>
 }
 
@@ -156,21 +153,51 @@ Norm norm() :
 { <NORM> id = <ATOM> ":"
   b = log_expr() 
   "->"  
-  h = literal()        { if (!h.getFunctor().equals(NormativeProgram.FailFunctor) && !h.getFunctor().equals(NormativeProgram.OblFunctor))
-                            throw new ParseException("the consequence of norm "+id.image+" must be a fail or obligation");
-                         if (h.getFunctor().equals(NormativeProgram.FailFunctor) && h.getArity() != 1)
-                            throw new ParseException("fail of norm "+id.image+" must have arity 1");
-                         //if (h.getFunctor().equals(NormativeProgram.OblFunctor) && !id.image.equals( ((Literal)h.getTerm(1)).getFunctor()))
-                         //   throw new ParseException("the functor of the reason of an obligation in norm "+id.image+" must be equals to the norm id");                         
-                         if (h.getFunctor().equals(NormativeProgram.OblFunctor)) {
-                            if (h.getArity() != 4)
-                                throw new ParseException("obligation of norm "+id.image+" must have arity 4");
-                            if (!(h.getTerm(0).isAtom() || h.getTerm(0).isVar()))
-                                throw new ParseException("First argument of obligations must be an agent or a variable.");
-                         }
+  ( h = fail() | h = obligation() )
+                       {
                          return nFac.createNorm(id.image,h,(LogicalFormula)b); 
                        }   
 }
+
+Literal fail() :
+{ Token k; Term t = null; Literal r; }
+{
+   k = <FAIL> 
+   "("
+   t = term()
+   ")" 
+                       { r = ASSyntax.createLiteral(NormativeProgram.FailFunctor, t);
+                         r.setSrcInfo(new SourceInfo(npSource, k.beginLine)); 
+                         if (dfp != null && dfp.isRelevant(r.getPredicateIndicator())) {
+                            return lFac.createNPLLiteral(r,dfp);
+                         } else {                         
+                            return r;
+                         }
+                       } 
+}
+
+Literal obligation() :
+{ Token k; Term a, m, g, d = null; Literal r; Object o; }
+{
+   k = <OBLIGATION>    { r = ASSyntax.createLiteral(NormativeProgram.OblFunctor);
+                         r.setSrcInfo(new SourceInfo(npSource, k.beginLine));
+                       }
+   "("
+   ( k=<ATOM>          { r.addTerm(new Atom(k.image)); }
+   | k=<VAR>           { r.addTerm(new VarTerm(k.image)); }
+   ) ","
+   o = log_expr() ","  { r.addTerm( changeToAtom(o) ); }
+   o = log_expr() ","  { r.addTerm( changeToAtom(o) ); }     
+   o = log_expr()      { r.addTerm( changeToAtom(o) ); }
+   ")" 
+                       { if (dfp != null && dfp.isRelevant(r.getPredicateIndicator())) {
+                            return lFac.createNPLLiteral(r,dfp);
+                         } else {                         
+                            return r;
+                         }
+                       } 
+}
+
 
 /* what follows is mostly from Jason */
 
@@ -179,9 +206,8 @@ Norm norm() :
 Literal literal() :
 { Token k; List l = null; Literal r;}
 {
-  (
-   k=<ATOM> | k=<OS>   
-  )                    { r = ASSyntax.createLiteral(k.image); 
+  ( k=<ATOM> | k=<FAIL> | k=<OBLIGATION> )    
+                       { r = ASSyntax.createLiteral(k.image); 
                          r.setSrcInfo(new SourceInfo(npSource, k.beginLine)); 
                        } 
   

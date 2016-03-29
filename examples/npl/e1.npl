@@ -1,13 +1,15 @@
 
-// AMAI paper example
+// example of normative program in NPL
 
-scope main {
+scope main {                               // definition of a scope of norms
 
-    a(2). 
-    vl(X) :- a(A) & b(B) & A<B & X=A*B.
-    
+    // some facts
+    a(2).                                   
     student(bob,2).
     student(carlos,3).
+
+    // example of rule (Jason syntax)
+    vl(X) :- a(A) & b(B) & A<B & X=A*B.     
     
     // alice has 4 seconds to achieve a value of b < 0
     norm n1: vl(X) & X >= 5

@@ -15,16 +15,17 @@ public interface nplpConstants {
   int EXPONENT = 13;
   int STRING = 14;
   int NP = 15;
-  int OS = 16;
-  int SCOPE = 17;
-  int NORM = 18;
-  int ATOM = 19;
-  int UNNAMEDVAR = 20;
-  int CHAR = 21;
-  int LETTER = 22;
-  int LC_LETTER = 23;
-  int UP_LETTER = 24;
-  int DIGIT = 25;
+  int SCOPE = 16;
+  int NORM = 17;
+  int FAIL = 18;
+  int OBLIGATION = 19;
+  int ATOM = 20;
+  int UNNAMEDVAR = 21;
+  int CHAR = 22;
+  int LETTER = 23;
+  int LC_LETTER = 24;
+  int UP_LETTER = 25;
+  int DIGIT = 26;
 
   int DEFAULT = 0;
 
@@ -45,9 +46,10 @@ public interface nplpConstants {
     "<EXPONENT>",
     "<STRING>",
     "\"np\"",
-    "\"os\"",
     "\"scope\"",
     "\"norm\"",
+    "\"fail\"",
+    "\"obligation\"",
     "<ATOM>",
     "<UNNAMEDVAR>",
     "<CHAR>",

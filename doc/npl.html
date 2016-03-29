@@ -25,85 +25,95 @@
 <TR>
 <TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod4">norm</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE>&lt;NORM&gt; &lt;ATOM&gt; ":" <A HREF="#prod6">log_expr</A> "-&gt;" <A HREF="#prod3">literal</A></TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;NORM&gt; &lt;ATOM&gt; ":" <A HREF="#prod6">log_expr</A> "-&gt;" ( <A HREF="#prod7">fail</A> | <A HREF="#prod8">obligation</A> )</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod7">fail</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;FAIL&gt; "(" <A HREF="#prod9">term</A> ")"</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod8">obligation</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;OBLIGATION&gt; "(" ( &lt;ATOM&gt; | &lt;VAR&gt; ) "," <A HREF="#prod6">log_expr</A> "," <A HREF="#prod6">log_expr</A> "," <A HREF="#prod6">log_expr</A> ")"</TD>
 </TR>
 <TR>
 <TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod3">literal</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;ATOM&gt; | &lt;OS&gt; ) ( "(" <A HREF="#prod7">terms</A> ")" )?</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;ATOM&gt; | &lt;FAIL&gt; | &lt;OBLIGATION&gt; ) ( "(" <A HREF="#prod10">terms</A> ")" )?</TD>
 </TR>
 <TR>
-<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod7">terms</A></TD>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod10">terms</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod8">term</A> ( "," <A HREF="#prod8">term</A> )*</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod9">term</A> ( "," <A HREF="#prod9">term</A> )*</TD>
 </TR>
 <TR>
-<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod8">term</A></TD>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod9">term</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod9">list</A> | <A HREF="#prod6">log_expr</A> )</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod11">list</A> | <A HREF="#prod6">log_expr</A> )</TD>
 </TR>
 <TR>
-<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod9">list</A></TD>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod11">list</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE>"[" ( <A HREF="#prod10">term_in_list</A> ( "," <A HREF="#prod10">term_in_list</A> )* ( "|" ( &lt;VAR&gt; | &lt;UNNAMEDVAR&gt; | <A HREF="#prod9">list</A> ) )? )? "]"</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>"[" ( <A HREF="#prod12">term_in_list</A> ( "," <A HREF="#prod12">term_in_list</A> )* ( "|" ( &lt;VAR&gt; | &lt;UNNAMEDVAR&gt; | <A HREF="#prod11">list</A> ) )? )? "]"</TD>
 </TR>
 <TR>
-<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod10">term_in_list</A></TD>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod12">term_in_list</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod9">list</A> | <A HREF="#prod11">arithm_expr</A> | <A HREF="#prod12">string</A> )</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod11">list</A> | <A HREF="#prod13">arithm_expr</A> | <A HREF="#prod14">string</A> )</TD>
 </TR>
 <TR>
 <TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod6">log_expr</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod13">log_expr_trm</A> ( "|" <A HREF="#prod6">log_expr</A> )?</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod15">log_expr_trm</A> ( "|" <A HREF="#prod6">log_expr</A> )?</TD>
 </TR>
 <TR>
-<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod13">log_expr_trm</A></TD>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod15">log_expr_trm</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod14">log_expr_factor</A> ( "&amp;" <A HREF="#prod13">log_expr_trm</A> )?</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod16">log_expr_factor</A> ( "&amp;" <A HREF="#prod15">log_expr_trm</A> )?</TD>
 </TR>
 <TR>
-<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod14">log_expr_factor</A></TD>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod16">log_expr_factor</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;TK_NOT&gt; <A HREF="#prod14">log_expr_factor</A> | <A HREF="#prod15">rel_expr</A> )</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;TK_NOT&gt; <A HREF="#prod16">log_expr_factor</A> | <A HREF="#prod17">rel_expr</A> )</TD>
 </TR>
 <TR>
-<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod15">rel_expr</A></TD>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod17">rel_expr</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod11">arithm_expr</A> | <A HREF="#prod12">string</A> ) ( ( "&lt;" | "&lt;=" | "&gt;" | "&gt;=" | "==" | "\\==" | "=" | "=.." ) ( <A HREF="#prod11">arithm_expr</A> | <A HREF="#prod12">string</A> | <A HREF="#prod9">list</A> ) )?</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod13">arithm_expr</A> | <A HREF="#prod14">string</A> ) ( ( "&lt;" | "&lt;=" | "&gt;" | "&gt;=" | "==" | "\\==" | "=" | "=.." ) ( <A HREF="#prod13">arithm_expr</A> | <A HREF="#prod14">string</A> | <A HREF="#prod11">list</A> ) )?</TD>
 </TR>
 <TR>
-<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod11">arithm_expr</A></TD>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod13">arithm_expr</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod16">arithm_expr_trm</A> ( ( "+" | "-" ) <A HREF="#prod11">arithm_expr</A> )?</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod18">arithm_expr_trm</A> ( ( "+" | "-" ) <A HREF="#prod13">arithm_expr</A> )?</TD>
 </TR>
 <TR>
-<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod16">arithm_expr_trm</A></TD>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod18">arithm_expr_trm</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod17">arithm_expr_factor</A> ( ( "*" | "/" | &lt;TK_INTDIV&gt; | &lt;TK_INTMOD&gt; ) <A HREF="#prod16">arithm_expr_trm</A> )?</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod19">arithm_expr_factor</A> ( ( "*" | "/" | &lt;TK_INTDIV&gt; | &lt;TK_INTMOD&gt; ) <A HREF="#prod18">arithm_expr_trm</A> )?</TD>
 </TR>
 <TR>
-<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod17">arithm_expr_factor</A></TD>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod19">arithm_expr_factor</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod18">arithm_expr_simple</A> ( ( "**" ) <A HREF="#prod17">arithm_expr_factor</A> )?</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod20">arithm_expr_simple</A> ( ( "**" ) <A HREF="#prod19">arithm_expr_factor</A> )?</TD>
 </TR>
 <TR>
-<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod18">arithm_expr_simple</A></TD>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod20">arithm_expr_simple</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;NUMBER&gt; | "-" <A HREF="#prod18">arithm_expr_simple</A> | "(" <A HREF="#prod6">log_expr</A> ")" | <A HREF="#prod19">var</A> | <A HREF="#prod3">literal</A> | <A HREF="#prod20">time</A> )</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;NUMBER&gt; | "-" <A HREF="#prod20">arithm_expr_simple</A> | "(" <A HREF="#prod6">log_expr</A> ")" | <A HREF="#prod21">var</A> | <A HREF="#prod3">literal</A> | <A HREF="#prod22">time</A> )</TD>
 </TR>
 <TR>
-<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod19">var</A></TD>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod21">var</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;VAR&gt; | &lt;UNNAMEDVAR&gt; ) ( <A HREF="#prod9">list</A> )?</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;VAR&gt; | &lt;UNNAMEDVAR&gt; ) ( <A HREF="#prod11">list</A> )?</TD>
 </TR>
 <TR>
-<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod12">string</A></TD>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod14">string</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
 <TD ALIGN=LEFT VALIGN=BASELINE>&lt;STRING&gt;</TD>
 </TR>
 <TR>
-<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod20">time</A></TD>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod22">time</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
 <TD ALIGN=LEFT VALIGN=BASELINE>"`" ( &lt;NUMBER&gt; )? ( &lt;ATOM&gt; )? "`"</TD>
 </TR>
