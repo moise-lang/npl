@@ -1,6 +1,7 @@
 package npl;
 
 import jason.NoValueException;
+import jason.RevisionFailedException;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.ASSyntax;
@@ -51,7 +52,6 @@ public class NPLInterpreter implements ToDOM {
     private ObligationStateTransition   oblUpdateThread;
     
     public final static Atom NPAtom   = new Atom("np");
-    public final static Atom DynAtom  = new Atom("dyn");
     public final static Atom NormAtom = new Atom("npli");
 
     public void init() {
@@ -59,8 +59,7 @@ public class NPLInterpreter implements ToDOM {
         normsFail = new HashMap<String,Norm>();
         normsObl  = new HashMap<String,Norm>();
         ag.initAg();
-        clearNP();
-        //clearDynamicFacts();    
+        clearFacts();
         oblUpdateThread = new ObligationStateTransition();
         oblUpdateThread.start();
     }
@@ -78,16 +77,6 @@ public class NPLInterpreter implements ToDOM {
         return listeners.remove(ol);
     }
     
-    /** get all facts from a kind of source (os or oe) */
-    public List<Literal> getSource(Atom s) {
-        List<Literal> oel = new ArrayList<Literal>();
-        for (Literal b: ag.getBB())
-            if (b.hasSource(s))
-                oel.add(b);
-        return oel;
-    }
-
-    
     /** resets the interpreter with a new NP */
     public void setScope(Scope scope) {
         init();
@@ -99,14 +88,14 @@ public class NPLInterpreter implements ToDOM {
         return scope;
     }
     
-    /** loads facts from a NP scope into the interpreter */
-    public void loadNP(Scope scope) {
+    /** loads facts from a NP scope into the normative state */
+    protected void loadNP(Scope scope) {
         BeliefBase bb = ag.getBB();
         
         for (Rule r: scope.getRules()) {
             // normalise rules with empty body
             Literal l;
-            if (r.getBody().equals(Literal.LTrue) && r.isGround())
+            if (r.getBody().equals(Literal.LTrue) && r.getHead().isGround())
                 l = r.headClone();
             else
                 l = r.clone();
@@ -124,11 +113,34 @@ public class NPLInterpreter implements ToDOM {
             loadNP(scope.getFather());
     }
     
-    /** removes all facts/rules that comes from NP */
-    public void clearNP() {
-        BeliefBase bb = ag.getBB();
-        for (Literal b: getSource(NPAtom))
-            bb.remove(b);
+    /** removes all facts/rules of the normative state */
+    public void clearFacts() {
+        ag.getBB().clear();
+        if (oblUpdateThread != null) oblUpdateThread.update();
+    }
+    
+    /** removes a fact from the normative state */
+    public boolean removeFact(Literal l) {
+        if (!l.hasSource())
+            l.addSource(NPAtom);
+        try {
+            return ag.delBel(l);
+        } catch (RevisionFailedException e) {
+            return false;
+        } finally {
+            if (oblUpdateThread != null) oblUpdateThread.update();            
+        }
+    }
+    
+    /** adds a fact into the normative state */
+    public void addFact(Literal l) {
+        if (!l.hasSource())
+            l.addSource(NPAtom);
+        try {
+            ag.addBel(l);
+            if (oblUpdateThread != null) oblUpdateThread.update();
+        } catch (RevisionFailedException e) {
+        }
     }
     
     
@@ -315,8 +327,8 @@ public class NPLInterpreter implements ToDOM {
     }
 
     
+    /*
     private boolean maintenanceConditionHolds(Obligation obl) {
-        /*
         Norm n = obl.getNorm();
         // if the condition of the norm still holds
         Iterator<Unifier> i = n.getCondition().logicalConsequence(ag, new Unifier());
@@ -329,9 +341,8 @@ public class NPLInterpreter implements ToDOM {
             }
         }
         return false;
-        */
-        return obl.getMaitenanceCondition().logicalConsequence(ag, new Unifier()).hasNext();
     }
+    */
     
     private Literal createObligationState(String state, Obligation o) {
         Literal s = ASSyntax.createLiteral(state, o);
@@ -446,7 +457,7 @@ public class NPLInterpreter implements ToDOM {
     }
 
 
-    private int updateInterval = 1000;
+    private int updateInterval = 500;
     
     /** sets the update interval for checking the change in obligation states */
     public void setUpdateInterval(int miliseconds) {
@@ -523,7 +534,7 @@ public class NPLInterpreter implements ToDOM {
                     //System.out.println("fulfilled "+o);
                     bb.add(createObligationState(NormativeProgram.FFFunctor, o));
                     notifyOblFulfilled(o);
-                } else if (!maintenanceConditionHolds(o)) {
+                } else if (! o.getMaitenanceCondition().logicalConsequence(ag, new Unifier()).hasNext()) {
                     // transition active -> inactive
                     if (!bb.remove(oasinbb)) System.out.println("ooops obligation should be removed 1");
                     o.addAnnot(ASSyntax.createStructure("inactive", new TimeTerm(0,null)));

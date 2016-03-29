@@ -39,26 +39,14 @@ public class NormativeProgram {
         return root;
     }
     public void setRoot(Scope root) throws ParseException {
-        //if (!root.getId().getFunctor().equals("organisation"))
-        //    throw new ParseException("the root scope must be named 'organisation'");
         this.root = root;
     }
     
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder();
-        //out.append("np "+id+" {\n");
-        /*
-        if (! osf.isEmpty()) {
-            out.append("  os {\n");
-            for (Literal l: osf) 
-                out.append("    "+l+".\n");
-            out.append("  }\n");
-        }
-        */
         if (root != null)
             out.append("\n"+root.toString());
-        //out.append("}\n");
         return out.toString();
     }
 }

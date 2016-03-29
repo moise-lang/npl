@@ -34,36 +34,51 @@ public class Example1 {
         System.out.println(np);
     
         // loads the program into the interpreter
-        interpreter.init();
-        interpreter.loadNP(np.getRoot()); 
+        interpreter.setScope(np.getRoot()); 
 
         // listen events from NPInterpreter
         interpreter.addListener(new MyListener()); 
 
         // create initial obligations
         interpreter.verifyNorms();
-        System.out.println("Active obligations 0: "+ interpreter.getActiveObligations()); 
+        printObl();
         
         // change b value to trigger the first norm (n1)
         facts.setBValue(3);
         interpreter.verifyNorms();
-        System.out.println("Active obligations 1: "+ interpreter.getActiveObligations());
+        printObl();
         
         Thread.sleep(10000); // wait some time to see what happens
         
         // alice fulfills its obl
         facts.setBValue(-1);
-        
         Thread.sleep(4000);
+        
+        // creates obligations for bob and carlos
+        facts.setBValue(10);
+        interpreter.verifyNorms();        
+        
+        
+        // unactivate norm for bob removing his state of student
+        interpreter.removeFact(ASSyntax.parseLiteral("student(bob,_)"));
+
+        Thread.sleep(5000);        
+        printObl();
         System.exit(0);
     }
     
-    /** evaluates b/1 facts */
+    void printObl() {
+        System.out.println("Active Obligations:");
+        for (Obligation o: interpreter.getActiveObligations()) {
+            System.out.println("  "+o);
+        }        
+    }
+    
+    /** evaluates b/1 facts (without translating it to a logical literal) */
     class BFacts implements DynamicFactsProvider {
         
         PredicateIndicator b1 = new PredicateIndicator("b", 1);
-        
-        Literal bInst = ASSyntax.createLiteral("b", ASSyntax.createNumber(1) ); // creates literal b(1)
+        int b = 1;
 
         @Override
         public boolean isRelevant(PredicateIndicator pi) {
@@ -71,14 +86,12 @@ public class Example1 {
         }
 
         public void setBValue(int i) {
-            bInst = ASSyntax.createLiteral("b", ASSyntax.createNumber(i) );
+            b = i;
         }
         
         @Override
         public Iterator<Unifier> consult(Literal l, Unifier u) {
-            u = u.clone();
-            u.unifies(l, bInst);
-            //System.out.println("result of consult "+l+" is "+bInst+" "+u);
+            u.unifies(l.getTerm(0), ASSyntax.createNumber(b));
             return LogExpr.createUnifIterator(u); 
         }
         

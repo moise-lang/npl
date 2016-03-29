@@ -132,9 +132,9 @@
     b = log_expr();
     jj_consume_token(31);
     h = literal();
-                         if (!h.getFunctor().equals("fail") && !h.getFunctor().equals(NormativeProgram.OblFunctor))
+                         if (!h.getFunctor().equals(NormativeProgram.FailFunctor) && !h.getFunctor().equals(NormativeProgram.OblFunctor))
                             {if (true) throw new ParseException("the consequence of norm "+id.image+" must be a fail or obligation");}
-                         if (h.getFunctor().equals("fail") && h.getArity() != 1)
+                         if (h.getFunctor().equals(NormativeProgram.FailFunctor) && h.getArity() != 1)
                             {if (true) throw new ParseException("fail of norm "+id.image+" must have arity 1");}
                          //if (h.getFunctor().equals(NormativeProgram.OblFunctor) && !id.image.equals( ((Literal)h.getTerm(1)).getFunctor()))
                          //   throw new ParseException("the functor of the reason of an obligation in norm "+id.image+" must be equals to the norm id");                         
