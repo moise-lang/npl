@@ -23,7 +23,7 @@
         <tr style="{$trh-style}"> 
         <th valign="top" style="{$th-style}">state</th>
         <th valign="top" style="{$th-style}">agent</th>
-        <th valign="top" style="{$th-style}">maintenance</th> 
+        <th valign="top" style="{$th-style}">maintenance condition</th> 
         <th valign="top" style="{$th-style}">aim</th>
         <th valign="top" style="{$th-style}">deadline</th>
         <th valign="top" style="{$th-style}">done at</th>

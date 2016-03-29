@@ -33,6 +33,7 @@ TARGETS:
 
     <path id="test.classpath">
         <path refid="project.classpath" />
+        <path location="${build.dir}" />
     </path>
 
     <target name="init">
@@ -94,16 +95,14 @@ TARGETS:
     </target>
 
 	<target name="test" depends="jar">
-		<!-- junit printsummary="yes" failureProperty="test.failure">
+		<junit printsummary="yes" failureProperty="test.failure">
 			<classpath refid="test.classpath" />
 			<formatter type="plain" usefile="false" />
 			<batchtest>
-				<fileset dir="${basedir}/src" includes="moise/test/*Test.java" />
-                <fileset dir="${basedir}/src" includes="ora4mas/nopl/test/*Test.java" />
-                <fileset dir="${basedir}/src" includes="ora4mas/nopl/test/*TestSubGroups.java" />
+				<fileset dir="${basedir}/src" includes="test/*Test.java" />
 			</batchtest>
 		</junit>
-		<fail message="test failed" if="test.failure" / -->
+		<fail message="test failed" if="test.failure" />
 	</target>
 	
     <target name="apidoc" depends="compile" >

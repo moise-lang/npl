@@ -2,7 +2,6 @@ package npl;
 
 import jason.NoValueException;
 import jason.asSemantics.Unifier;
-import jason.asSyntax.ListTerm;
 import jason.asSyntax.Literal;
 import jason.asSyntax.LiteralImpl;
 import jason.asSyntax.LogicalFormula;
@@ -16,12 +15,16 @@ public class Obligation extends LiteralImpl {
     // used by capply
     public Obligation(Literal l, Unifier u, Norm n) {
         super("obligation");
-        addTerm(l.getTerm(0).capply(u));
-        addTerm(l.getTerm(1));
-        addTerm(l.getTerm(2).capply(u));
-        addTerm(l.getTerm(3).capply(u));
-        if (l.hasAnnot())
-            setAnnots( (ListTerm)l.getAnnots().capply(u) );
+        Literal lc = (Literal)l.capply(u);
+        Unifier newu = new Unifier();
+        newu.unifies(l.getTerm(0), lc.getTerm(0)); // unifies agent
+        newu.unifies(l.getTerm(2), lc.getTerm(2)); // unifies aim, this unifier is used for the maint. cond.
+        addTerm(lc.getTerm(0));
+        addTerm(l.getTerm(1).capply(newu));
+        addTerm(lc.getTerm(2));
+        addTerm(lc.getTerm(3));
+        if (lc.hasAnnot())
+            setAnnots( lc.getAnnots() );
 
         this.n = n;
     }

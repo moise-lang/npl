@@ -319,19 +319,21 @@ public class NPLInterpreter implements ToDOM {
 
     
     private boolean maintenanceConditionHolds(Obligation obl) {
-        //Norm n = obl.getNorm(); // TODO: review
-        // if the condition of the norm still holds
-        Iterator<Unifier> i = obl.getMaitenanceCondition().logicalConsequence(ag, new Unifier());
         /*
+        Norm n = obl.getNorm();
+        // if the condition of the norm still holds
+        Iterator<Unifier> i = n.getCondition().logicalConsequence(ag, new Unifier());
         while (i.hasNext()) {
             Unifier u = i.next();
-            Obligation head = new Obligation((Literal)n.getConsequence().capply(u), n);
+            Obligation head = new Obligation((Literal)obl.getNorm().getConsequence(), u, obl.getNorm());
+            // if the same obligation is produced.....
             if (head.equalsIgnoreDeadline(obl)) {
                 return true;
             }
         }
         return false;
         */
+        Iterator<Unifier> i = obl.getMaitenanceCondition().logicalConsequence(ag, new Unifier());
         return i.hasNext();
     }
     
@@ -398,7 +400,7 @@ public class NPLInterpreter implements ToDOM {
             oblele.setAttribute("state", state);
             oblele.setAttribute("agent", l.getAg().toString());
             oblele.setAttribute("maintenance", l.getMaitenanceCondition().toString());
-            oblele.setAttribute("adim", l.getAim().toString());
+            oblele.setAttribute("aim", l.getAim().toString());
             long ttf = l.getDeadline();
             if (reltime)
                 oblele.setAttribute("ttf", TimeTerm.toRelTimeStr(ttf));

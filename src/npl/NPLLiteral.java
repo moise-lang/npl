@@ -8,12 +8,16 @@ import jason.asSyntax.Term;
 
 import java.util.Iterator;
 
+import npl.parser.ParseException;
+
 public class NPLLiteral extends LiteralImpl {
 
     // used by the parser
     public static LiteralFactory getFactory() {
         return new LiteralFactory() {
-            public Literal createNPLLiteral(Literal l, DynamicFactsProvider dfp) {
+            public Literal createNPLLiteral(Literal l, DynamicFactsProvider dfp) throws ParseException {
+                if (l.getFunctor().equals("obligation") && !(l.getTerm(0).isAtom() || l.getTerm(0).isVar()))
+                    throw new ParseException("First argument of obligations must be an agent or a variable.");
                 return new NPLLiteral(l,dfp);
             }
         };
