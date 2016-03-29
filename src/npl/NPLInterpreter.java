@@ -128,7 +128,8 @@ public class NPLInterpreter implements ToDOM {
         } catch (RevisionFailedException e) {
             return false;
         } finally {
-            if (oblUpdateThread != null) oblUpdateThread.update();            
+            // better to use explicit "verifyNorms" to trigger the update
+            // if (oblUpdateThread != null) oblUpdateThread.update();            
         }
     }
     
@@ -138,7 +139,8 @@ public class NPLInterpreter implements ToDOM {
             l.addSource(NPAtom);
         try {
             ag.addBel(l);
-            if (oblUpdateThread != null) oblUpdateThread.update();
+            // better to use explicit "verifyNorms" to trigger the update
+            //if (oblUpdateThread != null) oblUpdateThread.update();
         } catch (RevisionFailedException e) {
         }
     }
@@ -327,23 +329,6 @@ public class NPLInterpreter implements ToDOM {
     }
 
     
-    /*
-    private boolean maintenanceConditionHolds(Obligation obl) {
-        Norm n = obl.getNorm();
-        // if the condition of the norm still holds
-        Iterator<Unifier> i = n.getCondition().logicalConsequence(ag, new Unifier());
-        while (i.hasNext()) {
-            Unifier u = i.next();
-            Obligation head = new Obligation((Literal)obl.getNorm().getConsequence(), u, obl.getNorm());
-            // if the same obligation is produced.....
-            if (head.equalsIgnoreDeadline(obl)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    */
-    
     private Literal createObligationState(String state, Obligation o) {
         Literal s = ASSyntax.createLiteral(state, o);
         s.addSource(NormAtom);
@@ -457,7 +442,7 @@ public class NPLInterpreter implements ToDOM {
     }
 
 
-    private int updateInterval = 500;
+    private int updateInterval = 1000;
     
     /** sets the update interval for checking the change in obligation states */
     public void setUpdateInterval(int miliseconds) {
@@ -474,17 +459,19 @@ public class NPLInterpreter implements ToDOM {
         private Queue<Obligation> toCheckUnfulfilled = new ConcurrentLinkedQueue<Obligation>();
                         
         /** update the state of the obligations */
-        void update() {
+        synchronized void update() {
             update = true;
+            notifyAll();
         }
         
         void setUpdateInterval(int miliseconds) {
             updateInterval = miliseconds;
         }
         
-        void checkUnfulfilled(Obligation o) {
+        synchronized void checkUnfulfilled(Obligation o) {
             toCheckUnfulfilled.offer(o);
             update = true;
+            notifyAll();
         }
         
         @Override
@@ -496,7 +483,7 @@ public class NPLInterpreter implements ToDOM {
                         sleep(50);
                         concModifExp = false;
                     } else {
-                        sleep(updateInterval);
+                        wait(updateInterval);
                     }
                     if (update) {
                         bb = ag.getBB();

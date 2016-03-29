@@ -16,11 +16,11 @@ import npl.Obligation;
 import npl.parser.nplp;
 
 
-/** basic example of use of NPL, this example run the normative program of file e1.npl */
+/** basic example of NPL use. This example is based on the normative program of file e1.npl */
 public class Example1 {
     
     NormativeProgram  np          = new NormativeProgram(); // where the parser will place the result of parsing (norms, rules, ....) 
-    NPLInterpreter    interpreter = new NPLInterpreter(); // interpreter
+    NPLInterpreter    interpreter = new NPLInterpreter(); // the NPL interpreter
     BFacts            facts       = new BFacts(); // the class that evaluates values for predicate b/1
 
     public static void main(String[] args) throws Exception {
@@ -39,29 +39,29 @@ public class Example1 {
         // listen events from NPInterpreter
         interpreter.addListener(new MyListener()); 
 
-        // create initial obligations
+        // verifies if some norm is applicable (none in this example)
         interpreter.verifyNorms();
         printObl();
         
-        // change b value to trigger the first norm (n1)
+        // changes b value to trigger the first norm (n1)
         facts.setBValue(3);
         interpreter.verifyNorms();
         printObl();
         
         Thread.sleep(10000); // wait some time to see what happens
         
-        // alice fulfills its obl
+        // alice fulfills her obligation
         facts.setBValue(-1);
         Thread.sleep(4000);
         
         // creates obligations for bob and carlos
         facts.setBValue(10);
         interpreter.verifyNorms();        
-        
-        
+                
         // unactivate norm for bob removing his state of student
         interpreter.removeFact(ASSyntax.parseLiteral("student(bob,_)"));
-
+        interpreter.verifyNorms();        
+        
         Thread.sleep(5000);        
         printObl();
         System.exit(0);
