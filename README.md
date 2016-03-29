@@ -4,5 +4,6 @@ Some papers describing the language are available in the folder [publications](h
 
 The folder [examples/npl](https://github.com/jomifred/npl/tree/master/examples/npl) contains Java programs to illustrates its use.
 
-This language is used to implement the organisational platform for [Moise](http://moise.sf.net), called _ORA4MAS_, 
-that is integrated into the [JaCaMo](http://jacamo.sf.net) project.
+This language is used to implement the organisational platform for [Moise](http://moise.sf.net), called _ORA4MAS_, that is integrated into the [JaCaMo](http://jacamo.sf.net) project.
+
+Developed by Jomi F. Hubner, Rafael H. Bordini, and Olivier Boissier.
