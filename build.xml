@@ -180,7 +180,7 @@ TARGETS:
               </tarfileset>
           </tar>
 
-          <zip basedir="${distDir}/.." includes="moise*/**/*" zipfile="${distFile}.zip"/>
+          <zip basedir="${distDir}/.." includes="npl*/**/*" zipfile="${distFile}.zip"/>
 
     </target>
 

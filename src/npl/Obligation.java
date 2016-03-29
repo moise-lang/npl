@@ -14,7 +14,7 @@ public class Obligation extends LiteralImpl {
     
     // used by capply
     public Obligation(Literal l, Unifier u, Norm n) {
-        super("obligation");
+        super(NormativeProgram.OblFunctor);
         Literal lc = (Literal)l.capply(u);
         Unifier newu = new Unifier();
         newu.unifies(l.getTerm(0), lc.getTerm(0)); // unifies agent

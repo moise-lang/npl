@@ -229,9 +229,6 @@ public class NPLInterpreter implements ToDOM {
                     Obligation obl = new Obligation((Literal)n.getConsequence(), u, n);
                     // check if already in BB
                     if (!containsIgnoreDeadline(activeObl, obl) // is it a new obligation?  
-                        //!containsIgnoreDeadline(unfulObl, head) &&
-                        //!containsIgnoreDeadline(fulObl, head)
-                        //) {
                         && !holds(obl.getAim())) { // that is not achieved yet
                         
                         obl.addAnnot(ASSyntax.createStructure("created", new TimeTerm(0,null)));
@@ -333,8 +330,7 @@ public class NPLInterpreter implements ToDOM {
         }
         return false;
         */
-        Iterator<Unifier> i = obl.getMaitenanceCondition().logicalConsequence(ag, new Unifier());
-        return i.hasNext();
+        return obl.getMaitenanceCondition().logicalConsequence(ag, new Unifier()).hasNext();
     }
     
     private Literal createObligationState(String state, Obligation o) {

@@ -132,14 +132,18 @@
     b = log_expr();
     jj_consume_token(31);
     h = literal();
-                         if (!h.getFunctor().equals("fail") && !h.getFunctor().equals("obligation"))
+                         if (!h.getFunctor().equals("fail") && !h.getFunctor().equals(NormativeProgram.OblFunctor))
                             {if (true) throw new ParseException("the consequence of norm "+id.image+" must be a fail or obligation");}
-                         if (h.getFunctor().equals("obligation") && h.getArity() != 4)
-                            {if (true) throw new ParseException("obligation of norm "+id.image+" must have arity 4");}
                          if (h.getFunctor().equals("fail") && h.getArity() != 1)
                             {if (true) throw new ParseException("fail of norm "+id.image+" must have arity 1");}
-                         if (h.getFunctor().equals("obligation") && !id.image.equals( ((Literal)h.getTerm(1)).getFunctor()))
-                            {if (true) throw new ParseException("the functor of the reason of an obligation in norm "+id.image+" must be equals to the norm id");}
+                         //if (h.getFunctor().equals(NormativeProgram.OblFunctor) && !id.image.equals( ((Literal)h.getTerm(1)).getFunctor()))
+                         //   throw new ParseException("the functor of the reason of an obligation in norm "+id.image+" must be equals to the norm id");                         
+                         if (h.getFunctor().equals(NormativeProgram.OblFunctor)) {
+                            if (h.getArity() != 4)
+                                {if (true) throw new ParseException("obligation of norm "+id.image+" must have arity 4");}
+                            if (!(h.getTerm(0).isAtom() || h.getTerm(0).isVar()))
+                                {if (true) throw new ParseException("First argument of obligations must be an agent or a variable.");}
+                         }
                          {if (true) return nFac.createNorm(id.image,h,(LogicalFormula)b);}
     throw new Error("Missing return statement in function");
   }
