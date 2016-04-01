@@ -7,3 +7,5 @@ The folder [examples/npl](https://github.com/jomifred/npl/tree/master/examples/n
 This language is used to implement the organisational platform for [Moise](http://moise.sf.net), called _ORA4MAS_, that is integrated into the [JaCaMo](http://jacamo.sf.net) project.
 
 Developed by Jomi F. Hubner, Rafael H. Bordini, and Olivier Boissier.
+
+![a screenshot](https://github.com/jomifred/npl/tree/master/doc/figures/s1.png "A screenshot")
