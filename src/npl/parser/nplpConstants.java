@@ -19,13 +19,15 @@ public interface nplpConstants {
   int NORM = 17;
   int FAIL = 18;
   int OBLIGATION = 19;
-  int ATOM = 20;
-  int UNNAMEDVAR = 21;
-  int CHAR = 22;
-  int LETTER = 23;
-  int LC_LETTER = 24;
-  int UP_LETTER = 25;
-  int DIGIT = 26;
+  int PERMISSION = 20;
+  int PROHIBITION = 21;
+  int ATOM = 22;
+  int UNNAMEDVAR = 23;
+  int CHAR = 24;
+  int LETTER = 25;
+  int LC_LETTER = 26;
+  int UP_LETTER = 27;
+  int DIGIT = 28;
 
   int DEFAULT = 0;
 
@@ -50,6 +52,8 @@ public interface nplpConstants {
     "\"norm\"",
     "\"fail\"",
     "\"obligation\"",
+    "\"permission\"",
+    "\"prohibition\"",
     "<ATOM>",
     "<UNNAMEDVAR>",
     "<CHAR>",

@@ -11,7 +11,7 @@ public class Norm {
     public static NormFactory getFactory() {
         return new NormFactory() {
             public Norm createNorm(String id, Literal consequence, LogicalFormula activationCondition) {
-                if (consequence.getFunctor().equals(NormativeProgram.OblFunctor)) {
+                if (!consequence.getFunctor().equals(NormativeProgram.FailFunctor)) {
                     if ( ((Literal)consequence.getTerm(1)).getFunctor().toString().equals(id)) {
                         consequence.addAnnot(ASSyntax.createStructure("norm", consequence.getTerm(1)));
                         consequence.setTerm(1, activationCondition);

@@ -100,7 +100,9 @@ TOKEN : {
 |  <SCOPE     : "scope">
 |  <NORM      : "norm">
 |  <FAIL      : "fail">
-|  <OBLIGATION : "obligation">
+|  <OBLIGATION  : "obligation">
+|  <PERMISSION  : "permission">
+|  <PROHIBITION : "prohibition">
 |  <ATOM      : (<LC_LETTER> | "." <CHAR>) (<CHAR> | "." <CHAR>)*>
 |  <UNNAMEDVAR: ("_" (<CHAR>)*) >
 |  <CHAR      : (<LETTER> | <DIGIT> | "_")>
@@ -179,9 +181,10 @@ Literal fail() :
 Literal obligation() :
 { Token k; Term a, m, g, d = null; Literal r; Object o; }
 {
-   k = <OBLIGATION>    { r = ASSyntax.createLiteral(NormativeProgram.OblFunctor);
-                         r.setSrcInfo(new SourceInfo(npSource, k.beginLine));
-                       }
+   ( k = <OBLIGATION>  { r = ASSyntax.createLiteral(NormativeProgram.OblFunctor); }
+   | k = <PERMISSION>  { r = ASSyntax.createLiteral(NormativeProgram.PerFunctor); }
+   | k = <PROHIBITION> { r = ASSyntax.createLiteral(NormativeProgram.ProFunctor); }
+   )                   { r.setSrcInfo(new SourceInfo(npSource, k.beginLine)); }
    "("
    ( k=<ATOM>          { r.addTerm(new Atom(k.image)); }
    | k=<VAR>           { r.addTerm(new VarTerm(k.image)); }
@@ -206,7 +209,7 @@ Literal obligation() :
 Literal literal() :
 { Token k; List l = null; Literal r;}
 {
-  ( k=<ATOM> | k=<FAIL> | k=<OBLIGATION> )    
+  ( k=<ATOM> | k=<FAIL> | k=<OBLIGATION> | k=<PERMISSION> | k=<PROHIBITION>)    
                        { r = ASSyntax.createLiteral(k.image); 
                          r.setSrcInfo(new SourceInfo(npSource, k.beginLine)); 
                        } 

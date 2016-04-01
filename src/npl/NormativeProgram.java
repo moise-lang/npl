@@ -1,6 +1,5 @@
 package npl;
 
-import jason.asSyntax.PredicateIndicator;
 import npl.parser.ParseException;
 
 
@@ -12,15 +11,8 @@ public class NormativeProgram {
     
     public final static String FailFunctor   = "fail";
     public final static String OblFunctor    = "obligation";
-    public final static String FFFunctor     = "fulfilled";
-    public final static String UFFFunctor    = "unfulfilled";
-    public final static String ActFunctor    = "active";
-    public final static String InactFunctor  = "inactive";
-    
-    public final static PredicateIndicator ACTPI  = new PredicateIndicator(NormativeProgram.ActFunctor,1);
-    public final static PredicateIndicator FFPI   = new PredicateIndicator(NormativeProgram.FFFunctor,1);
-    public final static PredicateIndicator UFPI   = new PredicateIndicator(NormativeProgram.UFFFunctor,1);
-    public final static PredicateIndicator INACPI = new PredicateIndicator(NormativeProgram.InactFunctor,1);
+    public final static String PerFunctor    = "permission";
+    public final static String ProFunctor    = "prohibition";
     
     public String getId() {
         return id;

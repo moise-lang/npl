@@ -160,6 +160,7 @@ TARGETS:
             <fileset dir="${basedir}" includes="LICENSE" />
             <fileset dir="${basedir}" includes="README*" />
             <fileset dir="${basedir}" includes="doc/api/**/*" />
+            <fileset dir="${basedir}" includes="doc/publications/**/*" />
             <fileset dir="${basedir}" includes="lib/**/*" />
             <fileset dir="${basedir}" includes="bin/*.*" />
             <!-- fileset dir="${basedir}" includes="examples/auction/**/*" / -->

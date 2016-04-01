@@ -35,12 +35,12 @@
 <TR>
 <TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod8">obligation</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE>&lt;OBLIGATION&gt; "(" ( &lt;ATOM&gt; | &lt;VAR&gt; ) "," <A HREF="#prod6">log_expr</A> "," <A HREF="#prod6">log_expr</A> "," <A HREF="#prod6">log_expr</A> ")"</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;OBLIGATION&gt; | &lt;PERMISSION&gt; | &lt;PROHIBITION&gt; ) "(" ( &lt;ATOM&gt; | &lt;VAR&gt; ) "," <A HREF="#prod6">log_expr</A> "," <A HREF="#prod6">log_expr</A> "," <A HREF="#prod6">log_expr</A> ")"</TD>
 </TR>
 <TR>
 <TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod3">literal</A></TD>
 <TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
-<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;ATOM&gt; | &lt;FAIL&gt; | &lt;OBLIGATION&gt; ) ( "(" <A HREF="#prod10">terms</A> ")" )?</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;ATOM&gt; | &lt;FAIL&gt; | &lt;OBLIGATION&gt; | &lt;PERMISSION&gt; | &lt;PROHIBITION&gt; ) ( "(" <A HREF="#prod10">terms</A> ")" )?</TD>
 </TR>
 <TR>
 <TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod10">terms</A></TD>

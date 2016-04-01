@@ -19,23 +19,23 @@ import npl.parser.nplp;
 /** 
  * Basic example of NPL use.
  *  
- * This example is based on the normative program of file e1.npl 
- * and illustrates obligations.
+ * This example is based on the normative program of file e2.npl 
+ * and illustrates permissions.
  *  
  */
-public class Example1 {
+public class Example2 {
     
     NormativeProgram  np          = new NormativeProgram(); // where the parser will place the result of parsing (norms, rules, ....) 
     NPLInterpreter    interpreter = new NPLInterpreter(); // the NPL interpreter
     BFacts            facts       = new BFacts(); // the class that evaluates values for predicate b/1
 
     public static void main(String[] args) throws Exception {
-        new Example1().run();
+        new Example2().run();
     }
     
     public void run() throws Exception {
         // parsing
-        nplp parser = new nplp(new FileInputStream("examples/npl/e1.npl"));        
+        nplp parser = new nplp(new FileInputStream("examples/npl/e2.npl"));        
         parser.program(np, facts);
         System.out.println(np);
     
@@ -56,16 +56,9 @@ public class Example1 {
         
         Thread.sleep(10000); // wait some time to see what happens
         
-        // alice fulfills her obligation
-        facts.setBValue(-1);
-        Thread.sleep(4000);
-        
-        // creates obligations for bob and carlos
-        facts.setBValue(10);
-        interpreter.verifyNorms();        
                 
-        // disactivate norm for bob removing his state of student
-        interpreter.removeFact(ASSyntax.parseLiteral("student(bob,_)"));
+        // disactivate permission for alice
+        interpreter.removeFact(ASSyntax.parseLiteral("a(2)"));
         interpreter.verifyNorms();        
         
         Thread.sleep(5000);        
@@ -74,8 +67,8 @@ public class Example1 {
     }
     
     void printObl() {
-        System.out.println("Active Obligations:");
-        for (DeonticModality o: interpreter.getActiveObligations()) {
+        System.out.println("Active Permissions:");
+        for (DeonticModality o: interpreter.getActivePermissions()) {
             System.out.println("  "+o);
         }        
     }
@@ -102,4 +95,5 @@ public class Example1 {
         }
         
     }
+
 }
