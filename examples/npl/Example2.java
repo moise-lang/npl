@@ -12,6 +12,7 @@ import npl.DynamicFactsProvider;
 import npl.NPLInterpreter;
 import npl.NormativeProgram;
 import npl.parser.nplp;
+import util.NPLMonitor;
 
 
 /** 
@@ -43,6 +44,10 @@ public class Example2 {
         // listen events from NPInterpreter
         interpreter.addListener(new MyListener()); 
 
+        // starts GUI
+        NPLMonitor m = new NPLMonitor();
+        m.add("example 2", interpreter);
+        
         // verifies if some norm is applicable (none in this example)
         interpreter.verifyNorms();
         printState();
@@ -63,15 +68,14 @@ public class Example2 {
         interpreter.addFact(ASSyntax.parseLiteral("setter(a,bob)")); // it was bob that defined the value of a
         interpreter.verifyNorms();        
         
-        
         // disactivate the prohibitions
         Thread.sleep(1000);        
         interpreter.removeFact(ASSyntax.parseLiteral("student(_,_)"));
         interpreter.removeFact(ASSyntax.parseLiteral("student(_,_)"));
         interpreter.verifyNorms();        
 
-        Thread.sleep(1000);        
         printState();
+        Thread.sleep(40000);        
         System.exit(0);
     }
     
@@ -102,7 +106,6 @@ public class Example2 {
             u.unifies(l.getTerm(0), ASSyntax.createNumber(b));
             return LogExpr.createUnifIterator(u); 
         }
-        
     }
 
 }

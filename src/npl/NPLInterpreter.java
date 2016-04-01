@@ -154,6 +154,9 @@ public class NPLInterpreter implements ToDOM {
 
     /** get active obligations, permissions and prohibitions  */
     public List<DeonticModality> getActive() { return getByState(ACTPI, null); }
+    public List<DeonticModality> getFulfilled() { return getByState(FFPI, null);  }
+    public List<DeonticModality> getUnFulfilled() { return getByState(UFPI, null); }
+    public List<DeonticModality> getInactive() { return getByState(INACPI, null); }
     
     /** get active obligations (those not fulfilled) */
     public List<DeonticModality> getActiveObligations() { return getByState(ACTPI, NormativeProgram.OblFunctor); }
@@ -167,12 +170,12 @@ public class NPLInterpreter implements ToDOM {
     /** get fulfilled obligations */
     public List<DeonticModality> getInactiveObligations() { return getByState(INACPI, NormativeProgram.OblFunctor); }
     
-    /** get active permissions  */
     public List<DeonticModality> getActivePermissions() { return getByState(ACTPI, NormativeProgram.PerFunctor); }
 
-    // TODO: do prohibitions
-    /** get unfulfilled prohibitions */
+    public List<DeonticModality> getActiveProhibitions() { return getByState(ACTPI, NormativeProgram.ProFunctor); }
+    public List<DeonticModality> getFulfilledProhibitions() { return getByState(FFPI, NormativeProgram.ProFunctor);  }
     public List<DeonticModality> getUnFulfilledProhibitions() { return getByState(UFPI, NormativeProgram.ProFunctor); }
+    public List<DeonticModality> getInactiveProhibitions() { return getByState(INACPI, NormativeProgram.ProFunctor); }
     
     private List<DeonticModality> getByState(PredicateIndicator state, String kind) {
         List<DeonticModality> ol = new ArrayList<DeonticModality>();
@@ -273,17 +276,6 @@ public class NPLInterpreter implements ToDOM {
         return newObl;
     }
 
-    /*
-    private long getOblTTF(final Literal o, final int pos) {
-        try {
-            return (long)((NumberTerm)o.getTerm(pos)).solve();
-        } catch (NoValueException e) {
-            e.printStackTrace();
-            return 0;
-        }
-    }
-    */
-    
     private void addInSchedule(final DeonticModality o) {
         long ttf = o.getDeadline() - System.currentTimeMillis();
 
@@ -360,52 +352,36 @@ public class NPLInterpreter implements ToDOM {
         for (Literal l: getActive()) {
             out.append("  "+l+"\n");
         }
-        out.append("\nunfulfilled obligations:\n");
-        for (Literal l: getUnFulfilledObligations()) {
+        out.append("\nfulfilled:\n");
+        for (Literal l: getFulfilled()) {
             out.append("  "+l+"\n");
         }
-        out.append("\nfulfilled obligations:\n");
-        for (Literal l: getFulfilledObligations()) {
+        out.append("\nunfulfilled:\n");
+        for (Literal l: getUnFulfilled()) {
             out.append("  "+l+"\n");
         }
-        // TODO: others
         return out.toString();
     }
-    /*
-    private String wellFormatTime(Literal l) {
-        if (l.getFunctor().equals(NormativeProgram.OblFunctor) || l.getFunctor().equals(NormativeProgram.PerFunctor)) {
-            long t = ((DeonticModality)l).getDeadline();
-            return l.getFunctor()+"("+l.getTerm(0)+","+l.getTerm(1)+","+l.getTerm(2)+","+TimeTerm.toRelTimeStr(t)+")";
-        } else if (l.getFunctor().equals(State.fulfilled.name())) {
-            DeonticModality o = (DeonticModality)l.getTerm(0);
-            long t = o.getDeadline();
-            String so = o.getFunctor()+"("+o.getTerm(0)+","+o.getTerm(1)+","+o.getTerm(2)+","+TimeTerm.toTimeStamp(t)+")";
-            t = getOblTTF(l,1);
-            return l.getFunctor()+"("+so+","+TimeTerm.toAbsTimeStr(t)+")";            
-        }
-        return l.toString();
-    }
-    */
     
     public Element getAsDOM(Document document) {
         Element ele = (Element) document.createElement("normative-state");
         if (scope != null)
             ele.setAttribute("id", scope.getId().toString());
-        for (DeonticModality l: getUnFulfilledObligations())
-            ele.appendChild( obligation2dom(document, l, "unfulfilled", true));
-        for (DeonticModality l: getActiveObligations())
-            ele.appendChild( obligation2dom(document, l, "active", true));
-        for (DeonticModality l: getFulfilledObligations()) 
-            ele.appendChild( obligation2dom(document, l, "fulfilled", false));
-        for (DeonticModality l: getInactiveObligations()) 
-            ele.appendChild( obligation2dom(document, l, "inactive", false));
-        // TODO: others
+        for (DeonticModality l: getUnFulfilled())
+            ele.appendChild( obligation2dom(document, l, State.unfulfilled, true));
+        for (DeonticModality l: getActive())
+            ele.appendChild( obligation2dom(document, l, State.active, true));
+        for (DeonticModality l: getFulfilled()) 
+            ele.appendChild( obligation2dom(document, l, State.fulfilled, false));
+        for (DeonticModality l: getInactive()) 
+            ele.appendChild( obligation2dom(document, l, State.inactive, false));
         return ele;
     }
-    private Element obligation2dom(Document document, DeonticModality l, String state, boolean reltime) {
-        Element oblele = (Element) document.createElement(l.getFunctor());
+    private Element obligation2dom(Document document, DeonticModality l, State state, boolean reltime) {
+        Element oblele = (Element) document.createElement("deontic-modality");
         try {            
-            oblele.setAttribute("state", state);
+            oblele.setAttribute("modality", l.getFunctor());
+            oblele.setAttribute("state", state.name());
             oblele.setAttribute("agent", l.getAg().toString());
             oblele.setAttribute("maintenance", l.getMaitenanceCondition().toString());
             oblele.setAttribute("aim", l.getAim().toString());
@@ -516,18 +492,33 @@ public class NPLInterpreter implements ToDOM {
             }
         }
         
-        // -- transition active -> inactive, fulfilled
+        // -- transition active -> (un)fulfilled (based on aim)
         private void updateActive() {
             active = getActive();  
-            for (DeonticModality o: active) { 
+            for (DeonticModality o: active) {
                 Literal oasinbb = createState(o);
-                if (o.isObligation() && holds(o.getAim())) { // TODO: consider ag as var                    
+                if (o.isObligation()) {
                     // transition active -> fulfilled
-                    if (!bb.remove(oasinbb)) System.out.println("ooops "+oasinbb+" should be removed 2");
-                    o = o.copy();
-                    o.setFulfilled();
-                    bb.add(createState(o));
-                    notifyFulfilled(o);
+                    if (o.getAg().isGround() && holds(o.getAim())) {                                        
+                        if (!bb.remove(oasinbb)) System.out.println("ooops "+oasinbb+" should be removed 2");
+                        o = o.copy();
+                        o.setFulfilled();
+                        bb.add(createState(o));
+                        notifyFulfilled(o);
+                    } else {
+                        List<DeonticModality> fuls = getFulfilledObligations();
+                        Iterator<Unifier> i = o.getAim().logicalConsequence(ag, new Unifier());
+                        while (i.hasNext()) {
+                            Unifier u = i.next();
+                            DeonticModality obl = new DeonticModality( new LiteralImpl(o), u, o.getNorm());
+                            if (!containsIgnoreDeadline(fuls, obl)) {
+                                o.incAgInstance();
+                                obl.setFulfilled();
+                                bb.add(createState(obl));
+                                notifyFulfilled(obl);
+                            }
+                        }
+                    }
                 } else if (o.isProhibition()) {
                     // transition active -> unfulfilled
                     if (o.getAg().isGround() && holds(o.getAim())) { // the case of a prohibition for one agent
@@ -537,23 +528,16 @@ public class NPLInterpreter implements ToDOM {
                         bb.add(createState(o));
                         notifyUnfulfilled(o);                        
                     } else {
+                        List<DeonticModality> unfuls = getUnFulfilledProhibitions();
                         Iterator<Unifier> i = o.getAim().logicalConsequence(ag, new Unifier());
                         while (i.hasNext()) {
                             Unifier u = i.next();
                             DeonticModality obl = new DeonticModality( new LiteralImpl(o), u, o.getNorm());
-                            
-                            boolean newunf = true;
-                            for (DeonticModality p: getUnFulfilledProhibitions()) {
-                                if (p.getAg().equals(obl.getAg()) && p.getNorm().equals(obl.getNorm())) {
-                                    newunf = false;
-                                    break;
-                                }
-                            }
-
-                            if (newunf) {
+                            if (!containsIgnoreDeadline(unfuls, obl)) {
+                                o.incAgInstance();
                                 obl.setUnfulfilled();
-                                if (bb.add(createState(obl)))
-                                    notifyUnfulfilled(obl);
+                                bb.add(createState(obl));
+                                notifyUnfulfilled(obl);
                             }
                         }
                     }
@@ -575,7 +559,7 @@ public class NPLInterpreter implements ToDOM {
             }            
         }
         
-        // -- transition active -> unfulfilled (for obl)
+        // -- transition active -> unfulfilled (for obl) (based on d)
         //               active -> inactive (for per)
         //               active -> fulfilled (for pro)
         private void updateDeadline() {
@@ -588,9 +572,11 @@ public class NPLInterpreter implements ToDOM {
 
                     if (o.isObligation()) {
                         // transition for prohibition (active -> unfulfilled)
-                        o.setUnfulfilled();
-                        bb.add(createState(o));
-                        notifyUnfulfilled(o);
+                        if (o.getAgIntances() == 0) { // it is unfulfilled only if no agent instance has fulfilled the prohibition
+                            o.setUnfulfilled();
+                            bb.add(createState(o));
+                            notifyUnfulfilled(o);
+                        }
                     } else if (o.isPermission()) {
                         // transition for prohibition (active -> inactive)
                         o.setInactive();
@@ -598,10 +584,11 @@ public class NPLInterpreter implements ToDOM {
                         notifyInactive(o);
                     } else {
                         // transition for prohibition (active -> fulfilled)
-                        o = o.copy();
-                        o.setFulfilled();
-                        bb.add(createState(o));
-                        notifyFulfilled(o);
+                        if (o.getAgIntances() == 0) { // it is fulfilled only if no agent instance has unfulfilled the prohibition
+                            o.setFulfilled();
+                            bb.add(createState(o));
+                            notifyFulfilled(o);
+                        }
                     }
                     try {
                         verifyNorms();

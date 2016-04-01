@@ -19,6 +19,7 @@ public class DeonticModality extends LiteralImpl {
 
     Norm n; // the norm that created this obligation
     State s = State.none;
+    int   agInstances = 0; // when the Ag is a var, this field count how many agent instances where latter created 
     
     public DeonticModality(Literal l, Unifier u, Norm n) {
         super(l.getFunctor());
@@ -102,6 +103,13 @@ public class DeonticModality extends LiteralImpl {
     
     public State getState() {
         return s;
+    }
+    
+    public void incAgInstance() {
+        agInstances++;
+    }
+    public int getAgIntances() {
+        return agInstances;
     }
     
     public void setActive() {

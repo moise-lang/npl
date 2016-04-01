@@ -7,6 +7,7 @@ import jason.asSyntax.PredicateIndicator;
 import java.io.FileInputStream;
 import java.util.Iterator;
 
+import util.NPLMonitor;
 import npl.DeonticModality;
 import npl.DynamicFactsProvider;
 import npl.NPLInterpreter;
@@ -43,6 +44,10 @@ public class Example1 {
         // listen events from NPInterpreter
         interpreter.addListener(new MyListener()); 
 
+        // starts GUI
+        NPLMonitor m = new NPLMonitor();
+        m.add("example 1", interpreter);
+
         // verifies if some norm is applicable (none in this example)
         interpreter.verifyNorms();
         printObl();
@@ -66,7 +71,7 @@ public class Example1 {
         interpreter.removeFact(ASSyntax.parseLiteral("student(bob,_)"));
         interpreter.verifyNorms();        
         
-        Thread.sleep(5000);        
+        Thread.sleep(15000);        
         printObl();
         System.exit(0);
     }
