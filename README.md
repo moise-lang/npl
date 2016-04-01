@@ -8,4 +8,4 @@ This language is used to implement the organisational platform for [Moise](http:
 
 Developed by Jomi F. Hubner, Rafael H. Bordini, and Olivier Boissier.
 
-![ScreenShot](https://github.com/jomifred/npl/tree/master/doc/figures/s1.png)
+![ScreenShot](doc/figures/s1.png?raw=true)
