@@ -1,14 +1,13 @@
 package npl;
 
-import jason.NoValueException;
 import jason.RevisionFailedException;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Atom;
 import jason.asSyntax.Literal;
+import jason.asSyntax.LiteralImpl;
 import jason.asSyntax.LogicalFormula;
-import jason.asSyntax.NumberTerm;
 import jason.asSyntax.PredicateIndicator;
 import jason.asSyntax.Rule;
 import jason.asSyntax.Structure;
@@ -172,6 +171,8 @@ public class NPLInterpreter implements ToDOM {
     public List<DeonticModality> getActivePermissions() { return getByState(ACTPI, NormativeProgram.PerFunctor); }
 
     // TODO: do prohibitions
+    /** get unfulfilled prohibitions */
+    public List<DeonticModality> getUnFulfilledProhibitions() { return getByState(UFPI, NormativeProgram.ProFunctor); }
     
     private List<DeonticModality> getByState(PredicateIndicator state, String kind) {
         List<DeonticModality> ol = new ArrayList<DeonticModality>();
@@ -248,12 +249,12 @@ public class NPLInterpreter implements ToDOM {
                 Iterator<Unifier> i = n.getCondition().logicalConsequence(ag, new Unifier());
                 while (i.hasNext()) {
                     Unifier u = i.next();
-                    //System.out.println("    solution "+u+" for "+n.getCondition());
                     DeonticModality obl = new DeonticModality((Literal)n.getConsequence(), u, n);
                     // check if already in BB
                     if (!containsIgnoreDeadline(activeObl, obl)) { // is it a new obligation?  
                         if ( (obl.isObligation() && !holds(obl.getAim())) || // that is an obligation not achieved yet
-                              obl.isPermission()                             // or a permission
+                              obl.isPermission()                          || // or a permission
+                              obl.isProhibition()                            // or a prohibition
                            ) {
                             obl.setActive();
                             if (bb.add(createState(obl))) {
@@ -272,6 +273,7 @@ public class NPLInterpreter implements ToDOM {
         return newObl;
     }
 
+    /*
     private long getOblTTF(final Literal o, final int pos) {
         try {
             return (long)((NumberTerm)o.getTerm(pos)).solve();
@@ -280,6 +282,7 @@ public class NPLInterpreter implements ToDOM {
             return 0;
         }
     }
+    */
     
     private void addInSchedule(final DeonticModality o) {
         long ttf = o.getDeadline() - System.currentTimeMillis();
@@ -353,21 +356,22 @@ public class NPLInterpreter implements ToDOM {
     
     public String getStateString() {
         StringBuilder out = new StringBuilder("--- normative state for program "+scope.getId()+" ---\n\n");
-        out.append("active obligations:\n");
-        for (Literal l: getActiveObligations()) {
-            out.append("  "+wellFormatTime(l)+"\n");
+        out.append("active:\n");
+        for (Literal l: getActive()) {
+            out.append("  "+l+"\n");
         }
         out.append("\nunfulfilled obligations:\n");
         for (Literal l: getUnFulfilledObligations()) {
-            out.append("  "+wellFormatTime(l)+"\n");
+            out.append("  "+l+"\n");
         }
         out.append("\nfulfilled obligations:\n");
         for (Literal l: getFulfilledObligations()) {
-            out.append("  "+wellFormatTime(l)+"\n");
+            out.append("  "+l+"\n");
         }
         // TODO: others
         return out.toString();
     }
+    /*
     private String wellFormatTime(Literal l) {
         if (l.getFunctor().equals(NormativeProgram.OblFunctor) || l.getFunctor().equals(NormativeProgram.PerFunctor)) {
             long t = ((DeonticModality)l).getDeadline();
@@ -381,6 +385,7 @@ public class NPLInterpreter implements ToDOM {
         }
         return l.toString();
     }
+    */
     
     public Element getAsDOM(Document document) {
         Element ele = (Element) document.createElement("normative-state");
@@ -410,11 +415,9 @@ public class NPLInterpreter implements ToDOM {
             else
                 oblele.setAttribute("ttf", TimeTerm.toTimeStamp(ttf));
             
-            List<Term> al = l.getAnnots("done");
-            if (!al.isEmpty()) {
-                Structure annot = (Structure)al.get(0);
-                long toff = getOblTTF(annot,0);
-                oblele.setAttribute("done", TimeTerm.toAbsTimeStr(toff));  
+            String toff = l.getDoneStr();
+            if (toff != null) {
+                oblele.setAttribute("done", toff); //TimeTerm.toAbsTimeStr(toff));  
             }
         } catch (Exception e) {
             System.err.println("Error adding attribute in DOM for "+l+" "+state);
@@ -429,11 +432,7 @@ public class NPLInterpreter implements ToDOM {
                         if (!la.getFunctor().equals("done")) {
                             Element annotele = (Element) document.createElement("annotation");
                             annotele.setAttribute("id", la.getFunctor());
-                            if (la.getArity() == 1 && la.getTerm(0) instanceof TimeTerm) {
-                                annotele.setAttribute("value", TimeTerm.toTimeStamp( (long)((TimeTerm)la.getTerm(0)).solve() ));                    
-                            } else {
-                                annotele.setAttribute("value", la.getTerms().toString());
-                            }
+                            annotele.setAttribute("value", la.getTerms().toString());
                             oblele.appendChild(annotele);
                         }
                     }
@@ -501,6 +500,7 @@ public class NPLInterpreter implements ToDOM {
                         synchronized (syncTransState) {
                             update = false;
                             updateActive();
+                            updateInactive();
                             updateDeadline();
                             updateDoneForUnfulfilled();
                         }
@@ -521,50 +521,93 @@ public class NPLInterpreter implements ToDOM {
             active = getActive();  
             for (DeonticModality o: active) { 
                 Literal oasinbb = createState(o);
-                if (o.isObligation() && holds(o.getAim())) {
+                if (o.isObligation() && holds(o.getAim())) { // TODO: consider ag as var                    
                     // transition active -> fulfilled
-                    if (!bb.remove(oasinbb)) System.out.println("ooops obligation should be removed 2");
+                    if (!bb.remove(oasinbb)) System.out.println("ooops "+oasinbb+" should be removed 2");
                     o = o.copy();
                     o.setFulfilled();
                     bb.add(createState(o));
                     notifyFulfilled(o);
-                } else if (! o.getMaitenanceCondition().logicalConsequence(ag, new Unifier()).hasNext()) {
+                } else if (o.isProhibition()) {
+                    // transition active -> unfulfilled
+                    if (o.getAg().isGround() && holds(o.getAim())) { // the case of a prohibition for one agent
+                        if (!bb.remove(oasinbb)) System.out.println("ooops "+oasinbb+" should be removed 2");
+                        o = o.copy();
+                        o.setUnfulfilled();
+                        bb.add(createState(o));
+                        notifyUnfulfilled(o);                        
+                    } else {
+                        Iterator<Unifier> i = o.getAim().logicalConsequence(ag, new Unifier());
+                        while (i.hasNext()) {
+                            Unifier u = i.next();
+                            DeonticModality obl = new DeonticModality( new LiteralImpl(o), u, o.getNorm());
+                            
+                            boolean newunf = true;
+                            for (DeonticModality p: getUnFulfilledProhibitions()) {
+                                if (p.getAg().equals(obl.getAg()) && p.getNorm().equals(obl.getNorm())) {
+                                    newunf = false;
+                                    break;
+                                }
+                            }
+
+                            if (newunf) {
+                                obl.setUnfulfilled();
+                                if (bb.add(createState(obl)))
+                                    notifyUnfulfilled(obl);
+                            }
+                        }
+                    }
+                }
+            }            
+        }
+        
+        // -- transition active -> inactive (based on r)
+        private void updateInactive() {
+            active = getActive();            
+            for (DeonticModality o: active) { 
+                Literal oasinbb = createState(o);
+                if (! o.getMaitenanceCondition().logicalConsequence(ag, new Unifier()).hasNext()) {
                     // transition active -> inactive
-                    if (!bb.remove(oasinbb)) System.out.println("ooops obligation should be removed 1");
+                    if (!bb.remove(oasinbb)) System.out.println("ooops "+oasinbb+" should be removed 1!");
                     o.setInactive();
-                    if (!bb.add(createState(o))) System.out.println("ooops inactive obligation should be added");
                     notifyInactive(o);
                 }
             }            
-            active = getActive();            
         }
         
         // -- transition active -> unfulfilled (for obl)
         //               active -> inactive (for per)
+        //               active -> fulfilled (for pro)
         private void updateDeadline() {
+            active = getActive();            
             DeonticModality o = toCheckUnfulfilled.poll();
             while (o != null) {
-                if (containsIgnoreDeadline(active, o)) {
-                    if (o.isObligation() || o.isPermission()) {
-                        Literal oasinbb = createState(o);                
-                        if (!bb.remove(oasinbb)) System.out.println("ooops 3 obligation "+o+" should be removed, becomes unfulfilled, but it is not in the set of facts.");
-                        if (o.isObligation()) {
-                            o.setUnfulfilled();
-                            bb.add(createState(o));
-                            notifyUnfulfilled(o);
-                        } else {
-                            o.setInactive();;
-                            bb.add(createState(o));
-                            notifyInactive(o);
-                        }
-                        try {
-                            verifyNorms();
-                        } catch (NormativeFailureException e) {
-                            //System.err.println("Error to set obligation "+o+" to unfulfilled!");
-                            //e.printStackTrace();
-                        }
+                if (containsIgnoreDeadline(active, o)) { // deadline achieved, and still active
+                    Literal oasinbb = createState(o);                
+                    if (!bb.remove(oasinbb)) System.out.println("ooops 3 "+o+" should be removed (due the deadline), but it is not in the set of facts.");
+
+                    if (o.isObligation()) {
+                        // transition for prohibition (active -> unfulfilled)
+                        o.setUnfulfilled();
+                        bb.add(createState(o));
+                        notifyUnfulfilled(o);
+                    } else if (o.isPermission()) {
+                        // transition for prohibition (active -> inactive)
+                        o.setInactive();
+                        bb.add(createState(o));
+                        notifyInactive(o);
                     } else {
-                        // TODO
+                        // transition for prohibition (active -> fulfilled)
+                        o = o.copy();
+                        o.setFulfilled();
+                        bb.add(createState(o));
+                        notifyFulfilled(o);
+                    }
+                    try {
+                        verifyNorms();
+                    } catch (NormativeFailureException e) {
+                        //System.err.println("Error to set obligation "+o+" to unfulfilled!");
+                        //e.printStackTrace();
                     }
                 }
                 o = toCheckUnfulfilled.poll();

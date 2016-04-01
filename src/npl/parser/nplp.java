@@ -44,6 +44,14 @@
     }
     private Term changeToAtom(Object o) {
         Term u = (Term)o;
+        if (u == Literal.LTrue)
+            return u;
+        if (u == Literal.LFalse)
+            return u;
+        if (u.toString().equals("true"))
+            return Literal.LTrue;
+        if (u.toString().equals("false"))
+            return Literal.LFalse;
         if (u.isAtom()) {
            return new Atom((Literal)u);
         } else {
@@ -151,6 +159,8 @@
       jj_consume_token(-1);
       throw new ParseException();
     }
+                         if (b.toString().equals("true"))  b = Literal.LTrue;
+                         if (b.toString().equals("false")) b = Literal.LFalse;
                          {if (true) return nFac.createNorm(id.image,h,(LogicalFormula)b);}
     throw new Error("Missing return statement in function");
   }
@@ -254,6 +264,8 @@
     }
                          r = ASSyntax.createLiteral(k.image);
                          r.setSrcInfo(new SourceInfo(npSource, k.beginLine));
+                         if (k.image.equals("true"))  r = Literal.LTrue;
+                         if (k.image.equals("false")) r = Literal.LFalse;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case 35:
       jj_consume_token(35);

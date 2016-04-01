@@ -95,13 +95,16 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
         if (time == null) // now
             return "`now`";
         else
-            return String.valueOf(time.getTime());
+            return String.valueOf( toTimeStamp(time.getTime()));
     }
     
     @SuppressWarnings("deprecation")
     public static String toTimeStamp(long time) {
         Date t = new Date(time); //(time == null ? new Date() : time);
-        return (1900+t.getYear())+"-"+t.getMonth()+"-"+t.getDay()+" "+t.getHours()+":"+t.getMinutes()+":"+t.getSeconds(); 
+        if (t.getYear() > 20000000)
+            return "--";
+        else
+            return (1900+t.getYear())+"-"+t.getMonth()+"-"+t.getDay()+" "+t.getHours()+":"+t.getMinutes()+":"+t.getSeconds(); 
     }
     
     public static String toRelTimeStr(long time) {

@@ -52,6 +52,14 @@ PARSER_BEGIN(nplp) // NPL parser
     }
     private Term changeToAtom(Object o) {
         Term u = (Term)o;
+        if (u == Literal.LTrue)
+            return u;
+        if (u == Literal.LFalse)
+            return u;
+        if (u.toString().equals("true"))
+            return Literal.LTrue;
+        if (u.toString().equals("false"))
+            return Literal.LFalse;
         if (u.isAtom()) {
            return new Atom((Literal)u);
         } else {
@@ -157,6 +165,8 @@ Norm norm() :
   "->"  
   ( h = fail() | h = obligation() )
                        {
+                         if (b.toString().equals("true"))  b = Literal.LTrue;  
+                         if (b.toString().equals("false")) b = Literal.LFalse;  
                          return nFac.createNorm(id.image,h,(LogicalFormula)b); 
                        }   
 }
@@ -209,9 +219,11 @@ Literal obligation() :
 Literal literal() :
 { Token k; List l = null; Literal r;}
 {
-  ( k=<ATOM> | k=<FAIL> | k=<OBLIGATION> | k=<PERMISSION> | k=<PROHIBITION>)    
-                       { r = ASSyntax.createLiteral(k.image); 
+  ( k=<ATOM> | k=<FAIL> | k=<OBLIGATION> | k=<PERMISSION> | k=<PROHIBITION> )    
+                       { r = ASSyntax.createLiteral(k.image);
                          r.setSrcInfo(new SourceInfo(npSource, k.beginLine)); 
+                         if (k.image.equals("true"))  r = Literal.LTrue;  
+                         if (k.image.equals("false")) r = Literal.LFalse;  
                        } 
   
   [

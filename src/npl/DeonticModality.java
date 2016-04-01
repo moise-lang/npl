@@ -7,7 +7,10 @@ import jason.asSyntax.Literal;
 import jason.asSyntax.LiteralImpl;
 import jason.asSyntax.LogicalFormula;
 import jason.asSyntax.NumberTerm;
+import jason.asSyntax.Structure;
 import jason.asSyntax.Term;
+
+import java.util.List;
 
 /** The generic class for obligations, permissions, and prohibitions */
 public class DeonticModality extends LiteralImpl {
@@ -29,7 +32,6 @@ public class DeonticModality extends LiteralImpl {
         addTerm(lc.getTerm(3));
         if (lc.hasAnnot())
             setAnnots( lc.getAnnots() );
-
         this.n = n;
     }
     
@@ -85,6 +87,19 @@ public class DeonticModality extends LiteralImpl {
         }
     }
     
+    public String getDoneStr() {
+        long toff = -1;
+        List<Term> al = getAnnots("done");
+        if (!al.isEmpty()) {
+            Structure annot = (Structure)al.get(0);
+            try {
+                toff = (long)((NumberTerm)annot.getTerm(0)).solve();
+                return TimeTerm.toAbsTimeStr(toff);
+            } catch (NoValueException e) {  }
+        }
+        return null;
+    }
+    
     public State getState() {
         return s;
     }
@@ -97,7 +112,7 @@ public class DeonticModality extends LiteralImpl {
     public void setFulfilled() {
         s = State.fulfilled;
         long ttf = System.currentTimeMillis()-getDeadline();
-        addAnnot(ASSyntax.createStructure("done", new TimeTerm(ttf, "milliseconds")));
+        addAnnot(ASSyntax.createStructure("done", ASSyntax.createNumber(ttf)));
         addAnnot(ASSyntax.createStructure("fulfilled", new TimeTerm(0,null)));
     }
 
@@ -133,7 +148,24 @@ public class DeonticModality extends LiteralImpl {
     
     public boolean isObligation()  { return getFunctor().equals(NormativeProgram.OblFunctor); } 
     public boolean isPermission()  { return getFunctor().equals(NormativeProgram.PerFunctor); } 
-    public boolean isProhibition() { return getFunctor().equals(NormativeProgram.OblFunctor); } 
+    public boolean isProhibition() { return getFunctor().equals(NormativeProgram.ProFunctor); } 
 
+    
+    @Override
+    public String toString() {
+        StringBuilder so = new StringBuilder();
+        so.append(getFunctor()+"("+getAg()+","+getMaitenanceCondition()+","+getAim()+",");
+        if (s == State.active) {
+            so.append(TimeTerm.toRelTimeStr( getDeadline()));
+        } else { // if (s == State.fulfilled) {
+            so.append(TimeTerm.toTimeStamp( getDeadline()));
+        }
+        so.append(")");
+        if (hasAnnot()) {
+            so.append(getAnnots());
+        }
+        return so.toString();
+    }
+    
 }
 

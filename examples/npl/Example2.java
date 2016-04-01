@@ -3,12 +3,10 @@ import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import jason.asSyntax.LogExpr;
 import jason.asSyntax.PredicateIndicator;
-import jason.asSyntax.Structure;
 
 import java.io.FileInputStream;
 import java.util.Iterator;
 
-import npl.DefaultNormativeListener;
 import npl.DeonticModality;
 import npl.DynamicFactsProvider;
 import npl.NPLInterpreter;
@@ -47,28 +45,39 @@ public class Example2 {
 
         // verifies if some norm is applicable (none in this example)
         interpreter.verifyNorms();
-        printObl();
+        printState();
         
         // changes b value to trigger the first norm (n1)
         facts.setBValue(3);
         interpreter.verifyNorms();
-        printObl();
+        printState();
         
-        Thread.sleep(10000); // wait some time to see what happens
+        Thread.sleep(5000); // wait some time to see what happens
         
-                
         // disactivate permission for alice
         interpreter.removeFact(ASSyntax.parseLiteral("a(2)"));
         interpreter.verifyNorms();        
+
+        // bob violates the prohibition
+        interpreter.addFact(ASSyntax.parseLiteral("a(50)"));
+        interpreter.addFact(ASSyntax.parseLiteral("setter(a,bob)")); // it was bob that defined the value of a
+        interpreter.verifyNorms();        
         
-        Thread.sleep(5000);        
-        printObl();
+        
+        // disactivate the prohibitions
+        Thread.sleep(1000);        
+        interpreter.removeFact(ASSyntax.parseLiteral("student(_,_)"));
+        interpreter.removeFact(ASSyntax.parseLiteral("student(_,_)"));
+        interpreter.verifyNorms();        
+
+        Thread.sleep(1000);        
+        printState();
         System.exit(0);
     }
     
-    void printObl() {
-        System.out.println("Active Permissions:");
-        for (DeonticModality o: interpreter.getActivePermissions()) {
+    void printState() {
+        System.out.println("Active:");
+        for (DeonticModality o: interpreter.getActive()) {
             System.out.println("  "+o);
         }        
     }

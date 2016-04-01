@@ -3,12 +3,10 @@ import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import jason.asSyntax.LogExpr;
 import jason.asSyntax.PredicateIndicator;
-import jason.asSyntax.Structure;
 
 import java.io.FileInputStream;
 import java.util.Iterator;
 
-import npl.DefaultNormativeListener;
 import npl.DeonticModality;
 import npl.DynamicFactsProvider;
 import npl.NPLInterpreter;
