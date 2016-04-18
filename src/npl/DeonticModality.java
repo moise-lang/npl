@@ -162,13 +162,13 @@ public class DeonticModality extends LiteralImpl {
     @Override
     public String toString() {
         StringBuilder so = new StringBuilder();
-        so.append(getFunctor()+"("+getAg()+","+getMaitenanceCondition()+","+getAim()+",");
+        so.append(getFunctor()+"("+getAg()+","+getMaitenanceCondition()+","+getAim()+",\"");
         if (s == State.active) {
             so.append(TimeTerm.toRelTimeStr( getDeadline()));
         } else { // if (s == State.fulfilled) {
             so.append(TimeTerm.toTimeStamp( getDeadline()));
         }
-        so.append(")");
+        so.append("\")");
         if (hasAnnot()) {
             so.append(getAnnots());
         }

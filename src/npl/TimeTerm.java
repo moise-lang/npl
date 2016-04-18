@@ -95,7 +95,7 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
         if (time == null) // now
             return "`now`";
         else
-            return String.valueOf( toTimeStamp(time.getTime()));
+            return "\""+String.valueOf( toTimeStamp(time.getTime()))+"\""; // enclosed by " to avoid parser error
     }
     
     @SuppressWarnings("deprecation")

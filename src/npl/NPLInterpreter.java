@@ -95,7 +95,7 @@ public class NPLInterpreter implements ToDOM {
     }
     
     /** loads facts from a NP scope into the normative state */
-    protected void loadNP(Scope scope) {
+    public void loadNP(Scope scope) {
         BeliefBase bb = ag.getBB();
         
         for (Rule r: scope.getRules()) {

@@ -17,10 +17,6 @@ import util.NPLMonitor;
 public class Example0 {
     
     public static void main(String[] args) throws Exception {
-        new Example0().run();
-    }
-    
-    public void run() throws Exception {
         NormativeProgram  np          = new NormativeProgram(); // where the parser will place the result of parsing (norms, rules, ....) 
         NPLInterpreter    interpreter = new NPLInterpreter(); // the NPL interpreter
 
