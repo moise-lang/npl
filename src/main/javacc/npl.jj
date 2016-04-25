@@ -79,8 +79,8 @@ SKIP : {
 |  <"/*" (~["*"])* "*" ("*" | ~["*","/"] (~["*"])* "*")* "/">
 }
 
-// Note: i do not why, but vars must be defined before TK_BEGIN and END
-TOKEN : {
+       
+TOKEN : {   // Note: i do not know why, but vars must be defined before TK_BEGIN and END
   <VAR : (<UP_LETTER> (<CHAR>)*) >
 }
 
@@ -120,7 +120,6 @@ TOKEN : {
 |  <DIGIT     : ["0"-"9"]>
 }
 
-/* NLP Grammar */
 
 void program(NormativeProgram np, DynamicFactsProvider dfp) : 
 { Token k; }  
@@ -212,10 +211,7 @@ Literal obligation() :
 }
 
 
-/* what follows is mostly from Jason */
 
-
-/* Literal */
 Literal literal() :
 { Token k; List l = null; Literal r;}
 {
@@ -245,7 +241,6 @@ Literal literal() :
                        }
 }
 
-/* List of terms */
 List terms() :    { ArrayList listTerms = new ArrayList(); Term v;  }
 {
   v=term()             { listTerms.add(v); } 
@@ -280,7 +275,6 @@ ListTermImpl list() :     { ListTermImpl lt = new ListTermImpl(); ListTerm last;
   ]
   "]"                     { return lt; } 
 }
-// term_in_list is the same as term, but log_expr/plan_body must be enclosed by "("....")" to avoid problem with |
 Term term_in_list() :     { Object o; }
 {
   ( o=list()        
@@ -291,7 +285,6 @@ Term term_in_list() :     { Object o; }
 }
 
 
-/* logical expression */
 
 Object log_expr() :         { Object t1, t2; }
 {                   
@@ -318,13 +311,6 @@ Object log_expr_factor():
 }
 
 
-/* relational expression 
-   used in context, body and term
-   
-     <VAR>      [ <OPREL> <EXP> ]  --> this method returns the VarTerm
-   | <LITERAL>  [ <OPREL> <EXP> ]  --> returns the Literal
-   | <EXP>      [ <OPREL> <EXP> ]  --> returns the ExprTerm 
-*/
 Object rel_expr() :               
                                           {  Object op1 = null;
                                              Object op2 = null;
@@ -362,7 +348,6 @@ Object rel_expr() :
 }
 
 
-/* arithmetic expression */
 Object arithm_expr() :        { Object t1, t2; ArithmeticOp op;}
 {
    t1 = arithm_expr_trm()     { op = ArithmeticOp.none; }

@@ -10,6 +10,7 @@ import java.util.Date;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+/** A Jason Term that represent a moment on time */
 public class TimeTerm extends DefaultTerm implements NumberTerm {
 
     Date time; // time == null means 'now'

@@ -1,5 +1,3 @@
-package test;
-
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 

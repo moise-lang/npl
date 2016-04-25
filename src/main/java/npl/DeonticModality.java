@@ -20,9 +20,12 @@ public class DeonticModality extends LiteralImpl {
     Norm n; // the norm that created this obligation
     State s = State.none;
     int   agInstances = 0; // when the Ag is a var, this field count how many agent instances where latter created 
+    boolean maintContFromNorm = false;
     
     public DeonticModality(Literal l, Unifier u, Norm n) {
         super(l.getFunctor());
+        maintContFromNorm = l.getTerm(1).equals(n.getCondition());
+        
         Literal lc = (Literal)l.capply(u);
         Unifier newu = new Unifier();
         newu.unifies(l.getTerm(0), lc.getTerm(0)); // unifies agent
@@ -52,6 +55,7 @@ public class DeonticModality extends LiteralImpl {
 
         this.n = l.n;
         this.s = l.s;
+        this.maintContFromNorm = l.maintContFromNorm;
     }
     
     // used by copy
@@ -59,6 +63,7 @@ public class DeonticModality extends LiteralImpl {
         super(d);
         this.n = d.n;
         this.s = d.s;
+        this.maintContFromNorm = d.maintContFromNorm;
     }
     
     /** returns the norms used to create this obligation */
@@ -162,7 +167,12 @@ public class DeonticModality extends LiteralImpl {
     @Override
     public String toString() {
         StringBuilder so = new StringBuilder();
-        so.append(getFunctor()+"("+getAg()+","+getMaitenanceCondition()+","+getAim()+",\"");
+        so.append(getFunctor()+"("+getAg()+",");
+        //if (maintContFromNorm)
+        //    so.append(getNorm().getId());
+        //else
+        so.append(getMaitenanceCondition());
+        so.append(","+getAim()+",\"");
         if (s == State.active) {
             so.append(TimeTerm.toRelTimeStr( getDeadline()));
         } else { // if (s == State.fulfilled) {
