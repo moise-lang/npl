@@ -14,8 +14,10 @@ defaultTasks 'jar'
 
 apply plugin: 'java'
 apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
 
 version 0.2
+group   'net.sf.jacamo'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -46,6 +48,34 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.+'
     
     umljavadoc 'org.umlgraph:umlgraph:5.6'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            
+            artifactId 'npl'
+        }
+    }
+}
+
+task publishMavenSF(dependsOn: publishToMavenLocal) {
+    setDescription('transfer local maven artifact to our maven2 repository at sourceforge')
+    setGroup('Publishing')
+    
+    exec {
+        commandLine 'scp', '-r', project.version, 'jomifred,jacamo@web.sf.net:/home/project-web/jacamo/htdocs/maven2/net/sf/jacamo/npl'
+        workingDir System.getProperty("user.home")+'/.m2/repository/net/sf/jacamo/npl'
+    }
+    exec {
+        commandLine 'cp', 'maven-metadata-local.xml', 'maven-metadata.xml'
+        workingDir System.getProperty("user.home")+'/.m2/repository/net/sf/jacamo/npl'
+    }
+    exec {
+        commandLine 'scp', 'maven-metadata.xml', 'jomifred,jacamo@web.sf.net:/home/project-web/jacamo/htdocs/maven2/net/sf/jacamo/npl'
+        workingDir System.getProperty("user.home")+'/.m2/repository/net/sf/jacamo/npl'
+    }
 }
 
 jar {
@@ -92,19 +122,22 @@ jjdoc {
 }
 
 task release(dependsOn: [ 'build', 'jjdoc', 'javadoc', 'zipRel'])  {
-    setDescription('Builds the distribution and documentation')
-    setGroup(JavaBasePlugin.BUILD_TASK_NAME)
+    setDescription('Builds the distribution, documentation and a new release')
+    setGroup('Publishing')
 } 
 
 task copyRel {
+    setDescription('copy files used to build a release')
+    //configurations.compile.each { File file -> println file.name }
     copy {
         from '.'      
         into 'build/npl-'+project.version 
         include '*.md'
     }
     copy {
-        from 'build/libs'      
-        from 'lib'  
+        from 'build/libs'
+        from configurations.runtime
+        //from 'lib'  
         into 'build/npl-'+project.version+'/lib' 
         include '**/*.jar'
     }
@@ -118,7 +151,9 @@ task copyRel {
     }
 }
 
+// creates a zip file for a relase
 task zipRel(type: Zip, dependsOn: copyRel) {
+    setDescription('creates a release zip file')
     from 'build/npl-'+project.version
     baseName 'npl'
 }
