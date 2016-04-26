@@ -22,9 +22,14 @@ targetCompatibility = 1.7
 
 repositories {
     mavenCentral()
-    flatDir {
-	   dirs 'lib'
+    
+    maven {
+        url "http://jacamo.sourceforge.net/maven2"
     }
+    
+    /*flatDir {
+	   dirs 'lib'
+    }*/
 }
 
 configurations {
@@ -35,8 +40,9 @@ configurations {
 
 dependencies {
     //compile group: 'net.sf.jason', name: 'jason', version: '1.4.2'
-    compile group: 'jason', name: 'jason', version: '2.+'
-
+    //compile group: 'jason', name: 'jason', version: '2.+'
+    compile group: 'net.sf.jason', name: 'jason', version: '2.+'
+    
     testCompile group: 'junit', name: 'junit', version: '4.+'
     
     umljavadoc 'org.umlgraph:umlgraph:5.6'
@@ -85,12 +91,12 @@ jjdoc {
     //arguments = [text: 'true']
 }
 
-task release(dependsOn: [ 'build', 'jjdoc', 'javadoc', 'zipDist'])  {
+task release(dependsOn: [ 'build', 'jjdoc', 'javadoc', 'zipRel'])  {
     setDescription('Builds the distribution and documentation')
     setGroup(JavaBasePlugin.BUILD_TASK_NAME)
 } 
 
-task copyDist {
+task copyRel {
     copy {
         from '.'      
         into 'build/npl-'+project.version 
@@ -112,7 +118,7 @@ task copyDist {
     }
 }
 
-task zipDist(type: Zip, dependsOn: copyDist) {
+task zipRel(type: Zip, dependsOn: copyRel) {
     from 'build/npl-'+project.version
     baseName 'npl'
 }
