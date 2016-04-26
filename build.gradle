@@ -1,12 +1,24 @@
+/* 
+   NPL Gradle file
+
+   https://github.com/jomifred/npl
+   
+*/
+
 plugins {
   id "ca.coglinc.javacc" version "2.3.1"
   // see https://github.com/johnmartel/javaccPlugin
 }
 
+defaultTasks 'jar'
+
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
-version 1.0
+version 0.2
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
 
 repositories {
     mavenCentral()
@@ -24,17 +36,11 @@ configurations {
 dependencies {
     //compile group: 'net.sf.jason', name: 'jason', version: '1.4.2'
     compile group: 'jason', name: 'jason', version: '2.+'
-    //compile group: 'gr.spinellis', name: 'UmlGraph', version: '4.6'
 
     testCompile group: 'junit', name: 'junit', version: '4.+'
     
     umljavadoc 'org.umlgraph:umlgraph:5.6'
 }
-
-task dist(dependsOn: [ 'build', 'jjdoc', 'javadoc'])  {
-    setDescription('Builds the distribution and documentation')
-    setGroup(JavaBasePlugin.BUILD_TASK_NAME)
-} 
 
 jar {
     baseName 'npl'
@@ -79,3 +85,34 @@ jjdoc {
     //arguments = [text: 'true']
 }
 
+task release(dependsOn: [ 'build', 'jjdoc', 'javadoc', 'zipDist'])  {
+    setDescription('Builds the distribution and documentation')
+    setGroup(JavaBasePlugin.BUILD_TASK_NAME)
+} 
+
+task copyDist {
+    copy {
+        from '.'      
+        into 'build/npl-'+project.version 
+        include '*.md'
+    }
+    copy {
+        from 'build/libs'      
+        from 'lib'  
+        into 'build/npl-'+project.version+'/lib' 
+        include '**/*.jar'
+    }
+    copy {
+        from 'doc'      
+        into 'build/npl-'+project.version+'/doc' 
+    }
+    copy {
+        from 'examples'      
+        into 'build/npl-'+project.version+'/examples' 
+    }
+}
+
+task zipDist(type: Zip, dependsOn: copyDist) {
+    from 'build/npl-'+project.version
+    baseName 'npl'
+}

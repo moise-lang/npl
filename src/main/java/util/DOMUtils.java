@@ -148,7 +148,7 @@ public class DOMUtils {
         if (f.exists()) {
             ss = new StreamSource(new FileInputStream(f));
         } else {
-            f = new File("src/xml/"+href);
+            f = new File("src/main/resources/xml/"+href);
             if (f.exists()) {
                 ss = new StreamSource(new FileInputStream(f));
             } else {
