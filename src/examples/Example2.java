@@ -1,5 +1,3 @@
-package examples;
-
 import jason.asSemantics.Unifier;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
@@ -9,34 +7,34 @@ import jason.asSyntax.PredicateIndicator;
 import java.io.FileInputStream;
 import java.util.Iterator;
 
-import util.NPLMonitor;
 import npl.DeonticModality;
 import npl.DynamicFactsProvider;
 import npl.NPLInterpreter;
 import npl.NormativeProgram;
 import npl.parser.nplp;
+import util.NPLMonitor;
 
 
 /** 
  * Basic example of NPL use.
  *  
- * This example is based on the normative program of file e1.npl 
- * and illustrates obligations.
+ * This example is based on the normative program of file e2.npl 
+ * and illustrates permissions.
  *  
  */
-public class Example1 {
+public class Example2 {
     
     NormativeProgram  np          = new NormativeProgram(); // where the parser will place the result of parsing (norms, rules, ....) 
     NPLInterpreter    interpreter = new NPLInterpreter(); // the NPL interpreter
     BFacts            facts       = new BFacts(); // the class that evaluates values for predicate b/1
 
     public static void main(String[] args) throws Exception {
-        new Example1().run();
+        new Example2().run();
     }
     
     public void run() throws Exception {
         // parsing
-        nplp parser = new nplp(new FileInputStream("src/main/java/examples/e1.npl"));        
+        nplp parser = new nplp(new FileInputStream("src/examples/e2.npl"));        
         parser.program(np, facts);
         System.out.println(np);
     
@@ -48,39 +46,42 @@ public class Example1 {
 
         // starts GUI
         NPLMonitor m = new NPLMonitor();
-        m.add("example 1", interpreter);
-
+        m.add("example 2", interpreter);
+        
         // verifies if some norm is applicable (none in this example)
         interpreter.verifyNorms();
-        printObl();
+        printState();
         
         // changes b value to trigger the first norm (n1)
         facts.setBValue(3);
         interpreter.verifyNorms();
-        printObl();
+        printState();
         
-        Thread.sleep(10000); // wait some time to see what happens
+        Thread.sleep(5000); // wait some time to see what happens
         
-        // alice fulfills her obligation
-        facts.setBValue(-1);
-        Thread.sleep(4000);
-        
-        // creates obligations for bob and carlos
-        facts.setBValue(10);
+        // disactivate permission for alice
+        interpreter.removeFact(ASSyntax.parseLiteral("a(2)"));
         interpreter.verifyNorms();        
-                
-        // disactivate norm for bob removing his state of student
-        interpreter.removeFact(ASSyntax.parseLiteral("student(bob,_)"));
+
+        // bob violates the prohibition
+        interpreter.addFact(ASSyntax.parseLiteral("a(50)"));
+        interpreter.addFact(ASSyntax.parseLiteral("setter(a,bob)")); // it was bob that defined the value of a
         interpreter.verifyNorms();        
         
-        Thread.sleep(15000);        
-        printObl();
+        // disactivate the prohibitions
+        Thread.sleep(1000);        
+        interpreter.removeFact(ASSyntax.parseLiteral("student(_,_)"));
+        interpreter.removeFact(ASSyntax.parseLiteral("student(_,_)"));
+        interpreter.verifyNorms();        
+
+        printState();
+        Thread.sleep(40000);        
         System.exit(0);
     }
     
-    void printObl() {
-        System.out.println("Active Obligations:");
-        for (DeonticModality o: interpreter.getActiveObligations()) {
+    void printState() {
+        System.out.println("Active:");
+        for (DeonticModality o: interpreter.getActive()) {
             System.out.println("  "+o);
         }        
     }
@@ -105,6 +106,6 @@ public class Example1 {
             u.unifies(l.getTerm(0), ASSyntax.createNumber(b));
             return LogExpr.createUnifIterator(u); 
         }
-        
     }
+
 }

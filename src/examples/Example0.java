@@ -1,5 +1,3 @@
-package examples;
-
 import jason.asSyntax.ASSyntax;
 
 import java.io.StringReader;

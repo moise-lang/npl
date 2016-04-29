@@ -1,5 +1,3 @@
-package examples;
-
 import jason.asSyntax.Structure;
 import npl.DefaultNormativeListener;
 import npl.DeonticModality;

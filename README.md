@@ -3,7 +3,7 @@
 Normative Programming Language (NPL) is a language to program the norms of multi-agent systems. 
 Some papers describing the language are available in the folder [publications](https://github.com/jomifred/npl/tree/master/doc/publications). 
 
-The folder [examples](https://github.com/jomifred/npl/tree/master/src/main/java/examples) contains Java programs to illustrates its use.
+The folder [examples](https://github.com/jomifred/npl/tree/master/src/examples) contains Java programs to illustrates its use.
 
 This language is used to implement the organisational platform for [Moise](http://moise.sf.net), called _ORA4MAS_, that is integrated into the [JaCaMo](http://jacamo.sf.net) project.
 

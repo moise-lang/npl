@@ -17,7 +17,7 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
 version '0.2-SNAPSHOT'
-group   'net.sf.jacamo'
+group   'org.jacamo'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -41,44 +41,41 @@ configurations {
 
 
 dependencies {
-    //compile group: 'net.sf.jason', name: 'jason', version: '1.4.2'
-    //compile group: 'jason', name: 'jason', version: '2.+'
     compile group: 'net.sf.jason', name: 'jason', version: '2.0.beta'
-    
     testCompile group: 'junit', name: 'junit', version: '4.+'
-    
     umljavadoc 'org.umlgraph:umlgraph:5.6'
 }
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-            from components.java
-            
-            artifactId 'npl'
+sourceSets {
+    main {
+        java {
+            srcDirs 'src/main/java', 'src/examples'
         }
     }
 }
 
 jar {
     baseName 'npl'
+    
+    // exclude files from example
+    exclude('*.class') 
+    exclude('*.npl') 
 }
 
 task example0 (type: JavaExec, dependsOn: classes) {
-    main = 'examples.Example0'
+    main = 'Example0'
     classpath sourceSets.main.runtimeClasspath
 }
 
 task example1 (type: JavaExec, dependsOn: classes) {
-    main = 'examples.Example1'
+    main = 'Example1'
     classpath sourceSets.main.runtimeClasspath
 }
 
 task example2 (type: JavaExec, dependsOn: classes) {
-    main = 'examples.Example2'
+    main = 'Example2'
     classpath sourceSets.main.runtimeClasspath
 }
-
 
 task javadoc(overwrite: true, dependsOn: compileJava) {
     setDescription('Generates Javadoc API documentation with UMLGraph diagrams')
@@ -108,6 +105,16 @@ task javadoc(overwrite: true, dependsOn: compileJava) {
     }
 }
 
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            
+            artifactId 'npl'
+        }
+    }
+}
+
 compileJavacc {
     inputDirectory = file('src/main/javacc')
     outputDirectory = file(project.buildDir.absolutePath + '/generated/javacc/npl/parser')
@@ -121,18 +128,19 @@ jjdoc {
 
 // transfer local maven artifact to our maven2 repository at sourceforge
 task publishMavenSF(dependsOn: [ 'build', 'publishToMavenLocal']) << {
-    
+    def wdir = System.getProperty("user.home")+'/.m2/repository/org/jacamo/npl'
+    def tdir = 'jomifred,jacamo@web.sf.net:/home/project-web/jacamo/htdocs/maven2/org/jacamo/npl'
     exec {
-        commandLine 'scp', '-r', project.version, 'jomifred,jacamo@web.sf.net:/home/project-web/jacamo/htdocs/maven2/net/sf/jacamo/npl'
-        workingDir System.getProperty("user.home")+'/.m2/repository/net/sf/jacamo/npl'
+        commandLine 'scp', '-r', project.version, tdir
+        workingDir wdir
     }
     exec {
         commandLine 'cp', 'maven-metadata-local.xml', 'maven-metadata.xml'
-        workingDir System.getProperty("user.home")+'/.m2/repository/net/sf/jacamo/npl'
+        workingDir wdir
     }
     exec {
-        commandLine 'scp', 'maven-metadata.xml', 'jomifred,jacamo@web.sf.net:/home/project-web/jacamo/htdocs/maven2/net/sf/jacamo/npl'
-        workingDir System.getProperty("user.home")+'/.m2/repository/net/sf/jacamo/npl'
+        commandLine 'scp', 'maven-metadata.xml', tdir
+        workingDir wdir
     }
 }
 
