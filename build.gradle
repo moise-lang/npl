@@ -43,7 +43,7 @@ configurations {
 dependencies {
     //compile group: 'net.sf.jason', name: 'jason', version: '1.4.2'
     //compile group: 'jason', name: 'jason', version: '2.+'
-    compile group: 'net.sf.jason', name: 'jason', version: '2.+'
+    compile group: 'net.sf.jason', name: 'jason', version: '2.0.beta'
     
     testCompile group: 'junit', name: 'junit', version: '4.+'
     
@@ -63,6 +63,22 @@ publishing {
 jar {
     baseName 'npl'
 }
+
+task example0 (type: JavaExec, dependsOn: classes) {
+    main = 'examples.Example0'
+    classpath sourceSets.main.runtimeClasspath
+}
+
+task example1 (type: JavaExec, dependsOn: classes) {
+    main = 'examples.Example1'
+    classpath sourceSets.main.runtimeClasspath
+}
+
+task example2 (type: JavaExec, dependsOn: classes) {
+    main = 'examples.Example2'
+    classpath sourceSets.main.runtimeClasspath
+}
+
 
 task javadoc(overwrite: true, dependsOn: compileJava) {
     setDescription('Generates Javadoc API documentation with UMLGraph diagrams')

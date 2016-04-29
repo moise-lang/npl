@@ -1,3 +1,5 @@
+package examples;
+
 import jason.asSemantics.Unifier;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
@@ -34,7 +36,7 @@ public class Example1 {
     
     public void run() throws Exception {
         // parsing
-        nplp parser = new nplp(new FileInputStream("examples/npl/e1.npl"));        
+        nplp parser = new nplp(new FileInputStream("src/main/java/examples/e1.npl"));        
         parser.program(np, facts);
         System.out.println(np);
     

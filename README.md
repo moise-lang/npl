@@ -3,7 +3,7 @@
 Normative Programming Language (NPL) is a language to program the norms of multi-agent systems. 
 Some papers describing the language are available in the folder [publications](https://github.com/jomifred/npl/tree/master/doc/publications). 
 
-The folder [examples/npl](https://github.com/jomifred/npl/tree/master/examples/npl) contains Java programs to illustrates its use.
+The folder [examples](https://github.com/jomifred/npl/tree/master/src/main/java/examples) contains Java programs to illustrates its use.
 
 This language is used to implement the organisational platform for [Moise](http://moise.sf.net), called _ORA4MAS_, that is integrated into the [JaCaMo](http://jacamo.sf.net) project.
 
@@ -17,15 +17,14 @@ Some built releases are available at [GitHub](https://github.com/jomifred/npl/re
 	gradle dist
 	gradle eclipse
 
-# Examples
+To run the examples:
 
-Steps to compile and run the examples:
+	gradle example0
+	gradle example1
+	...
 
-	cd examples/npl
-	javac -cp ../../lib/npl-0.2.jar:../../lib/jason-2.0.jar:. Example0.java
-	java  -cp ../../lib/npl-0.2.jar:../../lib/jason-2.0.jar:. Example0
+![ScreenShot](doc/figures/s1.png?raw=true)
 
 ---
 Developed by Jomi F. Hubner, Rafael H. Bordini, and Olivier Boissier.
 
-![ScreenShot](doc/figures/s1.png?raw=true)
