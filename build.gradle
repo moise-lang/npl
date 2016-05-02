@@ -62,6 +62,11 @@ jar {
     exclude('*.npl') 
 }
 
+clean {
+    delete 'bin'
+}
+
+
 task example0 (type: JavaExec, dependsOn: classes) {
     main = 'Example0'
     classpath sourceSets.main.runtimeClasspath
@@ -150,17 +155,17 @@ task release(dependsOn: [ 'build', 'jjdoc', 'javadoc', 'zipRel']) << {
 
 // copy files used to build a release
 task copyRel << {
-    //configurations.compile.each { File file -> println file.name }
     copy {
-        from '.'      
-        into 'build/npl-'+project.version 
+        from '.'
+        into 'build/npl-'+project.version
         include '*.md'
+        include 'LICENSE'
+        include 'scripts/**'
     }
     copy {
-        from 'build/libs'
+        from libsDir
         from configurations.runtime
-        //from 'lib'  
-        into 'build/npl-'+project.version+'/lib' 
+        into 'build/npl-'+project.version+'/'+libsDirName
         include '**/*.jar'
     }
     copy {
@@ -168,13 +173,13 @@ task copyRel << {
         into 'build/npl-'+project.version+'/doc' 
     }
     copy {
-        from 'examples'      
-        into 'build/npl-'+project.version+'/examples' 
+        from 'src/examples'      
+        into 'build/npl-'+project.version+'/src/examples' 
     }
 }
 
-// creates a zip file for a relase
-task zipRel(type: Zip, dependsOn: copyRel) << {
+// creates a zip file for a release
+task zipRel(type: Zip, dependsOn: copyRel) {
     from 'build/npl-'+project.version
     baseName 'npl'
 }

@@ -14,7 +14,7 @@ Some built releases are available at [GitHub](https://github.com/jomifred/npl/re
 
 	git clone https://github.com/jomifred/npl.git
 	cd npl
-	gradle dist
+	gradle build
 	gradle eclipse
 
 To run the examples:
