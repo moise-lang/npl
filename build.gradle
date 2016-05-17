@@ -150,15 +150,20 @@ task publishMavenSF(dependsOn: [ 'build', 'publishToMavenLocal']) << {
 }
 
 // Builds the distribution, documentation and a new release
-task release(dependsOn: [ 'build', 'jjdoc', 'javadoc', 'zipRel']) << {
+task release(dependsOn: [ 'build', 'jjdoc', 'javadoc', 'fixTab', 'zipRel']) << {
 } 
+
+task fixTab {
+    ant.fixcrlf(eol: 'lf',  includes: '**/*.txt,**/*.bat, **/*.adoc', srcdir: '.')
+    ant.fixcrlf(tab: 'remove', tablength: '4', javafiles: 'true', includes: '**/*.java,**/*.xml', srcdir: 'src')
+}
 
 // copy files used to build a release
 task copyRel << {
     copy {
         from '.'
         into 'build/npl-'+project.version
-        include '*.md'
+        include '*.adoc'
         include 'LICENSE'
         include 'scripts/**'
     }
