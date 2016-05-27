@@ -1,7 +1,6 @@
 /* 
-   NPL Gradle file
-
-   https://github.com/jomifred/npl
+   Normative Programming Language (NPL)
+   gradle build file
    
 */
 
@@ -35,8 +34,7 @@ repositories {
 }
 
 configurations {
-    umljavadoc
-    // see http://www.umlgraph.org/doc/indexw.html#ClassCastException
+    umljavadoc // see http://www.umlgraph.org/doc/indexw.html
 }
 
 
