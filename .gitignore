@@ -7,3 +7,5 @@ build
 doc/api
 lib/npl.jar
 .settings
+.classpath
+.project

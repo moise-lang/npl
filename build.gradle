@@ -1,7 +1,7 @@
-/* 
+/*
    Normative Programming Language (NPL)
    gradle build file
-   
+
 */
 
 plugins {
@@ -23,11 +23,11 @@ targetCompatibility = 1.7
 
 repositories {
     mavenCentral()
-    
+
     maven {
         url "http://jacamo.sourceforge.net/maven2"
     }
-    
+
     /*flatDir {
 	   dirs 'lib'
     }*/
@@ -47,17 +47,17 @@ dependencies {
 sourceSets {
     main {
         java {
-            srcDirs 'src/main/java', 'src/examples'
+            srcDirs 'src/main/java', 'examples'
         }
     }
 }
 
 jar {
     baseName 'npl'
-    
+
     // exclude files from example
-    exclude('*.class') 
-    exclude('*.npl') 
+    exclude('*.class')
+    exclude('*.npl')
 }
 
 clean {
@@ -85,8 +85,8 @@ task javadoc(overwrite: true, dependsOn: compileJava) {
     setGroup(JavaBasePlugin.DOCUMENTATION_GROUP)
 
     doLast {
-        ant.javadoc(classpath: (configurations.runtime + configurations.compile).asPath, 
-                    sourcepath: file('src/main/java'), 
+        ant.javadoc(classpath: (configurations.runtime + configurations.compile).asPath,
+                    sourcepath: file('src/main/java'),
                     packagenames: '*',
                     destdir: "${docsDir}/../../doc/api",
                     private: 'true',
@@ -112,7 +112,7 @@ publishing {
     publications {
         maven(MavenPublication) {
             from components.java
-            
+
             artifactId 'npl'
         }
     }
@@ -157,7 +157,7 @@ task publishMavenSF(dependsOn: [ 'build', 'publishToMavenLocal']) << {
 
 // Builds the distribution, documentation and a new release
 task release(dependsOn: [ 'build', 'jjdoc', 'javadoc', 'fixTab', 'zipRel']) << {
-} 
+}
 
 task fixTab {
     ant.fixcrlf(eol: 'lf',  includes: '**/*.txt,**/*.bat, **/*.adoc', srcdir: '.')
@@ -180,12 +180,12 @@ task copyRel << {
         include '**/*.jar'
     }
     copy {
-        from 'doc'      
-        into 'build/npl-'+project.version+'/doc' 
+        from 'doc'
+        into 'build/npl-'+project.version+'/doc'
     }
     copy {
-        from 'src/examples'      
-        into 'build/npl-'+project.version+'/src/examples' 
+        from 'examples'
+        into 'build/npl-'+project.version+'/examples'
     }
 }
 
