@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 import npl.DeonticModality.State;
 
@@ -51,6 +52,8 @@ public class NPLInterpreter implements ToDOM {
     private ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1); // a thread that checks deadlines of obligations, permissions, ...
     private StateTransitions   oblUpdateThread;
     
+    protected Logger logger = Logger.getLogger(NPLInterpreter.class.getName());
+
     public final static Atom NPAtom   = new Atom("np");
     public final static Atom NormAtom = new Atom("npli");
 
@@ -81,18 +84,17 @@ public class NPLInterpreter implements ToDOM {
     public boolean removeListener(NormativeListener ol) {
         return listeners.remove(ol);
     }
-    
-    /** resets the interpreter with a new NP */
-    public void setScope(Scope scope) {
-        init();
-        loadNP(scope);
-    }
-        
+
     /** loads facts from a NP scope into the normative state */
     public void loadNP(Scope scope) {
-        if (ag == null) {
+        loadNP(scope, true);
+    }
+    
+    /** loads facts from a NP scope into the normative state */
+    public void loadNP(Scope scope, boolean autoIds) {
+        if (ag == null) 
             init();
-        }
+
         BeliefBase bb = ag.getBB();
         
         for (Rule r: scope.getRules()) {
@@ -106,14 +108,27 @@ public class NPLInterpreter implements ToDOM {
             bb.add(1,l); // add in the end of the BB to preserve the program order
         }
         for (Norm n: scope.getNorms()) {
+            
+            // auto id management
+            String id = n.getId();
+            if (getNorm(id) != null) {
+                if (autoIds) {
+                    while (getNorm(id) != null)
+                        id = id + id;
+                } else {
+                    logger.warning("Norm with id "+id+" already exists! It will be replaced by "+n);
+                }                    
+            }
+
+            // add norm in the proper set
             if (n.getConsequence().getFunctor().equals(NormativeProgram.FailFunctor))
-                regimentedNorms.put(n.getId(), n.clone());
+                regimentedNorms.put(id, n.clone());
             else 
-                regulativeNorms.put(n.getId(), n.clone());
+                regulativeNorms.put(id, n.clone());
         }
         
         if (scope.getFather() != null)
-            loadNP(scope.getFather());
+            loadNP(scope.getFather(), autoIds);
     }
     
     /** removes all facts/rules of the normative state */

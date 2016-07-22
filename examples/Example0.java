@@ -29,7 +29,7 @@ public class Example0 {
         parser.program(np, null);
     
         // loads the program into the interpreter
-        interpreter.setScope(np.getRoot()); 
+        interpreter.loadNP(np.getRoot()); 
 
         // starts GUI
         NPLMonitor m = new NPLMonitor();

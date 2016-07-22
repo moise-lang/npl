@@ -39,7 +39,7 @@ public class Example2 {
         System.out.println(np);
     
         // loads the program into the interpreter
-        interpreter.setScope(np.getRoot()); 
+        interpreter.loadNP(np.getRoot()); 
 
         // listen events from NPInterpreter
         interpreter.addListener(new MyListener()); 
