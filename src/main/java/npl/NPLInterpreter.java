@@ -43,7 +43,6 @@ public class NPLInterpreter implements ToDOM {
     private Agent            ag = null; // use a Jason agent to store the facts (BB)
     private Map<String,Norm> regimentedNorms = null; // norms with failure consequence
     private Map<String,Norm> regulativeNorms  = null; // norms with obligation, permission, prohibition consequence
-    private Scope            scope = null;
 
     private Object           syncTransState = new Object();
     
@@ -86,16 +85,14 @@ public class NPLInterpreter implements ToDOM {
     /** resets the interpreter with a new NP */
     public void setScope(Scope scope) {
         init();
-        this.scope = scope;
         loadNP(scope);
     }
-    
-    public Scope getScope() {
-        return scope;
-    }
-    
+        
     /** loads facts from a NP scope into the normative state */
     public void loadNP(Scope scope) {
+        if (ag == null) {
+            init();
+        }
         BeliefBase bb = ag.getBB();
         
         for (Rule r: scope.getRules()) {
@@ -346,8 +343,17 @@ public class NPLInterpreter implements ToDOM {
         return false;
     }
     
+    public String getNormsString() {
+        StringBuilder out = new StringBuilder();
+        for (Norm n: regimentedNorms.values()) 
+            out.append(n+".\n");
+        for (Norm n: regulativeNorms.values()) 
+            out.append(n+".\n");
+        return out.toString();
+    }
+    
     public String getStateString() {
-        StringBuilder out = new StringBuilder("--- normative state for program "+scope.getId()+" ---\n\n");
+        StringBuilder out = new StringBuilder("--- normative state ---\n\n");
         out.append("active:\n");
         for (Literal l: getActive()) {
             out.append("  "+l+"\n");
@@ -365,8 +371,6 @@ public class NPLInterpreter implements ToDOM {
     
     public Element getAsDOM(Document document) {
         Element ele = (Element) document.createElement("normative-state");
-        if (scope != null)
-            ele.setAttribute("id", scope.getId().toString());
         for (DeonticModality l: getUnFulfilled())
             ele.appendChild( obligation2dom(document, l, State.unfulfilled, true));
         for (DeonticModality l: getActive())
@@ -427,7 +431,7 @@ public class NPLInterpreter implements ToDOM {
     
     @Override
     public String toString() {
-        return "normative interpreter for "+scope.getId();
+        return "normative interpreter";
     }
 
 

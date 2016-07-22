@@ -83,6 +83,7 @@ public class Scope {
         else 
             return 1+father.getNbFathers();
     }
+
     @Override
     public String toString() {
         StringBuilder spaces = new StringBuilder();

@@ -17,7 +17,7 @@
 <xsl:template match="normative-state">
    <html>
       <body>
-         <h2 style="{$h-style}">Normative State of <b><xsl:value-of select="@id" /></b></h2>
+         <h2 style="{$h-style}">Normative State</h2>
 
         <table border="0" cellspacing="3" cellpadding="6">
         <tr style="{$trh-style}"> 

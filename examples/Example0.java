@@ -12,7 +12,8 @@ import util.NPLMonitor;
  * Basic example of NPL use.
  *  
  * This example creates an obligation and then fulfills it 
- * and illustrates obligations. *  
+ * and illustrates obligations. 
+ *  
  */
 public class Example0 {
     
