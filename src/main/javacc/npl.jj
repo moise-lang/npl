@@ -179,7 +179,7 @@ Literal fail() :
    ")" 
                        { r = ASSyntax.createLiteral(NormativeProgram.FailFunctor, t);
                          r.setSrcInfo(new SourceInfo(npSource, k.beginLine)); 
-                         if (dfp != null && dfp.isRelevant(r.getPredicateIndicator())) {
+                         if (dfp != null) { // && dfp.isRelevant(r.getPredicateIndicator())) {
                             return lFac.createNPLLiteral(r,dfp);
                          } else {                         
                             return r;
@@ -202,7 +202,7 @@ Literal obligation() :
    o = log_expr() ","  { r.addTerm( changeToAtom(o) ); }     
    o = log_expr()      { r.addTerm( changeToAtom(o) ); }
    ")" 
-                       { if (dfp != null && dfp.isRelevant(r.getPredicateIndicator())) {
+                       { if (dfp != null) { // && dfp.isRelevant(r.getPredicateIndicator())) {
                             return lFac.createNPLLiteral(r,dfp);
                          } else {                         
                             return r;
@@ -233,7 +233,7 @@ Literal literal() :
                             } catch (Exception e) {
                                e.printStackTrace();
                             }
-                         } else if (dfp != null && dfp.isRelevant(r.getPredicateIndicator())) {
+                         } else if (dfp != null) { // && dfp.isRelevant(r.getPredicateIndicator())) {
                             return lFac.createNPLLiteral(r,dfp);
                          } else {                         
                             return r;

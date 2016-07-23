@@ -567,16 +567,22 @@ public class NPLInterpreter implements ToDOM {
             }            
         }
         
-        // -- transition active -> inactive (based on r)
+        // -- transition active -> inactive (based on r for obl)
+        //                                  (based on w for per)
         private void updateInactive() {
             active = getActive();            
             for (DeonticModality o: active) { 
                 Literal oasinbb = createState(o);
-                if (! o.getMaitenanceCondition().logicalConsequence(ag, new Unifier()).hasNext()) {
+                if (o.isObligation() && ! o.getMaitenanceCondition().logicalConsequence(ag, new Unifier()).hasNext()) {
                     // transition active -> inactive
                     if (!bb.remove(oasinbb)) System.out.println("ooops "+oasinbb+" should be removed 1!");
                     o.setInactive();
                     notifyInactive(o);
+                }
+                if (o.isPermission() && o.getAim().logicalConsequence(ag, new Unifier()).hasNext()) {
+                    if (!bb.remove(oasinbb)) System.out.println("ooops "+oasinbb+" should be removed 2!");
+                    o.setInactive();
+                    notifyInactive(o);                    
                 }
             }            
         }

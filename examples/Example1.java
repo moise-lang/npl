@@ -34,7 +34,7 @@ public class Example1 {
     
     public void run() throws Exception {
         // parsing
-        nplp parser = new nplp(new FileInputStream("src/examples/e1.npl"));        
+        nplp parser = new nplp(new FileInputStream("examples/e1.npl"));        
         parser.program(np, facts);
         System.out.println(np);
     
