@@ -112,6 +112,8 @@ publishing {
     publications {
         maven(MavenPublication) {
             from components.java
+			artifact sourceJar
+			artifact javadocJar
 
             artifactId 'npl'
         }
@@ -135,6 +137,18 @@ compileJavacc {
 jjdoc {
     outputDirectory = file(project.projectDir.absolutePath + '/doc')
     //arguments = [text: 'true']
+}
+
+task javadocJar (type: Jar, dependsOn: javadoc) {
+    baseName 'npl'
+    classifier = 'javadoc'
+    from '${docsDir}/../../doc/api'
+}
+
+task sourceJar (type : Jar) {
+    baseName 'npl'
+    classifier = 'sources'
+    from sourceSets.main.allSource
 }
 
 // transfer local maven artifact to our maven2 repository at sourceforge
