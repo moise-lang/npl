@@ -62,17 +62,20 @@ public class Example1 {
         // alice fulfills her obligation
         facts.setBValue(-1);
         Thread.sleep(4000);
-        
+
         // creates obligations for bob and carlos
         facts.setBValue(10);
         interpreter.verifyNorms();        
                 
-        // disactivate norm for bob removing his state of student
+        // deactivate norm for bob removing his state of student
         interpreter.removeFact(ASSyntax.parseLiteral("student(bob,_)"));
         interpreter.verifyNorms();        
-        
-        Thread.sleep(15000);        
-        printObl();
+
+        for (int i=0; i<10; i++) {
+        	Thread.sleep(1000);
+        	interpreter.verifyNorms();
+            printObl();
+        }
         System.exit(0);
     }
     

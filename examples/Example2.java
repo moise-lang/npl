@@ -19,7 +19,7 @@ import util.NPLMonitor;
  * Basic example of NPL use.
  *  
  * This example is based on the normative program of file e2.npl 
- * and illustrates permissions.
+ * and illustrates permissions and prohibition.
  *  
  */
 public class Example2 {
@@ -59,7 +59,7 @@ public class Example2 {
         
         Thread.sleep(5000); // wait some time to see what happens
         
-        // disactivate permission for alice
+        // deactivate permission for alice
         interpreter.removeFact(ASSyntax.parseLiteral("a(2)"));
         interpreter.verifyNorms();        
 
@@ -68,14 +68,17 @@ public class Example2 {
         interpreter.addFact(ASSyntax.parseLiteral("setter(a,bob)")); // it was bob that defined the value of a
         interpreter.verifyNorms();        
         
-        // disactivate the prohibitions
+        // deactivate the prohibitions
         Thread.sleep(1000);        
         interpreter.removeFact(ASSyntax.parseLiteral("student(_,_)"));
         interpreter.removeFact(ASSyntax.parseLiteral("student(_,_)"));
         interpreter.verifyNorms();        
 
         printState();
-        Thread.sleep(40000);        
+        for (int i=0; i<40; i++) {
+        	Thread.sleep(1000);   
+        	interpreter.verifyNorms();
+        }
         System.exit(0);
     }
     

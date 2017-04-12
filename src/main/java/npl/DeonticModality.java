@@ -1,16 +1,17 @@
 package npl;
 
+import java.util.List;
+
 import jason.NoValueException;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.ASSyntax;
+import jason.asSyntax.ListTerm;
 import jason.asSyntax.Literal;
 import jason.asSyntax.LiteralImpl;
 import jason.asSyntax.LogicalFormula;
 import jason.asSyntax.NumberTerm;
 import jason.asSyntax.Structure;
 import jason.asSyntax.Term;
-
-import java.util.List;
 
 /** The generic class for obligations, permissions, and prohibitions */
 public class DeonticModality extends LiteralImpl {
@@ -27,11 +28,12 @@ public class DeonticModality extends LiteralImpl {
         maintContFromNorm = l.getTerm(1).equals(n.getCondition());
         
         Literal lc = (Literal)l.capply(u);
-        Unifier newu = new Unifier();
-        newu.unifies(l.getTerm(0), lc.getTerm(0)); // unifies agent
-        newu.unifies(l.getTerm(2), lc.getTerm(2)); // unifies aim, this unifier is used for the maint. cond.
+        //Unifier newu = new Unifier();
+        //newu.unifies(l.getTerm(0), lc.getTerm(0)); // unifies agent
+        //newu.unifies(l.getTerm(2), lc.getTerm(2)); // unifies aim, this unifier is used for the maint. cond.
         addTerm(lc.getTerm(0));
-        addTerm(l.getTerm(1).capply(newu));
+        //addTerm(l.getTerm(1).capply(newu));
+        addTerm(lc.getTerm(1));
         addTerm(lc.getTerm(2));
         addTerm(lc.getTerm(3));
         if (lc.hasAnnot())
@@ -42,7 +44,11 @@ public class DeonticModality extends LiteralImpl {
     // used by capply
     private DeonticModality(DeonticModality l, Unifier u) {
         super(l.getFunctor());
-        Literal lc = (Literal)l.capply(u);
+        for (Term t: l.getTerms())
+            addTerm(t.capply(u));
+        if (l.hasAnnot())
+            setAnnots( (ListTerm)l.getAnnots().capply(u) );
+        /*Literal lc = (Literal)l.capply(u);
         Unifier newu = new Unifier();
         newu.unifies(l.getTerm(0), lc.getTerm(0)); // unifies agent
         newu.unifies(l.getTerm(2), lc.getTerm(2)); // unifies aim, this unifier is used for the maint. cond.
@@ -52,6 +58,7 @@ public class DeonticModality extends LiteralImpl {
         addTerm(lc.getTerm(3));
         if (lc.hasAnnot())
             setAnnots( lc.getAnnots() );
+        */
 
         this.n = l.n;
         this.s = l.s;

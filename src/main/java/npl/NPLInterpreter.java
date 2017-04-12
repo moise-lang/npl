@@ -266,17 +266,19 @@ public class NPLInterpreter implements ToDOM {
                     Unifier u = i.next();
                     DeonticModality obl = new DeonticModality((Literal)n.getConsequence(), u, n);
                     // check if already in BB
-                    if (!containsIgnoreDeadline(activeObl, obl)) { // is it a new obligation?  
-                        if ( (obl.isObligation() && !holds(obl.getAim())) || // that is an obligation not achieved yet
-                              obl.isPermission()                          || // or a permission
-                              obl.isProhibition()                            // or a prohibition
-                           ) {
-                            obl.setActive();
-                            if (bb.add(createState(obl))) {
-                                newObl.add(obl);
-                                activeObl.add(obl);
-                                addInSchedule(obl);
-                                notifyCreated(obl);
+                    if (!containsIgnoreDeadline(activeObl, obl)) { // is it a new obligation?
+                        if (obl.maintContFromNorm || holds(obl.getMaitenanceCondition())) { // is the maintenance condition true, avoids the creation of unnecessary obligations
+                            if ( (obl.isObligation() && !holds(obl.getAim())) || // that is an obligation not achieved yet
+                                  obl.isPermission()                          || // or a permission
+                                  obl.isProhibition()                            // or a prohibition
+                               ) {
+                                obl.setActive();
+                                if (bb.add(createState(obl))) {
+                                    newObl.add(obl);
+                                    activeObl.add(obl);
+                                    addInSchedule(obl);
+                                    notifyCreated(obl);
+                                }
                             }
                         }
                     }
@@ -567,22 +569,16 @@ public class NPLInterpreter implements ToDOM {
             }            
         }
         
-        // -- transition active -> inactive (based on r for obl)
-        //                                  (based on w for per)
+        // -- transition active -> inactive (based on r for obl/pro/per)
+        //                                  (based also on g for per)
         private void updateInactive() {
             active = getActive();            
             for (DeonticModality o: active) { 
-                Literal oasinbb = createState(o);
-                if (o.isObligation() && ! o.getMaitenanceCondition().logicalConsequence(ag, new Unifier()).hasNext()) {
-                    // transition active -> inactive
+                if (!holds(o.getMaitenanceCondition()) || o.isPermission() && holds(o.getAim())) {
+                    Literal oasinbb = createState(o);
                     if (!bb.remove(oasinbb)) System.out.println("ooops "+oasinbb+" should be removed 1!");
                     o.setInactive();
                     notifyInactive(o);
-                }
-                if (o.isPermission() && o.getAim().logicalConsequence(ag, new Unifier()).hasNext()) {
-                    if (!bb.remove(oasinbb)) System.out.println("ooops "+oasinbb+" should be removed 2!");
-                    o.setInactive();
-                    notifyInactive(o);                    
                 }
             }            
         }
