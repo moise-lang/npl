@@ -45,7 +45,7 @@ public class NPLParserTest extends TestCase {
         assertEquals(2, wp.getNorms().size());
         Literal o = p.getRoot().getScope(ASSyntax.parseLiteral("group(wp)")).getNorm("n2").getConsequence();
         assertEquals("(vl(X) & (Y > 10))", o.getTerm(1).toString());
-        assertEquals("[norm(n2(a))]", o.getAnnots().toString());
+        //assertEquals("[norm(n2(a))]", o.getAnnots().toString());
         //System.out.println(p);
         
         Norm n2 = p.getRoot().findScope("group(wp)").getNorm("n2");
@@ -54,12 +54,13 @@ public class NPLParserTest extends TestCase {
         u.unifies(new VarTerm("X"), ASSyntax.createNumber(10));
         DeonticModality obl = new DeonticModality(n2.getConsequence(), u, n2);
         assertTrue(obl.toString().startsWith("obligation(bob,(vl(10) & (Y > 10)),(ii(10) & (10 > 5))"));
-        System.out.println(obl);
         u = new Unifier();
         u.unifies(new VarTerm("Y"), ASSyntax.createNumber(20));
         obl = obl.capply(u);
-        System.out.println(obl);
         assertTrue(obl.toString().startsWith("obligation(bob,(vl(10) & (20 > 10)),(ii(10) & (10 > 5))"));
+        System.out.println(obl);
+        obl.setActive();
+        System.out.println(obl);
         
     }
     

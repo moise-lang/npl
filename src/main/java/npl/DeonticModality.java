@@ -5,6 +5,7 @@ import java.util.List;
 import jason.NoValueException;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.ASSyntax;
+import jason.asSyntax.Atom;
 import jason.asSyntax.ListTerm;
 import jason.asSyntax.Literal;
 import jason.asSyntax.LiteralImpl;
@@ -24,6 +25,8 @@ public class DeonticModality extends LiteralImpl {
     int   agInstances = 0; // when the Ag is a var, this field count how many agent instances where latter created 
     boolean maintContFromNorm = false;
     
+    private static Unifier emptyUnif = new Unifier();
+    
     public DeonticModality(Literal l, Unifier u, Norm n) {
         super(l.getFunctor());
         maintContFromNorm = l.getTerm(1).equals(n.getCondition());
@@ -40,7 +43,10 @@ public class DeonticModality extends LiteralImpl {
         if (lc.hasAnnot())
             setAnnots( lc.getAnnots() );
         this.n = n;
-        this.u = u.clone();
+        if (u == null)
+            this.u = emptyUnif;
+        else 
+            this.u = u.clone();
     }
     
     // used by capply
@@ -64,7 +70,8 @@ public class DeonticModality extends LiteralImpl {
 
         this.n = l.n;
         this.s = l.s;
-        this.u = l.u;
+        this.u = u;
+        u.compose(l.u);
         this.maintContFromNorm = l.maintContFromNorm;
     }
     
@@ -73,6 +80,7 @@ public class DeonticModality extends LiteralImpl {
         super(d);
         this.n = d.n;
         this.s = d.s;
+        this.u = d.u;
         this.maintContFromNorm = d.maintContFromNorm;
     }
     
@@ -83,7 +91,7 @@ public class DeonticModality extends LiteralImpl {
     
     /** returns the unifier used to activate the norm used to create this obligation */
     public Unifier getUnifier() {
-    	return u;
+        return u;
     }
     
     public Literal getAg() {
@@ -135,6 +143,9 @@ public class DeonticModality extends LiteralImpl {
     public void setActive() {
         s = State.active;
         addAnnot(ASSyntax.createStructure("created", new TimeTerm(0,null)));
+        addAnnot(ASSyntax.createStructure("norm", 
+                new Atom(n.getId()),
+                u.getAsTerm()));
     }
     
     public void setFulfilled() {
