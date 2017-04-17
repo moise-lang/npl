@@ -19,6 +19,7 @@ public class DeonticModality extends LiteralImpl {
     public enum State { none, active, fulfilled, unfulfilled, inactive } ;
 
     Norm n; // the norm that created this obligation
+    Unifier u; // the unifier used in the activation of the norm
     State s = State.none;
     int   agInstances = 0; // when the Ag is a var, this field count how many agent instances where latter created 
     boolean maintContFromNorm = false;
@@ -39,6 +40,7 @@ public class DeonticModality extends LiteralImpl {
         if (lc.hasAnnot())
             setAnnots( lc.getAnnots() );
         this.n = n;
+        this.u = u.clone();
     }
     
     // used by capply
@@ -62,6 +64,7 @@ public class DeonticModality extends LiteralImpl {
 
         this.n = l.n;
         this.s = l.s;
+        this.u = l.u;
         this.maintContFromNorm = l.maintContFromNorm;
     }
     
@@ -76,6 +79,11 @@ public class DeonticModality extends LiteralImpl {
     /** returns the norms used to create this obligation */
     public Norm getNorm() {
         return n;
+    }
+    
+    /** returns the unifier used to activate the norm used to create this obligation */
+    public Unifier getUnifier() {
+    	return u;
     }
     
     public Literal getAg() {
