@@ -7,12 +7,15 @@ import jason.asSemantics.Unifier;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Atom;
 import jason.asSyntax.ListTerm;
+import jason.asSyntax.ListTermImpl;
 import jason.asSyntax.Literal;
 import jason.asSyntax.LiteralImpl;
 import jason.asSyntax.LogicalFormula;
 import jason.asSyntax.NumberTerm;
 import jason.asSyntax.Structure;
 import jason.asSyntax.Term;
+import jason.asSyntax.UnnamedVar;
+import jason.asSyntax.VarTerm;
 
 /** The generic class for obligations, permissions, and prohibitions */
 public class DeonticModality extends LiteralImpl {
@@ -145,7 +148,19 @@ public class DeonticModality extends LiteralImpl {
         addAnnot(ASSyntax.createStructure("created", new TimeTerm(0,null)));
         addAnnot(ASSyntax.createStructure("norm", 
                 new Atom(n.getId()),
-                u.getAsTerm()));
+                getUnifierAsTerm(u)));
+    }
+    
+    private ListTerm getUnifierAsTerm(Unifier u) {
+        ListTerm lf = new ListTermImpl();
+        ListTerm tail = lf;
+        for (VarTerm k: u) {
+        	if (! k.isUnnamedVar()) {
+	            Term vl = u.get(k);
+	            tail = tail.append(ASSyntax.createList(k, vl));
+        	}
+        }
+        return lf;
     }
     
     public void setFulfilled() {
