@@ -156,7 +156,9 @@ public class DeonticModality extends LiteralImpl {
         for (VarTerm k: u) {
             if (! k.isUnnamedVar()) {
                 Term vl = u.get(k);
-                tail = tail.append(ASSyntax.createList(k, vl));
+                tail = tail.append(ASSyntax.createList(
+                        ASSyntax.createString(k), 
+                        vl));
             }
         }
         return lf;
