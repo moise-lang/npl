@@ -14,7 +14,6 @@ import jason.asSyntax.LogicalFormula;
 import jason.asSyntax.NumberTerm;
 import jason.asSyntax.Structure;
 import jason.asSyntax.Term;
-import jason.asSyntax.UnnamedVar;
 import jason.asSyntax.VarTerm;
 
 /** The generic class for obligations, permissions, and prohibitions */
@@ -148,17 +147,17 @@ public class DeonticModality extends LiteralImpl {
         addAnnot(ASSyntax.createStructure("created", new TimeTerm(0,null)));
         addAnnot(ASSyntax.createStructure("norm", 
                 new Atom(n.getId()),
-                getUnifierAsTerm(u)));
+                getUnifierAsTerm()));
     }
     
-    private ListTerm getUnifierAsTerm(Unifier u) {
+    public ListTerm getUnifierAsTerm() {
         ListTerm lf = new ListTermImpl();
         ListTerm tail = lf;
         for (VarTerm k: u) {
-        	if (! k.isUnnamedVar()) {
-	            Term vl = u.get(k);
-	            tail = tail.append(ASSyntax.createList(k, vl));
-        	}
+            if (! k.isUnnamedVar()) {
+                Term vl = u.get(k);
+                tail = tail.append(ASSyntax.createList(k, vl));
+            }
         }
         return lf;
     }

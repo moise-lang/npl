@@ -404,7 +404,7 @@ public class NPLInterpreter implements ToDOM {
             oblele.setAttribute("modality", l.getFunctor());
             oblele.setAttribute("state", state.name());
             oblele.setAttribute("agent", l.getAg().toString());
-            if (l.maintContFromNorm)                 
+            if (l.maintContFromNorm && !"true".equals(l.getMaitenanceCondition().toString()))                 
                 oblele.setAttribute("maintenance", "as in norm "+l.getNorm().getId());
             else
                 oblele.setAttribute("maintenance", l.getMaitenanceCondition().toString());

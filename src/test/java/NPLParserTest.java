@@ -60,7 +60,8 @@ public class NPLParserTest extends TestCase {
         assertTrue(obl.toString().startsWith("obligation(bob,(vl(10) & (20 > 10)),(ii(10) & (10 > 5))"));
         assertFalse(obl.toString().contains("norm(n2,[[Y,20],[X,10]])"));
         obl.setActive();
-        assertTrue(obl.toString().contains("norm(n2,[[Y,20],[X,10]])"));
+        System.out.println(obl);
+        assertTrue(obl.toString().contains("norm(n2,[[Y,20],[X,10]])") || obl.toString().contains("norm(n2,[[X,10],[Y,20]])"));
     }
     
     /*
