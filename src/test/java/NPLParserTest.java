@@ -15,7 +15,7 @@ import npl.parser.nplp;
 /** JUnit test case for syntax package */
 public class NPLParserTest extends TestCase {
 
-    String program    = ""; // np test { \n"; //os { a1(c,4,\"a\"). a2(b(1,a)). } \n";
+    String program = "";
 
     @Override
     protected void setUp() throws Exception {
@@ -31,9 +31,9 @@ public class NPLParserTest extends TestCase {
         program = program + "    } ";
         program = program + "  }";
     }
-    
+
     public void testBasic1() throws ParseException, Exception {
-        
+
         NormativeProgram p = new NormativeProgram();
         p.setSrc("test1");
         new nplp(new StringReader(program)).program(p, null);
@@ -45,9 +45,7 @@ public class NPLParserTest extends TestCase {
         assertEquals(2, wp.getNorms().size());
         Literal o = p.getRoot().getScope(ASSyntax.parseLiteral("group(wp)")).getNorm("n2").getConsequence();
         assertEquals("(vl(X) & (Y > 10))", o.getTerm(1).toString());
-        //assertEquals("[norm(n2(a))]", o.getAnnots().toString());
-        //System.out.println(p);
-        
+
         Norm n2 = p.getRoot().findScope("group(wp)").getNorm("n2");
         assertNotNull(n2);
         Unifier u = new Unifier();
@@ -58,28 +56,10 @@ public class NPLParserTest extends TestCase {
         u.unifies(new VarTerm("Y"), ASSyntax.createNumber(20));
         obl = obl.capply(u);
         assertTrue(obl.toString().startsWith("obligation(bob,(vl(10) & (20 > 10)),(ii(10) & (10 > 5))"));
-        assertFalse(obl.toString().contains("norm(n2,[[Y,20],[X,10]])"));
+        assertFalse(obl.toString().contains("norm(n2,[[\"Y\",20],[\"X\",10]])")
+                || obl.toString().contains("norm(n2,[[\"X\",10],[\"Y\",20]])"));
         obl.setActive();
-        System.out.println(obl);
-        assertTrue(obl.toString().contains("norm(n2,[[Y,20],[X,10]])") || obl.toString().contains("norm(n2,[[X,10],[Y,20]])"));
+        assertTrue(obl.toString().contains("norm(n2,[[\"Y\",20],[\"X\",10]])")
+                || obl.toString().contains("norm(n2,[[\"X\",10],[\"Y\",20]])"));
     }
-    
-    /*
-    public void testWP() throws ParseException, Exception {
-        NormativeProgram p = new NormativeProgram();
-        String src = "examples/writePaper/wp.npl";
-        p.setSrc(src);
-        new nplp(new FileReader(src)).program(p);
-        
-        assertEquals(0, p.getRoot().getRules().size());
-        assertEquals(0, p.getRoot().getNorms().size());
-        Scope wp = p.getRoot().getScope(ASSyntax.parseLiteral("group(wpgroup)"));
-        assertTrue(wp != null);
-
-        //System.out.println(p);
-        assertEquals(7, wp.getRules().size());
-        assertEquals(4, wp.getNorms().size());
-    }
-    */
-
 }
