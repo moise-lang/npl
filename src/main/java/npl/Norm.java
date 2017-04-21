@@ -3,11 +3,7 @@ package npl;
 import jason.asSyntax.Literal;
 import jason.asSyntax.LogicalFormula;
 
-public class Norm {
-
-	private String id;
-	private Literal consequence;
-	private LogicalFormula condition;
+public class Norm extends AbstractNorm {
 
 	public Norm(String id, Literal consequence, LogicalFormula condition) {
 		if (!consequence.getFunctor().equals(NormativeProgram.FailFunctor)) {
@@ -18,18 +14,6 @@ public class Norm {
 		this.id = id;
 		this.consequence = consequence;
 		this.condition = condition;
-	}
-
-	public String getId() {
-		return id;
-	}
-
-	public Literal getConsequence() {
-		return consequence;
-	}
-
-	public LogicalFormula getCondition() {
-		return condition;
 	}
 
 	public Norm clone() {
