@@ -9,6 +9,8 @@ import jason.asSyntax.LogicalFormula;
  */
 public interface INorm {
 
+	public INorm clone();
+	
 	/**
 	 * Returns the id of the norm which was assigned at creation.
 	 * 
@@ -31,5 +33,4 @@ public interface INorm {
 	 * @see DeonticModality
 	 */
 	public Literal getConsequence();
-
 }

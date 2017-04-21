@@ -10,6 +10,9 @@ public abstract class AbstractNorm implements INorm {
 	protected Literal consequence;
 
 	@Override
+	public abstract AbstractNorm clone();
+
+	@Override
 	public String getId() {
 		return id;
 	}
