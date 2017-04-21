@@ -14,7 +14,7 @@ public class Scope {
     private List<Rule>    rules = new ArrayList<Rule>();
     private Scope         father = null;
     private NormativeProgram   program = null;
-    private Map<String,Norm>   norms  = new HashMap<String,Norm>();
+    private Map<String,INorm>   norms  = new HashMap<String,INorm>();
     private Map<Literal,Scope> scopes = new HashMap<Literal,Scope>();
     
     public Scope(Literal id, NormativeProgram np) {
@@ -35,16 +35,16 @@ public class Scope {
         return rules;
     }
     
-    public void addNorm(Norm n) {
+    public void addNorm(INorm n) {
         norms.put(n.getId(),n);
     }
-    public Norm removeNorm(String id) {
+    public INorm removeNorm(String id) {
         return norms.remove(id);
     }
-    public Collection<Norm> getNorms() {
+    public Collection<INorm> getNorms() {
         return norms.values();
     }
-    public Norm getNorm(String id) {
+    public INorm getNorm(String id) {
         return norms.get(id);
     }
     
@@ -95,7 +95,7 @@ public class Scope {
         out.append(s+"scope "+id+" {\n");
         for (Rule r: rules) 
             out.append(s+"  "+r+".\n");
-        for (Norm n: norms.values()) 
+        for (INorm n: norms.values()) 
             out.append(s+"  "+n+".\n");
         for (Scope sc: scopes.values()) 
             out.append("\n"+sc);

@@ -128,7 +128,7 @@ void program(NormativeProgram np, DynamicFactsProvider dfp) :
 
 
 void scope(NormativeProgram np, Scope superScope) : 
-{ Literal scopeId; Rule r; Norm n; Scope scope;  }
+{ Literal scopeId; Rule r; INorm n; Scope scope;  }
 { <SCOPE> scopeId = literal() 
                               { scope = new Scope(scopeId, np);
                                 if (superScope == null) { // it is root
@@ -153,7 +153,7 @@ Rule rule() :
                               { return new Rule(h,(LogicalFormula)b); } 
 }
 
-Norm norm() : 
+INorm norm() : 
 { Literal h; Object b; Token id; }
 { <NORM> id = <ATOM> ":"
   b = log_expr() 
