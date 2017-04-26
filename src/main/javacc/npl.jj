@@ -24,9 +24,13 @@ PARSER_BEGIN(nplp) // NPL parser
     private String npSource = null;
     private DynamicFactsProvider dfp;
     private static LiteralFactory lFac = NPLLiteral.getFactory();
+    private static NormFactory    nFac = Norm.getFactory();
 
     public static void setLiteralFactory(LiteralFactory l) {
         lFac = l; 
+    } 
+    public static void setNormFactory(NormFactory l) {
+        nFac = l; 
     } 
     
     private String getSourceRef(SourceInfo s) {
@@ -162,7 +166,7 @@ INorm norm() :
                        {
                          if (b.toString().equals("true"))  b = Literal.LTrue;  
                          if (b.toString().equals("false")) b = Literal.LFalse;  
-                         return new Norm(id.image,h,(LogicalFormula)b); 
+                         return nFac.createNorm(id.image,h,(LogicalFormula)b); 
                        }   
 }
 
