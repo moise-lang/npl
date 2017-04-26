@@ -6,7 +6,7 @@ import jason.asSyntax.Literal;
 import jason.asSyntax.VarTerm;
 import junit.framework.TestCase;
 import npl.DeonticModality;
-import npl.Norm;
+import npl.INorm;
 import npl.NormativeProgram;
 import npl.Scope;
 import npl.parser.ParseException;
@@ -46,7 +46,7 @@ public class NPLParserTest extends TestCase {
         Literal o = p.getRoot().getScope(ASSyntax.parseLiteral("group(wp)")).getNorm("n2").getConsequence();
         assertEquals("(vl(X) & (Y > 10))", o.getTerm(1).toString());
 
-        Norm n2 = p.getRoot().findScope("group(wp)").getNorm("n2");
+        INorm n2 = p.getRoot().findScope("group(wp)").getNorm("n2");
         assertNotNull(n2);
         Unifier u = new Unifier();
         u.unifies(new VarTerm("X"), ASSyntax.createNumber(10));

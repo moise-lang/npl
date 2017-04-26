@@ -42,8 +42,8 @@ import org.w3c.dom.Element;
 public class NPLInterpreter implements ToDOM {
 
     private Agent            ag = null; // use a Jason agent to store the facts (BB)
-    private Map<String,Norm> regimentedNorms = null; // norms with failure consequence
-    private Map<String,Norm> regulativeNorms  = null; // norms with obligation, permission, prohibition consequence
+    private Map<String,INorm> regimentedNorms = null; // norms with failure consequence
+    private Map<String,INorm> regulativeNorms  = null; // norms with obligation, permission, prohibition consequence
 
     private Object           syncTransState = new Object();
     
@@ -64,8 +64,8 @@ public class NPLInterpreter implements ToDOM {
     
     public void init() {
         ag              = new Agent();
-        regimentedNorms = new HashMap<String,Norm>();
-        regulativeNorms = new HashMap<String,Norm>();
+        regimentedNorms = new HashMap<String,INorm>();
+        regulativeNorms = new HashMap<String,INorm>();
         ag.initAg();
         clearFacts();
         oblUpdateThread = new StateTransitions();
@@ -107,7 +107,7 @@ public class NPLInterpreter implements ToDOM {
             l.addSource(NPAtom);
             bb.add(1,l); // add in the end of the BB to preserve the program order
         }
-        for (Norm n: scope.getNorms()) {
+        for (INorm n: scope.getNorms()) {
             
             // auto id management
             String id = n.getId();
@@ -116,7 +116,7 @@ public class NPLInterpreter implements ToDOM {
                     while (getNorm(id) != null)
                         id = id + id;
                 } else {
-                    logger.warning("Norm with id "+id+" already exists! It will be replaced by "+n);
+                    logger.warning("INorm with id "+id+" already exists! It will be replaced by "+n);
                 }                    
             }
 
@@ -226,8 +226,8 @@ public class NPLInterpreter implements ToDOM {
         }
     }
     
-    public Norm getNorm(String id) {
-        Norm n = regulativeNorms.get(id);
+    public INorm getNorm(String id) {
+        INorm n = regulativeNorms.get(id);
         if (n != null)
             return n;
         else
@@ -244,7 +244,7 @@ public class NPLInterpreter implements ToDOM {
         List<DeonticModality> newObl = new ArrayList<DeonticModality>();
         synchronized (syncTransState) {            
             // test all fails first
-            for (Norm n: regimentedNorms.values()) {
+            for (INorm n: regimentedNorms.values()) {
                 Iterator<Unifier> i = n.getCondition().logicalConsequence(ag, new Unifier());
                 while (i.hasNext()) {
                     Unifier u = i.next();
@@ -260,7 +260,7 @@ public class NPLInterpreter implements ToDOM {
             List<DeonticModality> activeObl = getActive();
             
             // -- computes new obligations, permissions, and prohibitions
-            for (Norm n: regulativeNorms.values()) {
+            for (INorm n: regulativeNorms.values()) {
                 Iterator<Unifier> i = n.getCondition().logicalConsequence(ag, new Unifier());
                 while (i.hasNext()) {
                     Unifier u = i.next();
@@ -362,9 +362,9 @@ public class NPLInterpreter implements ToDOM {
     
     public String getNormsString() {
         StringBuilder out = new StringBuilder();
-        for (Norm n: regimentedNorms.values()) 
+        for (INorm n: regimentedNorms.values()) 
             out.append(n+".\n");
-        for (Norm n: regulativeNorms.values()) 
+        for (INorm n: regulativeNorms.values()) 
             out.append(n+".\n");
         return out.toString();
     }
