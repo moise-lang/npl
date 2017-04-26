@@ -116,7 +116,7 @@ public class NPLInterpreter implements ToDOM {
                     while (getNorm(id) != null)
                         id = id + id;
                 } else {
-                    logger.warning("INorm with id "+id+" already exists! It will be replaced by "+n);
+                    logger.warning("Norm with id "+id+" already exists! It will be replaced by "+n);
                 }                    
             }
 

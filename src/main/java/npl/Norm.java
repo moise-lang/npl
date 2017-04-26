@@ -53,4 +53,9 @@ public class Norm extends AbstractNorm {
     public Norm clone() {
         return new Norm(id, consequence.copy(), (LogicalFormula) condition.clone());
     }
+    
+    @Override
+    public String toString() {
+    	return "norm " + id + ": " + condition + " -> " + consequence;
+	}
 }
