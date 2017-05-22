@@ -56,6 +56,6 @@ public class Norm extends AbstractNorm {
     
     @Override
     public String toString() {
-    	return "norm " + id + ": " + condition + " -> " + consequence;
-	}
+        return "norm " + id + ": " + condition + " -> " + consequence;
+    }
 }

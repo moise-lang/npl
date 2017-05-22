@@ -213,7 +213,7 @@ Literal obligation() :
 
 
 Literal literal() :
-{ Token k; List l = null; Literal r;}
+{ Token k; List l = null; Literal r; ListTerm lt; }
 {
   ( k=<ATOM> | k=<FAIL> | k=<OBLIGATION> | k=<PERMISSION> | k=<PROHIBITION> )    
                        { r = ASSyntax.createLiteral(k.image);
@@ -226,6 +226,9 @@ Literal literal() :
     "(" l = terms()    { r.setTerms(l); }
     ")"                
   ] 
+  [
+    lt = list()        { r.setAnnots(lt); }
+  ]
                        { 
                          if (r.getFunctor().indexOf(".") >= 0) {
                             try {
