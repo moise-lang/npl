@@ -8,12 +8,12 @@ public class NormativeProgram {
     private String        id = "";
     private String        src = "--no-source--";
     private Scope         root;
-    
+
     public final static String FailFunctor   = "fail";
     public final static String OblFunctor    = "obligation";
     public final static String PerFunctor    = "permission";
     public final static String ProFunctor    = "prohibition";
-    
+
     public String getId() {
         return id;
     }
@@ -33,7 +33,7 @@ public class NormativeProgram {
     public void setRoot(Scope root) throws ParseException {
         this.root = root;
     }
-    
+
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder();

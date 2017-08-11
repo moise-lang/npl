@@ -30,18 +30,18 @@ import npl.NPLInterpreter;
 /** displays the NPL state in a GUI interface */
 public class NPLMonitor {
 
-    NPLInterpreter nengine; 
-    
+    NPLInterpreter nengine;
+
     private static JFrame  frame;
     private static JTabbedPane allArtsPane;
     private static ScheduledThreadPoolExecutor updater = new ScheduledThreadPoolExecutor(1);
     private static int guiCount = 0;
-    
-    private JTabbedPane tpane; 
+
+    private JTabbedPane tpane;
     private JTextPane txtNF  = new JTextPane();
     private JTextPane txtNS  = new JTextPane();
-    
-    public NPLMonitor() {    
+
+    public NPLMonitor() {
     }
 
     private void initFrame() {
@@ -55,20 +55,20 @@ public class NPLMonitor {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         guiCount = guiCount+30;
         frame.setBounds(0, 0, 800, (int)(screenSize.height * 0.8));
-        frame.setLocation((screenSize.width / 2)-guiCount - frame.getWidth() / 2, (screenSize.height / 2)+guiCount - frame.getHeight() / 2);        
+        frame.setLocation((screenSize.width / 2)-guiCount - frame.getWidth() / 2, (screenSize.height / 2)+guiCount - frame.getHeight() / 2);
         EventQueue.invokeLater(new Runnable() {
             public void run() {
-                frame.setVisible(true);            
+                frame.setVisible(true);
             }
-        });        
+        });
     }
-    
+
     public void add(String id, NPLInterpreter nengine) throws Exception {
         if (frame == null)
             initFrame();
-        
+
         this.nengine = nengine;
-        
+
         // normative state
         JPanel nsp = new JPanel(new BorderLayout());
         txtNS.setContentType("text/html");
@@ -84,13 +84,13 @@ public class NPLMonitor {
         txtNF.setAutoscrolls(false);
         nFacts.add(BorderLayout.CENTER, new JScrollPane(txtNF));
 
-        // center tabled 
+        // center tabled
         tpane = new JTabbedPane();
         tpane.add("normative state", nsp);
         tpane.add("normative facts", nFacts);
-                    
+
         allArtsPane.add(id, tpane);
-        
+
         updater.scheduleAtFixedRate(new Runnable() {
             public void run() {
                 updateNS();
@@ -98,19 +98,19 @@ public class NPLMonitor {
         }, 0, 1, TimeUnit.SECONDS);
 
     }
-    
+
     private String lastNSStr = "";
     private String lastNFStr = "";
     public void updateNS() {
         try {
-            StringWriter so = new StringWriter();            
+            StringWriter so = new StringWriter();
             getNSTransformer().transform(new DOMSource(DOMUtils.getAsXmlDocument(nengine)), new StreamResult(so));
             String curStr = so.toString();
             if (! curStr.equals(lastNSStr))
                 txtNS.setText(curStr);
             lastNSStr = curStr;
-            
-            StringBuilder out = new StringBuilder();            
+
+            StringBuilder out = new StringBuilder();
             out.append(nengine.getStateString());
             out.append("\nDump of facts:\n");
             for (Literal l: nengine.getAg().getBB())

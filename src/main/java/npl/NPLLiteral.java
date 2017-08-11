@@ -19,21 +19,21 @@ public class NPLLiteral extends LiteralImpl {
                 return new NPLLiteral(l,dfp);
             }
         };
-    }    
-    
-    private DynamicFactsProvider dfp = null;    
+    }
+
+    private DynamicFactsProvider dfp = null;
 
     public NPLLiteral(Literal l, DynamicFactsProvider dfp) {
         super(l);
         this.dfp = dfp;
     }
-        
+
     // used by capply
     protected NPLLiteral(Literal l, DynamicFactsProvider dfp, Unifier u) {
         super(l,u);
         this.dfp = dfp;
     }
-    
+
     @Override
     public Iterator<Unifier> logicalConsequence(Agent ag, Unifier un) {
         if (dfp != null && dfp.isRelevant(getPredicateIndicator()))
@@ -41,12 +41,12 @@ public class NPLLiteral extends LiteralImpl {
         else
             return super.logicalConsequence(ag, un);
     }
- 
+
     @Override
     public Term capply(Unifier u) {
         return new NPLLiteral(this, dfp, u);
     }
-    
+
     public Term clone() {
         return new NPLLiteral(this, dfp);
     }

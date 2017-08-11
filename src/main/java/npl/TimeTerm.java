@@ -16,12 +16,12 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
     Date time; // time == null means 'now'
     final long   t;
     final String unit;
-    
+
     private TimeTerm() { // for clone
         t = 0;
         unit = null;
-    } 
-    
+    }
+
     public TimeTerm(long t, String unit) {
         this.t    = t;
         this.unit = unit;
@@ -29,7 +29,7 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
             time = new Date();
         else if (unit.equals("never"))
             time = new Date(Long.MAX_VALUE);
-        else if (unit.startsWith("millisecond")) 
+        else if (unit.startsWith("millisecond"))
             time = new Date(t);
         else if (unit.startsWith("second"))
             time = new Date(t * 1000);
@@ -42,7 +42,7 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
         else if  (unit.startsWith("year"))
             time = new Date(t * 356 * 1000 * 60 * 60 * 24);
     }
-    
+
     @Override
     protected int calcHashCode() {
         if (time == null) // now
@@ -50,7 +50,7 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
         else
             return time.hashCode();
     }
-    
+
     @Override
     public Term capply(Unifier u) {
         TimeTerm t = (TimeTerm)clone();
@@ -75,14 +75,14 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
     public boolean isNumeric() {
         return true;
     }
-    
+
     public double solve() {
         if (time == null) // now
             return 0; //new Date().getTime();
         else
             return time.getTime();
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) return false;
@@ -90,7 +90,7 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
         TimeTerm o = (TimeTerm)obj;
         return o.solve() == this.solve();
     }
-    
+
     @Override
     public String toString() {
         if (time == null) // now
@@ -98,16 +98,16 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
         else
             return "\""+String.valueOf( toTimeStamp(time.getTime()))+"\""; // enclosed by " to avoid parser error
     }
-    
+
     @SuppressWarnings("deprecation")
     public static String toTimeStamp(long time) {
         Date t = new Date(time); //(time == null ? new Date() : time);
         if (t.getYear() > 20000000)
             return "--";
         else
-            return (1900+t.getYear())+"-"+t.getMonth()+"-"+t.getDay()+" "+t.getHours()+":"+t.getMinutes()+":"+t.getSeconds(); 
+            return (1900+t.getYear())+"-"+t.getMonth()+"-"+t.getDay()+" "+t.getHours()+":"+t.getMinutes()+":"+t.getSeconds();
     }
-    
+
     public static String toRelTimeStr(long time) {
         long elap = time - System.currentTimeMillis();
         String s = " + ";
@@ -137,7 +137,7 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
         }
         if (t == 0)
             return "now";
-        else 
+        else
             return "now"+s+t+" "+u;
     }
     public static String toAbsTimeStr(long time) {

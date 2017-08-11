@@ -2,21 +2,21 @@
 // example of normative program in NPL
 // with permissions and prohibitions
 
-scope main {       
+scope main {
 
     // some facts
-    a(2).                                   
+    a(2).
     student(bob,2).
     student(carlos,3).
 
     // example of rule (Jason syntax)
-    vl(X) :- a(A) & b(B) & A<B & X=A*B.     
-    
+    vl(X) :- a(A) & b(B) & A<B & X=A*B.
+
     // alice is permitted to set b < 0 for 4 seconds, while a >= 2
     norm n1: vl(X) & X >= 5
        -> permission(alice,a(N) & N >=2, b(Y) & Y<0, `now`+`4 seconds`).
-    
+
     // it is prohibited to set a > 30, for all agents, while there is a student
     norm n2: true
-       -> prohibition(A,student(_,_), a(V) & V > 30 & setter(a,A), `never`).    
+       -> prohibition(A,student(_,_), a(V) & V > 30 & setter(a,A), `never`).
 }

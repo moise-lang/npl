@@ -15,34 +15,34 @@ import npl.NormativeProgram;
 import npl.parser.nplp;
 
 
-/** 
+/**
  * Basic example of NPL use.
- *  
- * This example is based on the normative program of file e1.npl 
+ *
+ * This example is based on the normative program of file e1.npl
  * and illustrates obligations.
- *  
+ *
  */
 public class Example1 {
-    
-    NormativeProgram  np          = new NormativeProgram(); // where the parser will place the result of parsing (norms, rules, ....) 
+
+    NormativeProgram  np          = new NormativeProgram(); // where the parser will place the result of parsing (norms, rules, ....)
     NPLInterpreter    interpreter = new NPLInterpreter(); // the NPL interpreter
     BFacts            facts       = new BFacts(); // the class that evaluates values for predicate b/1
 
     public static void main(String[] args) throws Exception {
         new Example1().run();
     }
-    
+
     public void run() throws Exception {
         // parsing
-        nplp parser = new nplp(new FileInputStream("examples/e1.npl"));        
+        nplp parser = new nplp(new FileInputStream("examples/e1.npl"));
         parser.program(np, facts);
         System.out.println(np);
-    
+
         // loads the program into the interpreter
-        interpreter.loadNP(np.getRoot()); 
+        interpreter.loadNP(np.getRoot());
 
         // listen events from NPInterpreter
-        interpreter.addListener(new MyListener()); 
+        interpreter.addListener(new MyListener());
 
         // starts GUI
         NPLMonitor m = new NPLMonitor();
@@ -51,25 +51,25 @@ public class Example1 {
         // verifies if some norm is applicable (none in this example)
         interpreter.verifyNorms();
         printObl();
-        
+
         // changes b value to trigger the first norm (n1)
         facts.setBValue(3);
         interpreter.verifyNorms();
         printObl();
-        
+
         Thread.sleep(10000); // wait some time to see what happens
-        
+
         // alice fulfills her obligation
         facts.setBValue(-1);
         Thread.sleep(4000);
 
         // creates obligations for bob and carlos
         facts.setBValue(10);
-        interpreter.verifyNorms();        
-                
+        interpreter.verifyNorms();
+
         // deactivate norm for bob removing his state of student
         interpreter.removeFact(ASSyntax.parseLiteral("student(bob,_)"));
-        interpreter.verifyNorms();        
+        interpreter.verifyNorms();
 
         for (int i=0; i<10; i++) {
         	Thread.sleep(1000);
@@ -78,17 +78,17 @@ public class Example1 {
         }
         System.exit(0);
     }
-    
+
     void printObl() {
         System.out.println("Active Obligations:");
         for (DeonticModality o: interpreter.getActiveObligations()) {
             System.out.println("  "+o);
-        }        
+        }
     }
-    
+
     /** evaluates b/1 facts (without translating it to a logical literal) */
     class BFacts implements DynamicFactsProvider {
-        
+
         PredicateIndicator b1 = new PredicateIndicator("b", 1);
         int b = 1;
 
@@ -100,12 +100,12 @@ public class Example1 {
         public void setBValue(int i) {
             b = i;
         }
-        
+
         @Override
         public Iterator<Unifier> consult(Literal l, Unifier u) {
             u.unifies(l.getTerm(0), ASSyntax.createNumber(b));
-            return LogExpr.createUnifIterator(u); 
+            return LogExpr.createUnifIterator(u);
         }
-        
+
     }
 }

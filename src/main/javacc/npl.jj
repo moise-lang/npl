@@ -27,12 +27,12 @@ PARSER_BEGIN(nplp) // NPL parser
     private static NormFactory    nFac = Norm.getFactory();
 
     public static void setLiteralFactory(LiteralFactory l) {
-        lFac = l; 
-    } 
+        lFac = l;
+    }
     public static void setNormFactory(NormFactory l) {
-        nFac = l; 
-    } 
-    
+        nFac = l;
+    }
+
     private String getSourceRef(SourceInfo s) {
         if (s == null)
             return "[]";
@@ -63,11 +63,11 @@ PARSER_BEGIN(nplp) // NPL parser
         if (u.isAtom()) {
            return new Atom((Literal)u);
         } else {
-           return u; 
-        }  
+           return u;
+        }
     }
-  
-  } 
+
+  }
 PARSER_END(nplp)
 
 SKIP : {
@@ -79,7 +79,7 @@ SKIP : {
 |  <"/*" (~["*"])* "*" ("*" | ~["*","/"] (~["*"])* "*")* "/">
 }
 
-       
+
 TOKEN : {   // Note: i do not know why, but vars must be defined before TK_BEGIN and END
   <VAR : (<UP_LETTER> (<CHAR>)*) >
 }
@@ -121,19 +121,19 @@ TOKEN : {
 }
 
 
-void program(NormativeProgram np, DynamicFactsProvider dfp) : 
-{ Token k; }  
+void program(NormativeProgram np, DynamicFactsProvider dfp) :
+{ Token k; }
 
 {                               { this.dfp  = dfp;
                                 }
-  scope(np, null) 
+  scope(np, null)
   <EOF>
 }
 
 
-void scope(NormativeProgram np, Scope superScope) : 
+void scope(NormativeProgram np, Scope superScope) :
 { Literal scopeId; Rule r; INorm n; Scope scope;  }
-{ <SCOPE> scopeId = literal() 
+{ <SCOPE> scopeId = literal()
                               { scope = new Scope(scopeId, np);
                                 if (superScope == null) { // it is root
                                   np.setRoot(scope);
@@ -142,49 +142,49 @@ void scope(NormativeProgram np, Scope superScope) :
                                   scope.setFather(superScope);
                                 }
                               }
-  "{" 
-  ( 
+  "{"
+  (
     n = norm() "."            { scope.addNorm(n); }
-  | r = rule() "."            { scope.addRule(r); }  
+  | r = rule() "."            { scope.addRule(r); }
   | scope(np,scope)
   )*
-  "}" 
+  "}"
 }
 
-Rule rule() : 
+Rule rule() :
 { Literal h; Object b = Literal.LTrue; }
-{ h = literal() [ ":-" b = log_expr() ] 
-                              { return new Rule(h,(LogicalFormula)b); } 
+{ h = literal() [ ":-" b = log_expr() ]
+                              { return new Rule(h,(LogicalFormula)b); }
 }
 
-INorm norm() : 
+INorm norm() :
 { Literal h; Object b; Token id; }
 { <NORM> id = <ATOM> ":"
-  b = log_expr() 
-  "->"  
+  b = log_expr()
+  "->"
   ( h = fail() | h = obligation() )
                        {
-                         if (b.toString().equals("true"))  b = Literal.LTrue;  
-                         if (b.toString().equals("false")) b = Literal.LFalse;  
-                         return nFac.createNorm(id.image,h,(LogicalFormula)b); 
-                       }   
+                         if (b.toString().equals("true"))  b = Literal.LTrue;
+                         if (b.toString().equals("false")) b = Literal.LFalse;
+                         return nFac.createNorm(id.image,h,(LogicalFormula)b);
+                       }
 }
 
 Literal fail() :
 { Token k; Term t = null; Literal r; }
 {
-   k = <FAIL> 
+   k = <FAIL>
    "("
    t = term()
-   ")" 
+   ")"
                        { r = ASSyntax.createLiteral(NormativeProgram.FailFunctor, t);
-                         r.setSrcInfo(new SourceInfo(npSource, k.beginLine)); 
+                         r.setSrcInfo(new SourceInfo(npSource, k.beginLine));
                          if (dfp != null) { // && dfp.isRelevant(r.getPredicateIndicator())) {
                             return lFac.createNPLLiteral(r,dfp);
-                         } else {                         
+                         } else {
                             return r;
                          }
-                       } 
+                       }
 }
 
 Literal obligation() :
@@ -199,15 +199,15 @@ Literal obligation() :
    | k=<VAR>           { r.addTerm(new VarTerm(k.image)); }
    ) ","
    o = log_expr() ","  { r.addTerm( changeToAtom(o) ); }
-   o = log_expr() ","  { r.addTerm( changeToAtom(o) ); }     
+   o = log_expr() ","  { r.addTerm( changeToAtom(o) ); }
    o = log_expr()      { r.addTerm( changeToAtom(o) ); }
-   ")" 
+   ")"
                        { if (dfp != null) { // && dfp.isRelevant(r.getPredicateIndicator())) {
                             return lFac.createNPLLiteral(r,dfp);
-                         } else {                         
+                         } else {
                             return r;
                          }
-                       } 
+                       }
 }
 
 
@@ -215,21 +215,21 @@ Literal obligation() :
 Literal literal() :
 { Token k; List l = null; Literal r; ListTerm lt; }
 {
-  ( k=<ATOM> | k=<FAIL> | k=<OBLIGATION> | k=<PERMISSION> | k=<PROHIBITION> )    
+  ( k=<ATOM> | k=<FAIL> | k=<OBLIGATION> | k=<PERMISSION> | k=<PROHIBITION> )
                        { r = ASSyntax.createLiteral(k.image);
-                         r.setSrcInfo(new SourceInfo(npSource, k.beginLine)); 
-                         if (k.image.equals("true"))  r = Literal.LTrue;  
-                         if (k.image.equals("false")) r = Literal.LFalse;  
-                       } 
-  
+                         r.setSrcInfo(new SourceInfo(npSource, k.beginLine));
+                         if (k.image.equals("true"))  r = Literal.LTrue;
+                         if (k.image.equals("false")) r = Literal.LFalse;
+                       }
+
   [
     "(" l = terms()    { r.setTerms(l); }
-    ")"                
-  ] 
+    ")"
+  ]
   [
     lt = list()        { r.setAnnots(lt); }
   ]
-                       { 
+                       {
                          if (r.getFunctor().indexOf(".") >= 0) {
                             try {
                                return new InternalActionLiteral((Structure)r, (Agent)null);
@@ -238,26 +238,26 @@ Literal literal() :
                             }
                          } else if (dfp != null) { // && dfp.isRelevant(r.getPredicateIndicator())) {
                             return lFac.createNPLLiteral(r,dfp);
-                         } else {                         
+                         } else {
                             return r;
-                         } 
+                         }
                        }
 }
 
 List terms() :    { ArrayList listTerms = new ArrayList(); Term v;  }
 {
-  v=term()             { listTerms.add(v); } 
+  v=term()             { listTerms.add(v); }
   ( "," v=term()       { listTerms.add(v); }
-  )* 
-                       { listTerms.trimToSize(); 
-                         return listTerms; 
+  )*
+                       { listTerms.trimToSize();
+                         return listTerms;
                        }
 }
 
 Term term() :          { Object o; }
 {
-  ( o=list()           
-  | o=log_expr()       // log_expr includes literals/atoms/structures  
+  ( o=list()
+  | o=log_expr()       // log_expr includes literals/atoms/structures
   )
                        { return changeToAtom(o); }
 }
@@ -273,78 +273,78 @@ ListTermImpl list() :     { ListTermImpl lt = new ListTermImpl(); ListTerm last;
   [ "|"  ( K=<VAR>        { last.setNext(new VarTerm(K.image)); }
          | K=<UNNAMEDVAR> { last.setNext(UnnamedVar.create(K.image)); }
          | f=list()       { last = last.concat((ListTerm)f); }
-         )           
+         )
   ]
   ]
-  "]"                     { return lt; } 
+  "]"                     { return lt; }
 }
 Term term_in_list() :     { Object o; }
 {
-  ( o=list()        
-  | o=arithm_expr()     
+  ( o=list()
+  | o=arithm_expr()
   | o=string()
   )
-                          { return changeToAtom(o); }  
+                          { return changeToAtom(o); }
 }
 
 
 
 Object log_expr() :         { Object t1, t2; }
-{                   
-   t1 = log_expr_trm()         
+{
+   t1 = log_expr_trm()
    [  "|" t2 = log_expr()   { return new LogExpr((LogicalFormula)t1,LogicalOp.or,(LogicalFormula)t2); } ]
                             { return t1; }
 }
 
 Object log_expr_trm() :     { Object t1, t2; }
 {
-   t1 = log_expr_factor()    
+   t1 = log_expr_factor()
 [  "&" t2 = log_expr_trm()  { return new LogExpr((LogicalFormula)t1,LogicalOp.and,(LogicalFormula)t2); } ]
                             { return t1; }
 }
 
-Object log_expr_factor():             
+Object log_expr_factor():
                                     { Object t; }
 {
-(  
-  <TK_NOT> t = log_expr_factor()    { return new LogExpr(LogicalOp.not,(LogicalFormula)t); } 
- | 
-  t = rel_expr()                    { return t; } 
+(
+  <TK_NOT> t = log_expr_factor()    { return new LogExpr(LogicalOp.not,(LogicalFormula)t); }
+ |
+  t = rel_expr()                    { return t; }
 )
 }
 
 
-Object rel_expr() :               
+Object rel_expr() :
                                           {  Object op1 = null;
                                              Object op2 = null;
                                              RelationalOp operator = RelationalOp.none;
                                            }
 {
-    (   op1 = arithm_expr()                
+    (   op1 = arithm_expr()
       | op1 = string()
     )
-                     
+
     [
-       ( "<"                               { operator = RelationalOp.lt; } 
-       | "<="                              { operator = RelationalOp.lte; } 
-       | ">"                               { operator = RelationalOp.gt; } 
-       | ">="                              { operator = RelationalOp.gte; } 
-       | "=="                              { operator = RelationalOp.eq; } 
-       | "\\=="                            { operator = RelationalOp.dif; } 
-       | "="                               { operator = RelationalOp.unify; } 
-       | "=.."                             { operator = RelationalOp.literalBuilder; } 
+       ( "<"                               { operator = RelationalOp.lt; }
+       | "<="                              { operator = RelationalOp.lte; }
+       | ">"                               { operator = RelationalOp.gt; }
+       | ">="                              { operator = RelationalOp.gte; }
+       | "=="                              { operator = RelationalOp.eq; }
+       | "\\=="                            { operator = RelationalOp.dif; }
+       | "="                               { operator = RelationalOp.unify; }
+       | "=.."                             { operator = RelationalOp.literalBuilder; }
        )
 
-       (   op2 = arithm_expr()        
-         | op2 = string()               
+       (   op2 = arithm_expr()
+         | op2 = string()
          | op2 = list()
        )
 
                                            { if ( ((Term)op1).isInternalAction() && operator != RelationalOp.literalBuilder)
                                                 throw new ParseException(getSourceRef(op1)+" RelExpr: operand '"+op1+"' can not be an internal action.");
                                              if ( ((Term)op2).isInternalAction() && operator != RelationalOp.literalBuilder)
-                                                throw new ParseException(getSourceRef(op2)+" RelExpr: operand '"+op2+"' can not be an internal action.");                                             
-                                             return new RelExpr((Term)op1, operator, (Term)op2); 
+                                                throw new ParseException(getSourceRef(op2)+" RelExpr: operand '"+op2+"' can not be an internal action.");
+                                             return new RelExpr((Term)op1, operator, (Term)op2);
                                            }
     ]
                                            { return op1; }
@@ -354,7 +354,7 @@ Object rel_expr() :
 Object arithm_expr() :        { Object t1, t2; ArithmeticOp op;}
 {
    t1 = arithm_expr_trm()     { op = ArithmeticOp.none; }
-[  ( "+"                      { op = ArithmeticOp.plus;} 
+[  ( "+"                      { op = ArithmeticOp.plus;}
    | "-"                      { op = ArithmeticOp.minus;}
    )
    t2 = arithm_expr()         { if (!(t1 instanceof NumberTerm)) {
@@ -363,7 +363,7 @@ Object arithm_expr() :        { Object t1, t2; ArithmeticOp op;}
                                 if (!(t2 instanceof NumberTerm)) {
                                    throw new ParseException(getSourceRef(t2)+" ArithExpr: second operand '"+t2+"' is not numeric or variable.");
                                 }
-                                return new ArithExpr((NumberTerm)t1, op, (NumberTerm)t2); 
+                                return new ArithExpr((NumberTerm)t1, op, (NumberTerm)t2);
                               }
 ]                             { return t1; }
 }
@@ -371,7 +371,7 @@ Object arithm_expr() :        { Object t1, t2; ArithmeticOp op;}
 Object arithm_expr_trm() :      { Object t1, t2; ArithmeticOp op;}
 {
    t1 = arithm_expr_factor()    { op = ArithmeticOp.none; }
-[  ( "*"                        { op = ArithmeticOp.times; } 
+[  ( "*"                        { op = ArithmeticOp.times; }
    | "/"                        { op = ArithmeticOp.div; }
    | <TK_INTDIV>                { op = ArithmeticOp.intdiv; }
    | <TK_INTMOD>                { op = ArithmeticOp.mod; }
@@ -382,12 +382,12 @@ Object arithm_expr_trm() :      { Object t1, t2; ArithmeticOp op;}
                                   if (!(t2 instanceof NumberTerm)) {
                                     throw new ParseException(getSourceRef(t2)+" ArithTerm: second operand '"+t2+"' is not numeric or variable.");
                                   }
-                                  return new ArithExpr((NumberTerm)t1, op, (NumberTerm)t2); 
+                                  return new ArithExpr((NumberTerm)t1, op, (NumberTerm)t2);
                                 }
 ]                               { return t1; }
 }
 
-Object arithm_expr_factor():   
+Object arithm_expr_factor():
                                 { Object t1, t2; ArithmeticOp op;}
 {
    t1 = arithm_expr_simple()    { op = ArithmeticOp.none; }
@@ -399,23 +399,23 @@ Object arithm_expr_factor():
                                   if (!(t2 instanceof NumberTerm)) {
                                     throw new ParseException(getSourceRef(t2)+" ArithFactor: second operand '"+t2+"' is not numeric or variable.");
                                   }
-                                  return new ArithExpr((NumberTerm)t1, op, (NumberTerm)t2); 
+                                  return new ArithExpr((NumberTerm)t1, op, (NumberTerm)t2);
                                 }
 ]                               { return t1; }
 }
 
 
-Object arithm_expr_simple():    
+Object arithm_expr_simple():
                                 { Token K; Object t; VarTerm v; }
 {
  ( K = <NUMBER>                 { NumberTerm ni = ASSyntax.parseNumber(K.image);
-                                  ni.setSrcInfo(new SourceInfo(npSource, K.beginLine)); 
+                                  ni.setSrcInfo(new SourceInfo(npSource, K.beginLine));
                                   return ni;
                                 }
  | "-" t = arithm_expr_simple() { if (!(t instanceof NumberTerm)) {
                                     throw new ParseException(getSourceRef(t)+" The argument '"+t+"' of operator '-' is not numeric or variable.");
                                   }
-                                  return new ArithExpr(ArithmeticOp.minus, (NumberTerm)t); 
+                                  return new ArithExpr(ArithmeticOp.minus, (NumberTerm)t);
                                 }
  | "(" t = log_expr() ")"       { return t; }
  | v = var()                    { return v; }
@@ -429,7 +429,7 @@ VarTerm var():      { Token K; VarTerm v; ListTerm lt; }
  ( K = <VAR>        { v = new VarTerm(K.image); v.setSrcInfo(new SourceInfo(npSource, K.beginLine));}
  | K = <UNNAMEDVAR> { v = UnnamedVar.create(K.image); }
  )
- [ 
+ [
    lt = list()      { v.setAnnots(lt); }
  ]
                     { return v; }
@@ -437,25 +437,25 @@ VarTerm var():      { Token K; VarTerm v; ListTerm lt; }
 
 StringTerm string():{ Token k; StringTermImpl s; }
 {
-  k = <STRING>      { s = new StringTermImpl(k.image.substring(1,k.image.length()-1)); 
-                      s.setSrcInfo(new SourceInfo(npSource,k.beginLine)); 
+  k = <STRING>      { s = new StringTermImpl(k.image.substring(1,k.image.length()-1));
+                      s.setSrcInfo(new SourceInfo(npSource,k.beginLine));
                       return s;
-                    } 
+                    }
 }
 
 Term time():        { Token k; long t = -1; String u = null; }
 {
   "`"
   [ k = <NUMBER>    { t = Long.parseLong(k.image); }
-  ]  
-  [ k = <ATOM>      { u = k.image; }   
-  ]    
+  ]
+  [ k = <ATOM>      { u = k.image; }
+  ]
   "`"
                     { //if (u == null && t != 0)
                       //   throw new ParseException("no time unit can be used only with 0");
                       if (t == -1 && !u.equals("now") && !u.equals("never"))
-                         throw new ParseException("only 'now' and 'never' cannot have a number after @");                         
-                      return new TimeTerm(t,u); 
+                         throw new ParseException("only 'now' and 'never' cannot have a number after @");
+                      return new TimeTerm(t,u);
                     }
 }
 

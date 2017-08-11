@@ -128,7 +128,7 @@ eclipse {
         }
         file.whenMerged { cp ->
 	        logger.lifecycle "Removing duplicate classpath entries from eclipse for project '${project.name}'"
-	
+
 	        Map entryByPath = cp.entries.groupBy { entry -> entry.path }
 	        entryByPath.each { key, values ->
 	          if (values.size() > 1) {

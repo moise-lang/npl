@@ -16,7 +16,7 @@ public class Scope {
     private NormativeProgram   program = null;
     private Map<String,INorm>   norms  = new HashMap<String,INorm>();
     private Map<Literal,Scope> scopes = new HashMap<Literal,Scope>();
-    
+
     public Scope(Literal id, NormativeProgram np) {
         this.id = id;
         this.program = np;
@@ -27,14 +27,14 @@ public class Scope {
     public NormativeProgram getNP() {
         return program;
     }
-    
+
     public void addRule(Rule r) {
         rules.add(r);
     }
     public List<Rule> getRules() {
         return rules;
     }
-    
+
     public void addNorm(INorm n) {
         norms.put(n.getId(),n);
     }
@@ -47,7 +47,7 @@ public class Scope {
     public INorm getNorm(String id) {
         return norms.get(id);
     }
-    
+
     public void addScope(Scope s) {
         scopes.put(s.getId(),s);
     }
@@ -67,8 +67,8 @@ public class Scope {
         }
         return null;
     }
-    
-    
+
+
 
     public Scope getFather() {
         return father;
@@ -76,11 +76,11 @@ public class Scope {
     public void setFather(Scope s) {
         father = s;
     }
-    
+
     public int getNbFathers() {
         if (father == null)
             return 0;
-        else 
+        else
             return 1+father.getNbFathers();
     }
 
@@ -90,14 +90,14 @@ public class Scope {
         for (int i=0; i<getNbFathers(); i++)
             spaces.append("  ");
         String s = spaces.toString();
-        
+
         StringBuilder out = new StringBuilder();
         out.append(s+"scope "+id+" {\n");
-        for (Rule r: rules) 
+        for (Rule r: rules)
             out.append(s+"  "+r+".\n");
-        for (INorm n: norms.values()) 
+        for (INorm n: norms.values())
             out.append(s+"  "+n+".\n");
-        for (Scope sc: scopes.values()) 
+        for (Scope sc: scopes.values())
             out.append("\n"+sc);
         out.append(s+"}\n");
         return out.toString();

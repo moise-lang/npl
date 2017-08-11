@@ -20,10 +20,10 @@
          <h2 style="{$h-style}">Normative State</h2>
 
         <table border="0" cellspacing="3" cellpadding="6">
-        <tr style="{$trh-style}"> 
+        <tr style="{$trh-style}">
         <th valign="top" style="{$th-style}">state</th>
         <th valign="top" style="{$th-style}">agent</th>
-        <th valign="top" style="{$th-style}">maintenance condition</th> 
+        <th valign="top" style="{$th-style}">maintenance condition</th>
         <th valign="top" style="{$th-style}">aim</th>
         <th valign="top" style="{$th-style}">deadline</th>
         <th valign="top" style="{$th-style}">done at</th>
@@ -49,7 +49,7 @@
 
 <xsl:template match="deontic-modality">
     <tr style="{$trh-style}">
-    
+
     <td style="{$td-style}">
         <xsl:if test="position()=1">
             <b><xsl:value-of select="@state" /></b>
@@ -69,16 +69,16 @@
         </xsl:if>
         <xsl:value-of select="@aim" />
     </td>
-    <td style="{$td-style}"><xsl:value-of select="@ttf" /></td>    
+    <td style="{$td-style}"><xsl:value-of select="@ttf" /></td>
     <td style="{$td-style}"><xsl:value-of select="@done" /></td>
     <td style="{$td-style}"><xsl:apply-templates /></td>
-    </tr>  
+    </tr>
 </xsl:template>
 
 <xsl:template match="annotation">
-    <xsl:value-of select="@id" /> = 
+    <xsl:value-of select="@id" /> =
     <xsl:value-of select="@value" />
-    <br/> 
+    <br/>
 </xsl:template>
 
 </xsl:stylesheet>
