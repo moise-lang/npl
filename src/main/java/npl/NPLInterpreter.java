@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import npl.DeonticModality.State;
@@ -217,7 +218,7 @@ public class NPLInterpreter implements ToDOM {
             Iterator<Unifier> i = l.logicalConsequence(ag, new Unifier());
             return i.hasNext();
         } catch (ConcurrentModificationException e) {
-            System.out.println("*-*-* concurrent exception in NPLI holds method, I'll try again later....");
+            logger.log(Level.FINE, "*-*-* concurrent exception in NPLI holds method, I'll try again later....");
             // try again later
             try {
                 Thread.sleep(100);
@@ -305,8 +306,7 @@ public class NPLInterpreter implements ToDOM {
             try {
                 l.created(o.copy());
             } catch (Exception e) {
-                System.err.println("Error notifying normative listener "+l);
-                e.printStackTrace();
+                logger.log(Level.WARNING, "Error notifying normative listener "+l, e);
             }
     }
     private void notifyFulfilled(DeonticModality o) {
@@ -314,8 +314,7 @@ public class NPLInterpreter implements ToDOM {
             try {
                 l.fulfilled(o.copy());
             } catch (Exception e) {
-                System.err.println("Error notifying normative listener "+l);
-                e.printStackTrace();
+                logger.log(Level.WARNING, "Error notifying normative listener "+l, e);
             }
     }
     private void notifyNormFailure(Literal f) {
@@ -323,8 +322,7 @@ public class NPLInterpreter implements ToDOM {
             try {
                 l.failure((Structure)f.clone());
             } catch (Exception e) {
-                System.err.println("Error notifying normative listener "+l);
-                e.printStackTrace();
+                logger.log(Level.WARNING,"Error notifying normative listener "+l, e);
             }
     }
     private void notifyUnfulfilled(DeonticModality o) {
@@ -332,8 +330,7 @@ public class NPLInterpreter implements ToDOM {
             try {
                 l.unfulfilled(o.copy());
             } catch (Exception e) {
-                System.err.println("Error notifying normative listener "+l);
-                e.printStackTrace();
+                logger.log(Level.WARNING, "Error notifying normative listener "+l, e);
             }
     }
     private void notifyInactive(DeonticModality o) {
@@ -341,8 +338,7 @@ public class NPLInterpreter implements ToDOM {
             try {
                 l.inactive(o.copy());
             } catch (Exception e) {
-                System.err.println("Error notifying normative listener "+l);
-                e.printStackTrace();
+                logger.log(Level.WARNING, "Error notifying normative listener "+l, e);
             }
     }
 
@@ -420,8 +416,7 @@ public class NPLInterpreter implements ToDOM {
                 oblele.setAttribute("done", toff); //TimeTerm.toAbsTimeStr(toff));
             }
         } catch (Exception e) {
-            System.err.println("Error adding attribute in DOM for "+l+" "+state);
-            e.printStackTrace();
+            logger.log(Level.WARNING, "Error adding attribute in DOM for "+l+" "+state, e);
         }
 
         try {
@@ -439,8 +434,7 @@ public class NPLInterpreter implements ToDOM {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error adding annotations in DOM for "+l+" "+state);
-            e.printStackTrace();
+            logger.log(Level.WARNING, "Error adding annotations in DOM for "+l+" "+state, e);
         }
         return oblele;
     }
@@ -524,7 +518,7 @@ public class NPLInterpreter implements ToDOM {
                 if (o.isObligation()) {
                     // transition active -> fulfilled
                     if (o.getAg().isGround() && holds(o.getAim())) {
-                        if (!bb.remove(oasinbb)) System.out.println("ooops "+oasinbb+" should be removed 2");
+                        if (!bb.remove(oasinbb)) logger.log(Level.FINE,"ooops "+oasinbb+" should be removed 2");
                         o = o.copy();
                         o.setFulfilled();
                         bb.add(createState(o));
@@ -546,7 +540,7 @@ public class NPLInterpreter implements ToDOM {
                 } else if (o.isProhibition()) {
                     // transition active -> unfulfilled
                     if (o.getAg().isGround() && holds(o.getAim())) { // the case of a prohibition for one agent
-                        if (!bb.remove(oasinbb)) System.out.println("ooops "+oasinbb+" should be removed 2");
+                        if (!bb.remove(oasinbb)) logger.log(Level.FINE,"ooops "+oasinbb+" should be removed 2");
                         o = o.copy();
                         o.setUnfulfilled();
                         bb.add(createState(o));
@@ -576,7 +570,7 @@ public class NPLInterpreter implements ToDOM {
             for (DeonticModality o: active) {
                 if (!holds(o.getMaitenanceCondition()) || o.isPermission() && holds(o.getAim())) {
                     Literal oasinbb = createState(o);
-                    if (!bb.remove(oasinbb)) System.out.println("ooops "+oasinbb+" should be removed 1!");
+                    if (!bb.remove(oasinbb)) logger.log(Level.FINE,"ooops "+oasinbb+" should be removed 1!");
                     o.setInactive();
                     notifyInactive(o);
                 }
@@ -592,7 +586,7 @@ public class NPLInterpreter implements ToDOM {
             while (o != null) {
                 if (containsIgnoreDeadline(active, o)) { // deadline achieved, and still active
                     Literal oasinbb = createState(o);
-                    if (!bb.remove(oasinbb)) System.out.println("ooops 3 "+o+" should be removed (due the deadline), but it is not in the set of facts.");
+                    if (!bb.remove(oasinbb)) logger.log(Level.FINE,"ooops 3 "+o+" should be removed (due the deadline), but it is not in the set of facts.");
 
                     if (o.isObligation()) {
                         // transition for prohibition (active -> unfulfilled)
