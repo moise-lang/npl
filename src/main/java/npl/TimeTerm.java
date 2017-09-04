@@ -40,7 +40,7 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
         else if  (unit.startsWith("day"))
             time = new Date(t * 1000 * 60 * 60 * 24);
         else if  (unit.startsWith("year"))
-            time = new Date(t * 356 * 1000 * 60 * 60 * 24);
+            time = new Date(t * 365 * 1000 * 60 * 60 * 24);
     }
 
     @Override
