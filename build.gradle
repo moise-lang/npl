@@ -15,11 +15,11 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version '0.3-SNAPSHOT'
+version '0.3'
 group   'org.jacamo'
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
@@ -33,15 +33,15 @@ repositories {
     }*/
 }
 
-configurations {
+/*configurations {
     umljavadoc // see http://www.umlgraph.org/doc/indexw.html
-}
+}*/
 
 
 dependencies {
-    compile group: 'org.jason-lang', name: 'jason',    version: '2.2'
+    compile group: 'org.jason-lang', name: 'jason',    version: '2.3', transitive: false
     testCompile group: 'junit', name: 'junit', version: '4.+'
-    umljavadoc 'org.umlgraph:umlgraph:5.6'
+    //umljavadoc 'org.umlgraph:umlgraph:5.6'
 }
 
 sourceSets {
@@ -62,6 +62,7 @@ jar {
 
 clean {
     delete 'bin'
+    delete 'build'
 }
 
 
@@ -80,7 +81,16 @@ task example2 (type: JavaExec, dependsOn: classes) {
     classpath sourceSets.main.runtimeClasspath
 }
 
-task javadoc(overwrite: true, dependsOn: compileJava) {
+// the following lines is used to avoid errors while generating javadoc
+if (JavaVersion.current().isJava8Compatible()) {
+    allprojects {
+      tasks.withType(Javadoc) {
+        options.addStringOption('Xdoclint:none', '-quiet')
+      }
+    }
+}
+
+/*task javadoc(overwrite: true, dependsOn: compileJava) {
     setDescription('Generates Javadoc API documentation with UMLGraph diagrams')
     setGroup(JavaBasePlugin.DOCUMENTATION_GROUP)
 
@@ -106,7 +116,7 @@ task javadoc(overwrite: true, dependsOn: compileJava) {
             }
         }
     }
-}
+}*/
 
 publishing {
     publications {
