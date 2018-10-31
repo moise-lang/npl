@@ -1,5 +1,27 @@
 package npl;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import jason.RevisionFailedException;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Unifier;
@@ -13,27 +35,9 @@ import jason.asSyntax.Rule;
 import jason.asSyntax.Structure;
 import jason.asSyntax.Term;
 import jason.bb.BeliefBase;
+import jason.util.Pair;
 import jason.util.ToDOM;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.ConcurrentModificationException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import npl.DeonticModality.State;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * Interprets a NP for a particular scope
@@ -52,6 +56,8 @@ public class NPLInterpreter implements ToDOM {
 
     private ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1); // a thread that checks deadlines of obligations, permissions, ...
     private StateTransitions   oblUpdateThread;
+    
+    private Notifier           notifier;
 
     protected Logger logger = Logger.getLogger(NPLInterpreter.class.getName());
 
@@ -71,6 +77,8 @@ public class NPLInterpreter implements ToDOM {
         clearFacts();
         oblUpdateThread = new StateTransitions();
         oblUpdateThread.start();
+        
+        notifier = new Notifier();
     }
 
     public void stop() {
@@ -252,7 +260,8 @@ public class NPLInterpreter implements ToDOM {
                     //System.out.println("    solution "+u+" for "+n.getCondition());
                     Literal head = (Literal)n.getConsequence().capply(u);
                     if (head.getFunctor().equals(NormativeProgram.FailFunctor)) {
-                        notifyNormFailure(head);
+                        //notifyNormFailure(head);
+                        notifier.failure(head);
                         throw new NormativeFailureException((Structure)head);
                     }
                 }
@@ -278,14 +287,14 @@ public class NPLInterpreter implements ToDOM {
                                     newObl.add(obl);
                                     activeObl.add(obl);
                                     addInSchedule(obl);
-                                    notifyCreated(obl);
+                                    //notifyCreated(obl);
+                                    notifier.add(EventType.create, obl);
                                 }
                             }
                         }
                     }
                 }
             }
-
         }
         oblUpdateThread.update();
         return newObl;
@@ -301,6 +310,7 @@ public class NPLInterpreter implements ToDOM {
         }, ttf, TimeUnit.MILLISECONDS);
     }
 
+    /*
     private void notifyCreated(DeonticModality o) {
         for (NormativeListener l: listeners)
             try {
@@ -341,7 +351,7 @@ public class NPLInterpreter implements ToDOM {
                 logger.log(Level.WARNING, "Error notifying normative listener "+l, e);
             }
     }
-
+    */
 
     private Literal createState(DeonticModality o) {
         Literal s = ASSyntax.createLiteral(o.getState().name(), o);
@@ -460,7 +470,7 @@ public class NPLInterpreter implements ToDOM {
         private boolean           update = false;
         private List<DeonticModality>  active = null;
         private BeliefBase        bb;
-        private Queue<DeonticModality> toCheckUnfulfilled = new ConcurrentLinkedQueue<DeonticModality>();
+        private Queue<DeonticModality> toCheckUnfulfilled = new ConcurrentLinkedQueue<>();
 
         /** update the state of the obligations */
         synchronized void update() {
@@ -522,7 +532,8 @@ public class NPLInterpreter implements ToDOM {
                         o = o.copy();
                         o.setFulfilled();
                         bb.add(createState(o));
-                        notifyFulfilled(o);
+                        //notifyFulfilled(o);
+                        notifier.add(EventType.fulfilled, o);
                     } else {
                         List<DeonticModality> fuls = getFulfilledObligations();
                         Iterator<Unifier> i = o.getAim().logicalConsequence(ag, new Unifier());
@@ -533,7 +544,8 @@ public class NPLInterpreter implements ToDOM {
                                 o.incAgInstance();
                                 obl.setFulfilled();
                                 bb.add(createState(obl));
-                                notifyFulfilled(obl);
+                                //notifyFulfilled(obl);
+                                notifier.add(EventType.fulfilled, obl);
                             }
                         }
                     }
@@ -544,7 +556,8 @@ public class NPLInterpreter implements ToDOM {
                         o = o.copy();
                         o.setUnfulfilled();
                         bb.add(createState(o));
-                        notifyUnfulfilled(o);
+                        //notifyUnfulfilled(o);
+                        notifier.add(EventType.unfulfilled, o);
                     } else {
                         List<DeonticModality> unfuls = getUnFulfilledProhibitions();
                         Iterator<Unifier> i = o.getAim().logicalConsequence(ag, new Unifier());
@@ -555,7 +568,8 @@ public class NPLInterpreter implements ToDOM {
                                 o.incAgInstance();
                                 obl.setUnfulfilled();
                                 bb.add(createState(obl));
-                                notifyUnfulfilled(obl);
+                                //notifyUnfulfilled(obl);
+                                notifier.add(EventType.unfulfilled, obl);
                             }
                         }
                     }
@@ -572,7 +586,8 @@ public class NPLInterpreter implements ToDOM {
                     Literal oasinbb = createState(o);
                     if (!bb.remove(oasinbb)) logger.log(Level.FINE,"ooops "+oasinbb+" should be removed 1!");
                     o.setInactive();
-                    notifyInactive(o);
+                    //notifyInactive(o);
+                    notifier.add(EventType.inactive, o);
                 }
             }
         }
@@ -593,19 +608,22 @@ public class NPLInterpreter implements ToDOM {
                         if (o.getAgIntances() == 0) { // it is unfulfilled only if no agent instance has fulfilled the prohibition
                             o.setUnfulfilled();
                             bb.add(createState(o));
-                            notifyUnfulfilled(o);
+                            //notifyUnfulfilled(o);
+                            notifier.add(EventType.unfulfilled, o);
                         }
                     } else if (o.isPermission()) {
                         // transition for prohibition (active -> inactive)
                         o.setInactive();
                         bb.add(createState(o));
-                        notifyInactive(o);
+                        //notifyInactive(o);
+                        notifier.add(EventType.inactive, o);
                     } else {
                         // transition for prohibition (active -> fulfilled)
                         if (o.getAgIntances() == 0) { // it is fulfilled only if no agent instance has unfulfilled the prohibition
                             o.setFulfilled();
                             bb.add(createState(o));
-                            notifyFulfilled(o);
+                            //notifyFulfilled(o);
+                            notifier.add(EventType.fulfilled, o);
                         }
                     }
                     try {
@@ -632,5 +650,44 @@ public class NPLInterpreter implements ToDOM {
             }
         }
 
+    }
+    
+    enum EventType { create, fulfilled, unfulfilled, inactive } ;
+    
+    class Notifier extends Thread {
+        ExecutorService exec = Executors.newCachedThreadPool();
+        
+        void add(EventType t, DeonticModality o) { 
+            exec.execute(new Runnable() {
+                @Override 
+                public void run() {
+                    for (NormativeListener l: listeners)
+                        try {
+                            switch (t) {
+                            case create   :   l.created(o.copy());    break;
+                            case fulfilled:   l.fulfilled(o.copy());  break;
+                            case inactive:    l.inactive(o.copy());   break;
+                            case unfulfilled: l.unfulfilled(o.copy());break;
+                            }
+                        } catch (Exception e) {
+                            logger.log(Level.WARNING, "Error notifying normative listener "+l, e);
+                        }
+                }
+            });
+        }
+        void failure(Literal f) { 
+            exec.execute(new Runnable() {
+                @Override 
+                public void run() {
+                    for (NormativeListener l: listeners)
+                        try {
+                            l.failure((Structure)f.clone());
+                        } catch (Exception e) {
+                            logger.log(Level.WARNING, "Error notifying normative listener "+l, e);
+                        }
+                }
+            });
+        }
+        
     }
 }
