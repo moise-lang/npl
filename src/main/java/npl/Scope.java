@@ -11,11 +11,11 @@ import java.util.Map;
 
 public class Scope {
     private Literal       id;
-    private List<Rule>    rules = new ArrayList<Rule>();
+    private List<Rule>    rules = new ArrayList<>();
     private Scope         father = null;
     private NormativeProgram   program = null;
-    private Map<String,INorm>   norms  = new HashMap<String,INorm>();
-    private Map<Literal,Scope> scopes = new HashMap<Literal,Scope>();
+    private Map<String,INorm>   norms  = new HashMap<>();
+    private Map<Literal,Scope> scopes = new HashMap<>();
 
     public Scope(Literal id, NormativeProgram np) {
         this.id = id;

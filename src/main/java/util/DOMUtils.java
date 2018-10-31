@@ -47,7 +47,7 @@ public class DOMUtils {
         return null;
     }
     public static List<Element> getDOMDirectChilds(Element ele, String tagName) {
-        List<Element> r = new ArrayList<Element>();
+        List<Element> r = new ArrayList<>();
         NodeList nl = ele.getChildNodes();
         if (nl != null) {
             for (int i=0; i<nl.getLength(); i++) {

@@ -8,12 +8,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -35,7 +33,6 @@ import jason.asSyntax.Rule;
 import jason.asSyntax.Structure;
 import jason.asSyntax.Term;
 import jason.bb.BeliefBase;
-import jason.util.Pair;
 import jason.util.ToDOM;
 import npl.DeonticModality.State;
 
@@ -52,7 +49,7 @@ public class NPLInterpreter implements ToDOM {
 
     private Object           syncTransState = new Object();
 
-    List<NormativeListener>  listeners = new CopyOnWriteArrayList<NormativeListener>();
+    List<NormativeListener>  listeners = new CopyOnWriteArrayList<>();
 
     private ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1); // a thread that checks deadlines of obligations, permissions, ...
     private StateTransitions   oblUpdateThread;
@@ -71,8 +68,8 @@ public class NPLInterpreter implements ToDOM {
 
     public void init() {
         ag              = new Agent();
-        regimentedNorms = new HashMap<String,INorm>();
-        regulativeNorms = new HashMap<String,INorm>();
+        regimentedNorms = new HashMap<>();
+        regulativeNorms = new HashMap<>();
         ag.initAg();
         clearFacts();
         oblUpdateThread = new StateTransitions();
@@ -199,7 +196,7 @@ public class NPLInterpreter implements ToDOM {
     public List<DeonticModality> getInactiveProhibitions() { return getByState(INACPI, NormativeProgram.ProFunctor); }
 
     private List<DeonticModality> getByState(PredicateIndicator state, String kind) {
-        List<DeonticModality> ol = new ArrayList<DeonticModality>();
+        List<DeonticModality> ol = new ArrayList<>();
         synchronized (syncTransState) {
             Iterator<Literal> i = ag.getBB().getCandidateBeliefs(state);
             if (i != null) {
@@ -250,7 +247,7 @@ public class NPLInterpreter implements ToDOM {
      */
     public Collection<DeonticModality> verifyNorms() throws NormativeFailureException {
         BeliefBase bb = ag.getBB();
-        List<DeonticModality> newObl = new ArrayList<DeonticModality>();
+        List<DeonticModality> newObl = new ArrayList<>();
         synchronized (syncTransState) {
             // test all fails first
             for (INorm n: regimentedNorms.values()) {
@@ -670,7 +667,7 @@ public class NPLInterpreter implements ToDOM {
                             case unfulfilled: l.unfulfilled(o.copy());break;
                             }
                         } catch (Exception e) {
-                            logger.log(Level.WARNING, "Error notifying normative listener "+l, e);
+                            logger.log(Level.WARNING, "Error notifying "+t+":"+o+" to normative listener "+l, e);
                         }
                 }
             });
@@ -683,7 +680,7 @@ public class NPLInterpreter implements ToDOM {
                         try {
                             l.failure((Structure)f.clone());
                         } catch (Exception e) {
-                            logger.log(Level.WARNING, "Error notifying normative listener "+l, e);
+                            logger.log(Level.WARNING, "Error notifying "+f+" to normative listener "+l, e);
                         }
                 }
             });
