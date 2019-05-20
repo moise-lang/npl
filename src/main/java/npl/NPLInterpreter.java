@@ -120,22 +120,30 @@ public class NPLInterpreter implements ToDOM {
             if (getNorm(id) != null) {
                 if (autoIds) {
                     while (getNorm(id) != null)
-                        id = id + id;
+                        id = id + id;                    
                 } else {
                     logger.warning("Norm with id "+id+" already exists! It will be replaced by "+n);
                 }
             }
 
             // add norm in the proper set
-            if (n.getConsequence().getFunctor().equals(NormativeProgram.FailFunctor))
-                regimentedNorms.put(id, n.clone());
-            else
-                regulativeNorms.put(id, n.clone());
+            addNorm(id,n);
         }
 
         if (scope.getFather() != null)
             loadNP(scope.getFather(), autoIds);
     }
+    
+    public void addNorm(INorm n) {
+        addNorm(n.getId(),n);
+    }
+    public void addNorm(String id, INorm n) {
+        if (n.getConsequence().getFunctor().equals(NormativeProgram.FailFunctor))
+            regimentedNorms.put(id, n.clone());
+        else
+            regulativeNorms.put(id, n.clone());     
+    }
+            
 
     /** removes all facts/rules of the normative state */
     public void clearFacts() {

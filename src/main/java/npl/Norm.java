@@ -1,7 +1,10 @@
 package npl;
 
+import java.io.StringReader;
+
 import jason.asSyntax.Literal;
 import jason.asSyntax.LogicalFormula;
+import npl.parser.nplp;
 
 public class Norm extends AbstractNorm {
 
@@ -20,7 +23,7 @@ public class Norm extends AbstractNorm {
      */
     public static NormFactory getFactory() {
         return new NormFactory() {
-            public Norm createNorm(String id, Literal consequence, LogicalFormula activationCondition) {
+            public INorm createNorm(String id, Literal consequence, LogicalFormula activationCondition) {
                 boolean consequenceIsFailure = consequence.getFunctor().equals(NormativeProgram.FailFunctor);
                 if (!consequenceIsFailure) {
                     String maintenanceConditionFunctor = ((Literal) consequence.getTerm(1)).getFunctor();
@@ -29,6 +32,11 @@ public class Norm extends AbstractNorm {
                     }
                 }
                 return new Norm(id, consequence, activationCondition);
+            }
+            public INorm parseNorm(String norm, DynamicFactsProvider dfp) throws Exception {
+                nplp parser = new nplp(new StringReader(norm));
+                parser.setDFP(dfp);
+                return parser.norm();
             }
         };
     }

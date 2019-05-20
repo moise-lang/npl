@@ -32,6 +32,9 @@ PARSER_BEGIN(nplp) // NPL parser
     public static void setNormFactory(NormFactory l) {
         nFac = l;
     }
+    public void setDFP(DynamicFactsProvider dfp) {
+        this.dfp = dfp;
+    }
 
     private String getSourceRef(SourceInfo s) {
         if (s == null)

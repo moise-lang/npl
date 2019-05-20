@@ -234,3 +234,31 @@ task zipRel(type: Zip, dependsOn: copyRel) {
     from 'build/npl-'+project.version
     baseName 'npl'
 }
+
+task publishMavenGitHub(dependsOn: [ 'build', 'publishToMavenLocal']) {
+  doLast {
+    def wdir = System.getProperty("user.home")+'/.m2/repository/org/jacamo/npl'
+    def rdir = '../jacamo-mvn-repo'
+    exec {
+        commandLine 'git', 'pull'
+        workingDir rdir
+    }
+    copy {
+        from wdir
+        into rdir + '/org/jacamo/npl'
+    }
+    exec {
+        commandLine 'git', 'add', '*'
+        workingDir rdir
+    }
+    exec {
+        commandLine 'git', 'commit', '-a', '-m', 'new version of NPL '+project.version
+        workingDir rdir
+    }
+    exec {
+        commandLine 'git', 'push'
+        workingDir rdir
+    }
+  }
+}
+
