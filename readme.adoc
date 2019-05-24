@@ -15,7 +15,6 @@ Some built releases are available at https://github.com/moise-lang/npl/releases[
 	git clone https://github.com/moise-lang/npl.git
 	cd npl
 	gradle build
-	gradle eclipse
 
 To run the examples:
 

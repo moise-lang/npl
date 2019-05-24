@@ -1,5 +1,9 @@
 = Release Notes for NPL
 
+== Version 0.4
+
+- minor improvements in the API
+
 == Version 0.3
 
 - both the norm and the unifier used to create an obligation are added as an annotation.
