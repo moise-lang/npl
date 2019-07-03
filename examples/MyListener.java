@@ -1,9 +1,9 @@
 import jason.asSyntax.Structure;
-import npl.DefaultNormativeListener;
 import npl.DeonticModality;
+import npl.NormativeListener;
 
 /** very simple normative listener that print messages for normative events */
-class MyListener extends DefaultNormativeListener {
+class MyListener implements NormativeListener {
     @Override
     public void created(DeonticModality o) {
         System.out.println("created: "+o);

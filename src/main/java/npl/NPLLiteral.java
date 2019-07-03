@@ -37,7 +37,7 @@ public class NPLLiteral extends LiteralImpl {
     @Override
     public Iterator<Unifier> logicalConsequence(Agent ag, Unifier un) {
         if (dfp != null && dfp.isRelevant(getPredicateIndicator()))
-            return dfp.consult(this, un);
+            return dfp.consult(this, un); // TODO: if false, consider super?
         else
             return super.logicalConsequence(ag, un);
     }

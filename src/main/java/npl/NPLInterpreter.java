@@ -41,7 +41,7 @@ import npl.DeonticModality.State;
  *
  * @author jomi
  */
-public class NPLInterpreter implements ToDOM {
+public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
 
     private Agent            ag = null; // use a Jason agent to store the facts (BB)
     private Map<String,INorm> regimentedNorms = null; // norms with failure consequence
@@ -221,6 +221,17 @@ public class NPLInterpreter implements ToDOM {
         return ol;
     }
 
+    @Override
+    public boolean isRelevant(PredicateIndicator pi) {
+        // TODO Auto-generated method stub
+        return pi.equals(ACTPI);
+    }
+    
+    @Override
+    public Iterator<Unifier> consult(Literal l, Unifier u) {
+        // TODO Auto-generated method stub
+        return consultFromCollection(l, u, getActive());
+    }
 
     public Agent getAg() {
         return ag;
