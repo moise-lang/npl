@@ -223,14 +223,24 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
 
     @Override
     public boolean isRelevant(PredicateIndicator pi) {
-        // TODO Auto-generated method stub
-        return pi.equals(ACTPI);
+        return pi.equals(ACTPI) || pi.equals(FFPI) || pi.equals(UFPI) || pi.equals(INACPI);
     }
     
     @Override
     public Iterator<Unifier> consult(Literal l, Unifier u) {
-        // TODO Auto-generated method stub
-        return consultFromCollection(l, u, getActive());
+        List<Unifier> ol = new ArrayList<>(); // TODO: use an iterator instead of list, lazy approach
+        synchronized (syncTransState) {
+            Iterator<Literal> i = ag.getBB().getCandidateBeliefs(l,u);
+            if (i != null) {
+                while (i.hasNext()) {
+                    Unifier un = u.clone();
+                    if (un.unifies(l, i.next())) {
+                        ol.add(un);
+                    }
+                }
+            }
+        }
+        return ol.iterator();
     }
 
     public Agent getAg() {
