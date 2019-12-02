@@ -100,6 +100,8 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     public void loadNP(Scope scope, boolean autoIds) {
         if (ag == null)
             init();
+        
+        logger = Logger.getLogger(NPLInterpreter.class.getName()+"_"+scope.getId());
 
         BeliefBase bb = ag.getBB();
 
@@ -295,7 +297,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                     if (!containsIgnoreDeadline(activeObl, obl)) { // is it a new obligation?
                         if (obl.maintContFromNorm || holds(obl.getMaitenanceCondition())) { // is the maintenance condition true, avoids the creation of unnecessary obligations
                             if ( (obl.isObligation() && !holds(obl.getAim())) || // that is an obligation not achieved yet
-                                  obl.isPermission()                          || // or a permission
+                                 (obl.isPermission() && !holds(obl.getAim())) || // or a permission not achieved yet
                                   obl.isProhibition()                            // or a prohibition
                                ) {
                                 obl.setActive();
@@ -598,9 +600,10 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         private void updateInactive() {
             active = getActive();
             for (DeonticModality o: active) {
-                if (!holds(o.getMaitenanceCondition()) || o.isPermission() && holds(o.getAim())) {
+                if (!holds(o.getMaitenanceCondition()) || (o.isPermission() && holds(o.getAim()))) {
                     Literal oasinbb = createState(o);
-                    if (!bb.remove(oasinbb)) logger.log(Level.FINE,"ooops "+oasinbb+" should be removed 1!");
+                    if (!bb.remove(oasinbb)) 
+                        logger.log(Level.INFO,"ooops "+oasinbb+" should be removed 1!");
                     o.setInactive();
                     //notifyInactive(o);
                     notifier.add(EventType.inactive, o);
@@ -671,9 +674,9 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     enum EventType { create, fulfilled, unfulfilled, inactive } ;
     
     class Notifier extends Thread {
-        ExecutorService exec = Executors.newCachedThreadPool();
+        ExecutorService exec = Executors.newSingleThreadExecutor(); //Executors.newCachedThreadPool();
         
-        void add(EventType t, DeonticModality o) { 
+        void add(EventType t, DeonticModality o) {
             exec.execute(new Runnable() {
                 @Override 
                 public void run() {
