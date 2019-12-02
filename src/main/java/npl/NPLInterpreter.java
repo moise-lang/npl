@@ -674,7 +674,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     enum EventType { create, fulfilled, unfulfilled, inactive } ;
     
     class Notifier extends Thread {
-        ExecutorService exec = Executors.newSingleThreadExecutor(); //Executors.newCachedThreadPool();
+        ExecutorService exec = Executors.newFixedThreadPool(4); //SingleThreadExecutor(); //Executors.newCachedThreadPool();
         
         void add(EventType t, DeonticModality o) {
             exec.execute(new Runnable() {
