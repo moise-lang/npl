@@ -23,15 +23,16 @@ import npl.parser.nplp;
 public class Example3 {
 
     NormativeProgram  np          = new NormativeProgram(); // where the parser will place the result of parsing (norms, rules, ....)
-    NPLInterpreter    interpreter = new NPLInterpreter(); // the NPL interpreter
-    BFacts            facts       = new BFacts(); // the class that evaluates values for predicate b/1
+    NPLInterpreter    interpreter = new NPLInterpreter();   // the NPL interpreter
+    
+    BFacts            facts       = new BFacts();           // the class that evaluates values for predicate b/1 (a dynamic fact)
 
     public static void main(String[] args) throws Exception {
         new Example3().run();
     }
 
     public void run() throws Exception {
-        // parsing
+        // parsing (in this case the program has only some facts and no norm)
         nplp parser = new nplp(new StringReader(
         		"scope main {\n" + 
         		"    a(2).\n" + 
@@ -39,14 +40,12 @@ public class Example3 {
         		"    student(carlos,3).\n" + 
         		"}"));
         parser.program(np, facts);
-        System.out.println(np);
 
         // loads the program into the interpreter
         interpreter.loadNP(np.getRoot());
 
-        // changes b value to trigger the first norm (n1)
+        // set value of B (a Dynamic Fact)
         facts.setBValue(2);
-        interpreter.verifyNorms();
 
         // consult NPL
         testFormula("student(bob,2)");
