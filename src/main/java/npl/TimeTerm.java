@@ -1,18 +1,19 @@
 package npl;
 
-import jason.asSemantics.Unifier;
-import jason.asSyntax.DefaultTerm;
-import jason.asSyntax.NumberTerm;
-import jason.asSyntax.Term;
-
 import java.util.Date;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import jason.asSemantics.Unifier;
+import jason.asSyntax.DefaultTerm;
+import jason.asSyntax.NumberTerm;
+import jason.asSyntax.Term;
+
 /** A Jason Term that represent a moment on time */
 public class TimeTerm extends DefaultTerm implements NumberTerm {
-
+    private static final long serialVersionUID = -5935273329840616372L;
+    
     Date time; // time == null means 'now'
     final long   t;
     final String unit;
@@ -175,4 +176,8 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
         return u;
     }
 
+    @Override
+    public String getAsJSON(String identation) {
+        return toString();
+    }
 }
