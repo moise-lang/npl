@@ -5,40 +5,54 @@
 */
 
 plugins {
-  id "ca.coglinc.javacc" version "2.3.1"
+  id "ca.coglinc.javacc" version "2.4.0"
   // see https://github.com/johnmartel/javaccPlugin
 }
 
 defaultTasks 'jar'
 
-apply plugin: 'java'
+apply plugin: 'java-library'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
 version '0.5'
 group   'org.jacamo'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(15)
+    }
+}
 
 repositories {
     mavenCentral()
 
-    maven {
-        url "http://jacamo.sourceforge.net/maven2"
-    }
+    maven { url "https://raw.githubusercontent.com/jacamo-lang/mvn-repo/master" }
+    maven { url 'https://repo.gradle.org/gradle/libs-releases' }
+    //maven { url "http://jacamo.sourceforge.net/maven2" }
 }
 
 dependencies {
-    compile group: 'org.jason-lang' , name: 'jason'   , version: '2.5.1' , changing: true, transitive: false
-    testCompile group: 'junit', name: 'junit', version: '4.+'
+    api('org.jason:jason:3.1') {
+       exclude group: 'net.sf.ingenias', module: 'jade'
+    }
+    testImplementation('junit:junit:4.12')
+
+    implementation group: 'javax.json', name: 'javax.json-api', version: '1.1.4'
+    implementation group: 'org.glassfish', name: 'javax.json', version: '1.1.4'
+
     //umljavadoc 'org.umlgraph:umlgraph:5.6'
 }
 
 sourceSets {
     main {
         java {
-            srcDirs 'src/main/java', 'examples'
+            srcDir 'src/main/java'
+            srcDir 'build/generated/javacc'
+            srcDir 'examples'
+        }
+        resources {
+            srcDir 'src/resources'
         }
     }
 }
@@ -70,15 +84,6 @@ task example1 (type: JavaExec, dependsOn: classes) {
 task example2 (type: JavaExec, dependsOn: classes) {
     main = 'Example2'
     classpath sourceSets.main.runtimeClasspath
-}
-
-// the following lines is used to avoid errors while generating javadoc
-if (JavaVersion.current().isJava8Compatible()) {
-    allprojects {
-      tasks.withType(Javadoc) {
-        options.addStringOption('Xdoclint:none', '-quiet')
-      }
-    }
 }
 
 /*task javadoc(overwrite: true, dependsOn: compileJava) {
@@ -134,6 +139,7 @@ publishing {
     }
 }
 
+/*
 eclipse {
     classpath {
         downloadJavadoc = true
@@ -161,6 +167,7 @@ eclipse {
 	   }
     }
 }
+*/
 
 compileJavacc {
     inputDirectory = file('src/main/javacc')

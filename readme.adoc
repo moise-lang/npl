@@ -9,17 +9,16 @@ This language is used to implement the organisational platform for http://moise.
 
 == Installation
 
-Some built releases are available at https://github.com/moise-lang/npl/releases[GitHub] and the source code can be used with the following commands (https://gradle.org[gradle] is required).
-
+Some built releases are available at https://github.com/moise-lang/npl/releases[GitHub] and the source code can be used with the following commands:
 
 	git clone https://github.com/moise-lang/npl.git
 	cd npl
-	gradle build
+	./gradlew build
 
 To run the examples:
 
-	gradle example0
-	gradle example1
+	./gradlew example0
+	./gradlew example1
 	...
 
 image::doc/figures/s1.png[ScreenShot]

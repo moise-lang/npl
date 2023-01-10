@@ -2,6 +2,9 @@ package npl;
 
 import java.util.Date;
 
+import javax.json.Json;
+import javax.json.JsonValue;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -10,10 +13,13 @@ import jason.asSyntax.DefaultTerm;
 import jason.asSyntax.NumberTerm;
 import jason.asSyntax.Term;
 
+import javax.json.Json;
+import javax.json.JsonValue;
+
 /** A Jason Term that represent a moment on time */
 public class TimeTerm extends DefaultTerm implements NumberTerm {
     private static final long serialVersionUID = -5935273329840616372L;
-    
+
     Date time; // time == null means 'now'
     final long   t;
     final String unit;
@@ -175,9 +181,9 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
         u.appendChild(document.createTextNode(toString()));
         return u;
     }
-
-    @Override
-    public String getAsJSON(String identation) {
-        return toString();
+    
+    public JsonValue getAsJson() {
+        return Json.createValue( toString() );      
     }
+
 }
