@@ -12,7 +12,6 @@ plugins {
 defaultTasks 'jar'
 
 apply plugin: 'java-library'
-apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
 version '0.5'
@@ -72,17 +71,17 @@ clean {
 
 
 task example0 (type: JavaExec, dependsOn: classes) {
-    main = 'Example0'
+    mainClass = 'Example0'
     classpath sourceSets.main.runtimeClasspath
 }
 
 task example1 (type: JavaExec, dependsOn: classes) {
-    main = 'Example1'
+    mainClass = 'Example1'
     classpath sourceSets.main.runtimeClasspath
 }
 
 task example2 (type: JavaExec, dependsOn: classes) {
-    main = 'Example2'
+    mainClass = 'Example2'
     classpath sourceSets.main.runtimeClasspath
 }
 
