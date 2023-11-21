@@ -27,7 +27,7 @@ public class DeonticModality extends LiteralImpl {
     Unifier u; // the unifier used in the activation of the norm
     State s = State.none;
     int agInstances = 0; // when the Ag is a var, this field count how many
-                            // agent instances where latter created
+                            // agent instances where created
     boolean maintContFromNorm = false;
 
     private static Unifier emptyUnif = new Unifier();
