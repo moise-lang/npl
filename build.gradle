@@ -57,7 +57,7 @@ sourceSets {
 }
 
 jar {
-    baseName 'npl'
+    //archiveBaseName 'npl'
 
     // exclude files from example
     exclude('*.class')
@@ -113,16 +113,20 @@ task example2 (type: JavaExec, dependsOn: classes) {
     }
 }*/
 
-task javadocJar (type: Jar, dependsOn: javadoc) {
-    baseName 'npl'
-    classifier = 'javadoc'
-    from '${docsDir}/../../doc/api'
-}
+// task javadocJar (type: Jar, dependsOn: javadoc) {
+//     // baseName 'npl'
+//     classifier = 'javadoc'
+//     from '${docsDir}/../../doc/api'
+// }
 
-task sourceJar (type : Jar) {
-    baseName 'npl'
-    classifier = 'sources'
-    from sourceSets.main.allSource
+// task sourceJar (type : Jar) {
+//     // baseName 'npl'
+//     classifier = 'sources'
+//     from sourceSets.main.allSource
+// }
+
+artifacts {
+    archives jar //, sourceJar, javadocJar
 }
 
 
@@ -130,8 +134,8 @@ publishing {
     publications {
         maven(MavenPublication) {
             from components.java
-			artifact sourceJar
-			artifact javadocJar
+			// artifact sourceJar
+			// artifact javadocJar
 
             artifactId 'npl'
         }
@@ -239,7 +243,7 @@ task copyRel {
 // creates a zip file for a release
 task zipRel(type: Zip, dependsOn: copyRel) {
     from 'build/npl-'+project.version
-    baseName 'npl'
+    // baseName 'npl'
 }
 
 task publishMavenGitHub(dependsOn: [ 'build', 'publishToMavenLocal']) {
