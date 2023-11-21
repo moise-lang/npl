@@ -34,7 +34,7 @@ import jason.asSyntax.Structure;
 import jason.asSyntax.Term;
 import jason.bb.BeliefBase;
 import jason.util.ToDOM;
-import npl.DeonticModality.State;
+import npl.NormInstance.State;
 
 /**
  * Interprets a NP for a particular scope
@@ -105,7 +105,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
 
         BeliefBase bb = ag.getBB();
 
-        for (Rule r: scope.getRules()) {
+        for (Rule r: scope.getInferenceRules()) {
             // normalise rules with empty body
             Literal l;
             if (r.getBody().equals(Literal.LTrue) && r.getHead().isGround())
@@ -181,39 +181,39 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
 
 
     /** get active obligations, permissions and prohibitions  */
-    public List<DeonticModality> getActive() { return getByState(ACTPI, null); }
-    public List<DeonticModality> getFulfilled() { return getByState(FFPI, null);  }
-    public List<DeonticModality> getUnFulfilled() { return getByState(UFPI, null); }
-    public List<DeonticModality> getInactive() { return getByState(INACPI, null); }
+    public List<NormInstance> getActive() { return getByState(ACTPI, null); }
+    public List<NormInstance> getFulfilled() { return getByState(FFPI, null);  }
+    public List<NormInstance> getUnFulfilled() { return getByState(UFPI, null); }
+    public List<NormInstance> getInactive() { return getByState(INACPI, null); }
 
     /** get active obligations (those not fulfilled) */
-    public List<DeonticModality> getActiveObligations() { return getByState(ACTPI, NormativeProgram.OblFunctor); }
+    public List<NormInstance> getActiveObligations() { return getByState(ACTPI, NormativeProgram.OblFunctor); }
 
     /** get fulfilled obligations */
-    public List<DeonticModality> getFulfilledObligations() { return getByState(FFPI, NormativeProgram.OblFunctor);  }
+    public List<NormInstance> getFulfilledObligations() { return getByState(FFPI, NormativeProgram.OblFunctor);  }
 
     /** get unfulfilled obligations */
-    public List<DeonticModality> getUnFulfilledObligations() { return getByState(UFPI, NormativeProgram.OblFunctor); }
+    public List<NormInstance> getUnFulfilledObligations() { return getByState(UFPI, NormativeProgram.OblFunctor); }
 
     /** get fulfilled obligations */
-    public List<DeonticModality> getInactiveObligations() { return getByState(INACPI, NormativeProgram.OblFunctor); }
+    public List<NormInstance> getInactiveObligations() { return getByState(INACPI, NormativeProgram.OblFunctor); }
 
-    public List<DeonticModality> getActivePermissions() { return getByState(ACTPI, NormativeProgram.PerFunctor); }
+    public List<NormInstance> getActivePermissions() { return getByState(ACTPI, NormativeProgram.PerFunctor); }
 
-    public List<DeonticModality> getActiveProhibitions() { return getByState(ACTPI, NormativeProgram.ProFunctor); }
-    public List<DeonticModality> getFulfilledProhibitions() { return getByState(FFPI, NormativeProgram.ProFunctor);  }
-    public List<DeonticModality> getUnFulfilledProhibitions() { return getByState(UFPI, NormativeProgram.ProFunctor); }
-    public List<DeonticModality> getInactiveProhibitions() { return getByState(INACPI, NormativeProgram.ProFunctor); }
+    public List<NormInstance> getActiveProhibitions() { return getByState(ACTPI, NormativeProgram.ProFunctor); }
+    public List<NormInstance> getFulfilledProhibitions() { return getByState(FFPI, NormativeProgram.ProFunctor);  }
+    public List<NormInstance> getUnFulfilledProhibitions() { return getByState(UFPI, NormativeProgram.ProFunctor); }
+    public List<NormInstance> getInactiveProhibitions() { return getByState(INACPI, NormativeProgram.ProFunctor); }
 
-    private List<DeonticModality> getByState(PredicateIndicator state, String kind) {
-        List<DeonticModality> ol = new ArrayList<>();
+    private List<NormInstance> getByState(PredicateIndicator state, String kind) {
+        List<NormInstance> ol = new ArrayList<>();
         synchronized (syncTransState) {
             Iterator<Literal> i = ag.getBB().getCandidateBeliefs(state);
             if (i != null) {
                 while (i.hasNext()) {
                     Literal b = i.next();
                     if (b.hasSource(NormAtom)) {
-                        DeonticModality o = (DeonticModality)b.getTerm(0);
+                        NormInstance o = (NormInstance)b.getTerm(0);
                         if (kind == null || o.getFunctor().equals(kind))
                             ol.add(o);
                     }
@@ -276,9 +276,9 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
      *
      * @return list of new obligations, permissions or prohibitions
      */
-    public Collection<DeonticModality> verifyNorms() throws NormativeFailureException {
+    public Collection<NormInstance> verifyNorms() throws NormativeFailureException {
         BeliefBase bb = ag.getBB();
-        List<DeonticModality> newObl = new ArrayList<>();
+        List<NormInstance> newObl = new ArrayList<>();
         synchronized (syncTransState) {
             // test all fails first
             for (INorm n: regimentedNorms.values()) {
@@ -295,14 +295,14 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                 }
             }
 
-            List<DeonticModality> activeObl = getActive();
+            List<NormInstance> activeObl = getActive();
 
             // -- computes new obligations, permissions, and prohibitions
             for (INorm n: regulativeNorms.values()) {
                 Iterator<Unifier> i = n.getCondition().logicalConsequence(ag, new Unifier());
                 while (i.hasNext()) {
                     Unifier u = i.next();
-                    DeonticModality obl = new DeonticModality((Literal)n.getConsequence(), u, n);
+                    NormInstance obl = new NormInstance((Literal)n.getConsequence(), u, n);
                     // check if already in BB
                     if (!containsIgnoreDeadline(activeObl, obl)) { // is it a new obligation?
                         if (obl.maintContFromNorm || holds(obl.getMaitenanceCondition())) { // is the maintenance condition true, avoids the creation of unnecessary obligations
@@ -328,7 +328,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         return newObl;
     }
 
-    private void addInSchedule(final DeonticModality o) {
+    private void addInSchedule(final NormInstance o) {
         long ttf = o.getDeadline() - System.currentTimeMillis();
 
         scheduler.schedule(new Runnable() {
@@ -381,14 +381,14 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     }
     */
 
-    private Literal createState(DeonticModality o) {
+    private Literal createState(NormInstance o) {
         Literal s = ASSyntax.createLiteral(o.getState().name(), o);
         s.addSource(NormAtom);
         return s;
     }
 
-    private boolean containsIgnoreDeadline(Collection<DeonticModality> list, DeonticModality obl) {
-        for (DeonticModality l: list)
+    private boolean containsIgnoreDeadline(Collection<NormInstance> list, NormInstance obl) {
+        for (NormInstance l: list)
             if (l.equalsIgnoreDeadline(obl))
                 return true;
         return false;
@@ -422,17 +422,17 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
 
     public Element getAsDOM(Document document) {
         Element ele = (Element) document.createElement("normative-state");
-        for (DeonticModality l: getUnFulfilled())
+        for (NormInstance l: getUnFulfilled())
             ele.appendChild( obligation2dom(document, l, State.unfulfilled, true));
-        for (DeonticModality l: getActive())
+        for (NormInstance l: getActive())
             ele.appendChild( obligation2dom(document, l, State.active, true));
-        for (DeonticModality l: getFulfilled())
+        for (NormInstance l: getFulfilled())
             ele.appendChild( obligation2dom(document, l, State.fulfilled, false));
-        for (DeonticModality l: getInactive())
+        for (NormInstance l: getInactive())
             ele.appendChild( obligation2dom(document, l, State.inactive, false));
         return ele;
     }
-    private Element obligation2dom(Document document, DeonticModality l, State state, boolean reltime) {
+    private Element obligation2dom(Document document, NormInstance l, State state, boolean reltime) {
         Element oblele = (Element) document.createElement("deontic-modality");
         try {
             oblele.setAttribute("modality", l.getFunctor());
@@ -496,9 +496,9 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     class StateTransitions extends Thread {
 
         private boolean           update = false;
-        private List<DeonticModality>  active = null;
+        private List<NormInstance>  active = null;
         private BeliefBase        bb;
-        private Queue<DeonticModality> toCheckUnfulfilled = new ConcurrentLinkedQueue<>();
+        private Queue<NormInstance> toCheckUnfulfilled = new ConcurrentLinkedQueue<>();
 
         /** update the state of the obligations */
         synchronized void update() {
@@ -510,7 +510,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             updateInterval = miliseconds;
         }
 
-        synchronized void checkUnfulfilled(DeonticModality o) {
+        synchronized void checkUnfulfilled(NormInstance o) {
             toCheckUnfulfilled.offer(o);
             update = true;
             notifyAll();
@@ -551,7 +551,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         // -- transition active -> (un)fulfilled (based on aim)
         private void updateActive() {
             active = getActive();
-            for (DeonticModality o: active) {
+            for (NormInstance o: active) {
                 Literal oasinbb = createState(o);
                 if (o.isObligation()) {
                     // transition active -> fulfilled
@@ -563,11 +563,11 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                         //notifyFulfilled(o);
                         notifier.add(EventType.fulfilled, o);
                     } else {
-                        List<DeonticModality> fuls = getFulfilledObligations();
+                        List<NormInstance> fuls = getFulfilledObligations();
                         Iterator<Unifier> i = o.getAim().logicalConsequence(ag, new Unifier());
                         while (i.hasNext()) {
                             Unifier u = i.next();
-                            DeonticModality obl = new DeonticModality( new LiteralImpl(o), u, o.getNorm());
+                            NormInstance obl = new NormInstance( new LiteralImpl(o), u, o.getNorm());
                             if (!containsIgnoreDeadline(fuls, obl)) {
                                 o.incAgInstance();
                                 obl.setFulfilled();
@@ -587,11 +587,11 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                         //notifyUnfulfilled(o);
                         notifier.add(EventType.unfulfilled, o);
                     } else {
-                        List<DeonticModality> unfuls = getUnFulfilledProhibitions();
+                        List<NormInstance> unfuls = getUnFulfilledProhibitions();
                         Iterator<Unifier> i = o.getAim().logicalConsequence(ag, new Unifier());
                         while (i.hasNext()) {
                             Unifier u = i.next();
-                            DeonticModality obl = new DeonticModality( new LiteralImpl(o), u, o.getNorm());
+                            NormInstance obl = new NormInstance( new LiteralImpl(o), u, o.getNorm());
                             if (!containsIgnoreDeadline(unfuls, obl)) {
                                 o.incAgInstance();
                                 obl.setUnfulfilled();
@@ -609,7 +609,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         //                                  (based also on g for per)
         private void updateInactive() {
             active = getActive();
-            for (DeonticModality o: active) {
+            for (NormInstance o: active) {
                 if (!holds(o.getMaitenanceCondition()) || (o.isPermission() && holds(o.getAim()))) {
                     Literal oasinbb = createState(o);
                     if (!bb.remove(oasinbb)) 
@@ -626,7 +626,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         //               active -> fulfilled (for pro)
         private void updateDeadline() {
             active = getActive();
-            DeonticModality o = toCheckUnfulfilled.poll();
+            NormInstance o = toCheckUnfulfilled.poll();
             while (o != null) {
                 if (containsIgnoreDeadline(active, o)) { // deadline achieved, and still active
                     Literal oasinbb = createState(o);
@@ -668,10 +668,10 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
 
         private void updateDoneForUnfulfilled() {
             // check done for unfulfilled and inactive
-            List<DeonticModality> unfulObl  = getUnFulfilledObligations();
-            List<DeonticModality> unfulPlusInactObls = getInactiveObligations();
+            List<NormInstance> unfulObl  = getUnFulfilledObligations();
+            List<NormInstance> unfulPlusInactObls = getInactiveObligations();
             unfulPlusInactObls.addAll(unfulObl);
-            for (DeonticModality o: unfulPlusInactObls) {
+            for (NormInstance o: unfulPlusInactObls) {
                 if (holds(o.getAim()) && o.getAnnots("done").isEmpty()) { // if the agent did, even latter...
                     long ttf = System.currentTimeMillis()-o.getDeadline();
                     o.addAnnot(ASSyntax.createStructure("done", new TimeTerm(ttf, "milliseconds")));
@@ -686,7 +686,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     class Notifier extends Thread {
         ExecutorService exec = Executors.newFixedThreadPool(4); //SingleThreadExecutor(); //Executors.newCachedThreadPool();
         
-        void add(EventType t, DeonticModality o) {
+        void add(EventType t, NormInstance o) {
             exec.execute(new Runnable() {
                 @Override 
                 public void run() {

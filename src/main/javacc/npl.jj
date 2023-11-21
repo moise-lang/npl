@@ -24,12 +24,12 @@ PARSER_BEGIN(nplp) // NPL parser
     private String npSource = null;
     private DynamicFactsProvider dfp;
     private static LiteralFactory lFac = NPLLiteral.getFactory();
-    private static NormFactory    nFac = Norm.getFactory();
+    private static IFactoryNPL    nFac = new FactoryNPL();
 
     public static void setLiteralFactory(LiteralFactory l) {
         lFac = l;
     }
-    public static void setNormFactory(NormFactory l) {
+    public static void setFactoryNPL(IFactoryNPL l) {
         nFac = l;
     }
     public void setDFP(DynamicFactsProvider dfp) {
@@ -110,6 +110,7 @@ TOKEN : {
 |  <NP        : "np">
 |  <SCOPE     : "scope">
 |  <NORM      : "norm">
+|  <SANCTION  : "sanction">
 |  <FAIL      : "fail">
 |  <OBLIGATION  : "obligation">
 |  <PERMISSION  : "permission">
@@ -124,7 +125,7 @@ TOKEN : {
 }
 
 
-void program(NormativeProgram np, DynamicFactsProvider dfp) :
+void program(NormativeProgram np, DynamicFactsProvider dfp) throws Exception :
 { Token k; }
 
 {                               { this.dfp  = dfp;
@@ -134,8 +135,8 @@ void program(NormativeProgram np, DynamicFactsProvider dfp) :
 }
 
 
-void scope(NormativeProgram np, Scope superScope) :
-{ Literal scopeId; Rule r; INorm n; Scope scope;  }
+void scope(NormativeProgram np, Scope superScope) throws Exception :
+{ Literal scopeId; Rule ir; INorm n; Scope scope; ISanctionRule sr; }
 { <SCOPE> scopeId = literal()
                               { scope = new Scope(scopeId, np);
                                 if (superScope == null) { // it is root
@@ -147,14 +148,15 @@ void scope(NormativeProgram np, Scope superScope) :
                               }
   "{"
   (
-    n = norm() "."            { scope.addNorm(n); }
-  | r = rule() "."            { scope.addRule(r); }
+    n = norm() "."             { scope.addNorm(n); }
+  | ir = inference_rule() "."  { scope.addInferenceRule(ir); }
+  | sr = sanction_rule() "."   { scope.addSanctionRule(sr); }
   | scope(np,scope)
   )*
   "}"
 }
 
-Rule rule() :
+Rule inference_rule() :
 { Literal h; Object b = Literal.LTrue; }
 { h = literal() [ ":-" b = log_expr() ]
                               { return new Rule(h,(LogicalFormula)b); }
@@ -165,11 +167,27 @@ INorm norm() :
 { <NORM> id = <ATOM> ":"
   b = log_expr()
   "->"
-  ( h = fail() | h = obligation() )
+  ( h = fail() | h = deontic_operator() )
                        {
                          if (b.toString().equals("true"))  b = Literal.LTrue;
                          if (b.toString().equals("false")) b = Literal.LFalse;
                          return nFac.createNorm(id.image,h,(LogicalFormula)b);
+                       }
+}
+
+ISanctionRule sanction_rule() :
+{ Literal h; Object b; Token id; Term t; List args = new ArrayList(); }
+{ <SANCTION> id = <ATOM>
+  [ "(" (
+       t = var()       { args.add(t); }
+  )* ")"
+  ]
+  ":"
+  b = log_expr()
+  "->"
+  h = literal()
+                       {
+                         return nFac.createSanctionRule(id.image,args,(LogicalFormula)b,h);
                        }
 }
 
@@ -190,7 +208,7 @@ Literal fail() :
                        }
 }
 
-Literal obligation() :
+Literal deontic_operator() :
 { Token k; Term a, m, g, d = null; Literal r; Object o; }
 {
    ( k = <OBLIGATION>  { r = ASSyntax.createLiteral(NormativeProgram.OblFunctor); }

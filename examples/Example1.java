@@ -8,7 +8,7 @@ import java.io.FileInputStream;
 import java.util.Iterator;
 
 import util.NPLMonitor;
-import npl.DeonticModality;
+import npl.NormInstance;
 import npl.DynamicFactsProvider;
 import npl.NPLInterpreter;
 import npl.NormativeProgram;
@@ -81,7 +81,7 @@ public class Example1 {
 
     void printObl() {
         System.out.println("Active Obligations:");
-        for (DeonticModality o: interpreter.getActiveObligations()) {
+        for (NormInstance o: interpreter.getActiveObligations()) {
             System.out.println("  "+o);
         }
     }

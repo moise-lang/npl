@@ -9,39 +9,6 @@ import npl.parser.nplp;
 public class Norm extends AbstractNorm {
 
     /**
-     * Creates a norm based on the given arguments. If consequence is not a
-     * failure and maintenance condition's functor is equal to the norm's id,
-     * then consequence's maintenance condition becomes the condition passed as
-     * argument.
-     *
-     * @param id
-     *            norm's id
-     * @param consequence
-     *            norm's consequence
-     * @param condition
-     *            norm's activation condition
-     */
-    public static NormFactory getFactory() {
-        return new NormFactory() {
-            public INorm createNorm(String id, Literal consequence, LogicalFormula activationCondition) {
-                boolean consequenceIsFailure = consequence.getFunctor().equals(NormativeProgram.FailFunctor);
-                if (!consequenceIsFailure) {
-                    String maintenanceConditionFunctor = ((Literal) consequence.getTerm(1)).getFunctor();
-                    if (maintenanceConditionFunctor.equals(id)) {
-                        consequence.setTerm(1, activationCondition);
-                    }
-                }
-                return new Norm(id, consequence, activationCondition);
-            }
-            public INorm parseNorm(String norm, DynamicFactsProvider dfp) throws Exception {
-                nplp parser = new nplp(new StringReader(norm));
-                parser.setDFP(dfp);
-                return parser.norm();
-            }
-        };
-    }
-
-    /**
      * Creates a norm based on the arguments' value without any modification.
      *
      * @param id

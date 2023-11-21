@@ -17,7 +17,7 @@ import jason.asSyntax.Term;
 import jason.asSyntax.VarTerm;
 
 /** The generic class for obligations, permissions, and prohibitions */
-public class DeonticModality extends LiteralImpl {
+public class NormInstance extends LiteralImpl {
 
     public enum State {
         none, active, fulfilled, unfulfilled, inactive
@@ -32,7 +32,7 @@ public class DeonticModality extends LiteralImpl {
 
     private static Unifier emptyUnif = new Unifier();
 
-    public DeonticModality(Literal l, Unifier u, INorm n) {
+    public NormInstance(Literal l, Unifier u, INorm n) {
         super(l.getFunctor());
         maintContFromNorm = l.getTerm(1).equals(n.getCondition());
 
@@ -56,7 +56,7 @@ public class DeonticModality extends LiteralImpl {
     }
 
     // used by capply
-    private DeonticModality(DeonticModality l, Unifier u) {
+    private NormInstance(NormInstance l, Unifier u) {
         super(l.getFunctor());
         for (Term t : l.getTerms())
             addTerm(t.capply(u));
@@ -80,7 +80,7 @@ public class DeonticModality extends LiteralImpl {
     }
 
     // used by copy
-    private DeonticModality(DeonticModality d) {
+    private NormInstance(NormInstance d) {
         super(d);
         this.n = d.n;
         this.s = d.s;
@@ -184,18 +184,18 @@ public class DeonticModality extends LiteralImpl {
         addAnnot(ASSyntax.createStructure("inactive", new TimeTerm(0, null)));
     }
 
-    public boolean equalsIgnoreDeadline(DeonticModality o) {
+    public boolean equalsIgnoreDeadline(NormInstance o) {
         return getFunctor().equals(o.getFunctor()) && getAg().equals(o.getAg()) &&
         // getReason().equals(o.getReason()) &&
                 getAim().equals(o.getAim());
     }
 
-    public DeonticModality capply(Unifier u) {
-        return new DeonticModality(this, u);
+    public NormInstance capply(Unifier u) {
+        return new NormInstance(this, u);
     }
 
-    public DeonticModality copy() {
-        return new DeonticModality(this);
+    public NormInstance copy() {
+        return new NormInstance(this);
     }
 
     @Override

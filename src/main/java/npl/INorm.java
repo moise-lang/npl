@@ -30,7 +30,7 @@ public interface INorm {
      * be an obligation, permission, prohibition, or failure.
      *
      * @return consequence
-     * @see DeonticModality
+     * @see NormInstance
      */
     public Literal getConsequence();
 }

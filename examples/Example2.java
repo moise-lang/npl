@@ -7,7 +7,7 @@ import jason.asSyntax.PredicateIndicator;
 import java.io.FileInputStream;
 import java.util.Iterator;
 
-import npl.DeonticModality;
+import npl.NormInstance;
 import npl.DynamicFactsProvider;
 import npl.NPLInterpreter;
 import npl.NormativeProgram;
@@ -84,7 +84,7 @@ public class Example2 {
 
     void printState() {
         System.out.println("Active:");
-        for (DeonticModality o: interpreter.getActive()) {
+        for (NormInstance o: interpreter.getActive()) {
             System.out.println("  "+o);
         }
     }

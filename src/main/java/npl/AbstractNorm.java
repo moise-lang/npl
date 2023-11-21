@@ -9,8 +9,8 @@ public abstract class AbstractNorm implements INorm {
     protected LogicalFormula condition;
     protected Literal consequence;
 
-    @Override
-    public abstract AbstractNorm clone();
+//    @Override
+//    public abstract AbstractNorm clone();
 
     @Override
     public String getId() {
@@ -26,4 +26,7 @@ public abstract class AbstractNorm implements INorm {
     public Literal getConsequence() {
         return consequence;
     }
+
+    @Override
+    public INorm clone() { return null; }
 }

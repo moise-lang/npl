@@ -11,11 +11,13 @@ import java.util.Map;
 
 public class Scope {
     private Literal       id;
-    private List<Rule>    rules = new ArrayList<>();
+    private List<Rule> infRules = new ArrayList<>();
     private Scope         father = null;
     private NormativeProgram   program = null;
     private Map<String,INorm>   norms  = new HashMap<>();
     private Map<Literal,Scope> scopes = new HashMap<>();
+
+    private Map<String, ISanctionRule> sanctionRules = new HashMap<>();
 
     public Scope(Literal id, NormativeProgram np) {
         this.id = id;
@@ -28,25 +30,34 @@ public class Scope {
         return program;
     }
 
-    public void addRule(Rule r) {
-        rules.add(r);
+    public void addInferenceRule(Rule r) {
+        infRules.add(r);
     }
-    public List<Rule> getRules() {
-        return rules;
+    public List<Rule> getInferenceRules() {
+        return infRules;
     }
 
-    public void addNorm(INorm n) {
+    public void addNorm(INorm n) throws Exception {
+        if (norms.containsKey(n.getId()))
+            throw new Exception("norm with id="+n.getId()+" exists already!");
         norms.put(n.getId(),n);
     }
     public INorm removeNorm(String id) {
         return norms.remove(id);
     }
-    public Collection<INorm> getNorms() {
-        return norms.values();
-    }
+    public Collection<INorm> getNorms() {  return norms.values();  }
     public INorm getNorm(String id) {
         return norms.get(id);
     }
+
+    public void addSanctionRule(ISanctionRule sr) throws Exception {
+        if (sanctionRules.containsKey(sr.getId()))
+            throw new Exception("sanction with id="+sr.getId()+" exists already!");
+        sanctionRules.put(sr.getId(),sr);
+    }
+    public Collection<ISanctionRule> getSanctionRules() {  return sanctionRules.values();  }
+    public ISanctionRule getSanctionRule(String id) { return sanctionRules.get(id);  }
+
 
     public void addScope(Scope s) {
         scopes.put(s.getId(),s);
@@ -93,10 +104,12 @@ public class Scope {
 
         StringBuilder out = new StringBuilder();
         out.append(s+"scope "+id+" {\n");
-        for (Rule r: rules)
+        for (Rule r: infRules)
             out.append(s+"  "+r+".\n");
         for (INorm n: norms.values())
             out.append(s+"  "+n+".\n");
+        for (ISanctionRule sr: sanctionRules.values())
+            out.append(s+"  "+sr+".\n");
         for (Scope sc: scopes.values())
             out.append("\n"+sc);
         out.append(s+"}\n");

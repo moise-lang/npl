@@ -1,26 +1,26 @@
 import jason.asSyntax.Structure;
-import npl.DeonticModality;
+import npl.NormInstance;
 import npl.NormativeListener;
 
 /** very simple normative listener that print messages for normative events */
 class MyListener implements NormativeListener {
     @Override
-    public void created(DeonticModality o) {
+    public void created(NormInstance o) {
         System.out.println("created: "+o);
     }
 
     @Override
-    public void fulfilled(DeonticModality o) {
+    public void fulfilled(NormInstance o) {
         System.out.println("fulfilled: "+o);
     }
 
     @Override
-    public void unfulfilled(DeonticModality o) {
+    public void unfulfilled(NormInstance o) {
         System.out.println("unfulfilled: "+o);
     }
 
     @Override
-    public void inactive(DeonticModality o) {
+    public void inactive(NormInstance o) {
         System.out.println("inactive: "+o);
     }
 

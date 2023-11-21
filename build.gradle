@@ -14,7 +14,7 @@ defaultTasks 'jar'
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 
-version '0.5'
+version '0.6'
 group   'org.jacamo'
 
 java {
