@@ -1,13 +1,13 @@
 = NPL
 
-Normative Programming Language (NPL) is a language to program the norms of multi-agent systems. The language allows us to write norms as follows:
+Normative Programming Language (NPL) is a language to program norms for multi-agent systems. The language allows us to write norms as follows:
       
 	  norm n1: vl(5)& play(alice,boss)
        -> obligation(alice, play(alice,boss), vl(0), `now`+`4 seconds`).
 
 that can be read as ``whenever _vl(5) & play(alice,boss)_ (activation condition), Alice is obliged to bring about _vl(0)_ in 4 seconds (deadline). If _play(alice,boss)_ (maintenance condition) ceases to hold, the obligation is dropped.'' The life cycle of obligations can seen link:./doc/npl-states.pdf[here]. More details are found in papers describing the language (folder link:./doc/publications[publications]).
 
-The folder https://github.com/moise-lang/npl/tree/master/examples[examples] contains Java programs to illustrates its use.
+The folder https://github.com/moise-lang/npl/tree/master/examples[examples] contains Java programs that illustrates how to use the interpreter of NPL.
 
 This language is used to implement the organisational platform for http://moise.sf.net[Moise], called _ORA4MAS_, that is integrated into the https://jacamo-lang.github.io/[JaCaMo] project.
 
