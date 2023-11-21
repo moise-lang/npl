@@ -28,11 +28,16 @@ public class SanctionRule extends AbstractSanctionRule {
             var v = "";
             for (VarTerm a : args) {
                 sArgs.append(v);
-                v = ", ";
+                v = ",";
                 sArgs.append(a);
             }
             sArgs.append(")");
         }
-        return "sanction " + id + sArgs + ": " + condition + " -> " + consequence;
+        var sCond = new StringBuilder();
+        if (getCondition() != null) {
+            sCond.append(": ");
+            sCond.append(getCondition());
+        }
+        return "sanction " + getId() + sArgs + sCond + " -> " + getConsequence();
     }
 }

@@ -43,38 +43,38 @@ import npl.NormInstance.State;
  */
 public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
 
-    private Agent            ag = null; // use a Jason agent to store the facts (BB)
-    private Map<String,INorm> regimentedNorms = null; // norms with failure consequence
-    private Map<String,INorm> regulativeNorms  = null; // norms with obligation, permission, prohibition consequence
+    private Agent ag = null; // use a Jason agent to store the facts (BB)
+    private Map<String, INorm> regimentedNorms = null; // norms with failure consequence
+    private Map<String, INorm> regulativeNorms = null; // norms with obligation, permission, prohibition consequence
 
-    private Object           syncTransState = new Object();
+    private Object syncTransState = new Object();
 
-    List<NormativeListener>  listeners = new CopyOnWriteArrayList<>();
+    List<NormativeListener> listeners = new CopyOnWriteArrayList<>();
 
     private ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1); // a thread that checks deadlines of obligations, permissions, ...
-    private StateTransitions   oblUpdateThread;
-    
-    private Notifier           notifier;
+    private StateTransitions oblUpdateThread;
+
+    private Notifier notifier;
 
     protected Logger logger = Logger.getLogger(NPLInterpreter.class.getName());
 
-    public final static Atom NPAtom   = new Atom("np");
+    public final static Atom NPAtom = new Atom("np");
     public final static Atom NormAtom = new Atom("npli");
 
-    public final static PredicateIndicator ACTPI  = new PredicateIndicator(State.active.name(),1);
-    public final static PredicateIndicator FFPI   = new PredicateIndicator(State.fulfilled.name(),1);
-    public final static PredicateIndicator UFPI   = new PredicateIndicator(State.unfulfilled.name(),1);
-    public final static PredicateIndicator INACPI = new PredicateIndicator(State.inactive.name(),1);
+    public final static PredicateIndicator ACTPI = new PredicateIndicator(State.active.name(), 1);
+    public final static PredicateIndicator FFPI = new PredicateIndicator(State.fulfilled.name(), 1);
+    public final static PredicateIndicator UFPI = new PredicateIndicator(State.unfulfilled.name(), 1);
+    public final static PredicateIndicator INACPI = new PredicateIndicator(State.inactive.name(), 1);
 
     public void init() {
-        ag              = new Agent();
+        ag = new Agent();
         regimentedNorms = new HashMap<>();
         regulativeNorms = new HashMap<>();
         ag.initAg();
         clearFacts();
         oblUpdateThread = new StateTransitions();
         oblUpdateThread.start();
-        
+
         notifier = new Notifier();
     }
 
@@ -87,25 +87,30 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     public void addListener(NormativeListener ol) {
         listeners.add(ol);
     }
+
     public boolean removeListener(NormativeListener ol) {
         return listeners.remove(ol);
     }
 
-    /** loads facts from a NP scope into the normative state */
+    /**
+     * loads facts from a NP scope into the normative state
+     */
     public void loadNP(Scope scope) {
         loadNP(scope, true);
     }
 
-    /** loads facts from a NP scope into the normative state */
+    /**
+     * loads facts from a NP scope into the normative state
+     */
     public void loadNP(Scope scope, boolean autoIds) {
         if (ag == null)
             init();
-        
-        logger = Logger.getLogger(NPLInterpreter.class.getName()+"_"+scope.getId());
+
+        logger = Logger.getLogger(NPLInterpreter.class.getName() + "_" + scope.getId());
 
         BeliefBase bb = ag.getBB();
 
-        for (Rule r: scope.getInferenceRules()) {
+        for (Rule r : scope.getInferenceRules()) {
             // normalise rules with empty body
             Literal l;
             if (r.getBody().equals(Literal.LTrue) && r.getHead().isGround())
@@ -113,47 +118,52 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             else
                 l = r.clone();
             l.addSource(NPAtom);
-            bb.add(1,l); // add in the end of the BB to preserve the program order
+            bb.add(1, l); // add in the end of the BB to preserve the program order
         }
-        for (INorm n: scope.getNorms()) {
+        for (INorm n : scope.getNorms()) {
 
             // auto id management
             String id = n.getId();
             if (getNorm(id) != null) {
                 if (autoIds) {
                     while (getNorm(id) != null)
-                        id = id + id;                    
+                        id = id + id;
                 } else {
-                    logger.warning("Norm with id "+id+" already exists! It will be replaced by "+n);
+                    logger.warning("Norm with id " + id + " already exists! It will be replaced by " + n);
                 }
             }
 
             // add norm in the proper set
-            addNorm(id,n);
+            addNorm(id, n);
         }
 
         if (scope.getFather() != null)
             loadNP(scope.getFather(), autoIds);
     }
-    
+
     public void addNorm(INorm n) {
-        addNorm(n.getId(),n);
+        addNorm(n.getId(), n);
     }
+
     public void addNorm(String id, INorm n) {
         if (n.getConsequence().getFunctor().equals(NormativeProgram.FailFunctor))
             regimentedNorms.put(id, n.clone());
         else
-            regulativeNorms.put(id, n.clone());     
+            regulativeNorms.put(id, n.clone());
     }
-            
 
-    /** removes all facts/rules of the normative state */
+
+    /**
+     * removes all facts/rules of the normative state
+     */
     public void clearFacts() {
         ag.getBB().clear();
         if (oblUpdateThread != null) oblUpdateThread.update();
     }
 
-    /** removes a fact from the normative state */
+    /**
+     * removes a fact from the normative state
+     */
     public boolean removeFact(Literal l) {
         if (!l.hasSource())
             l.addSource(NPAtom);
@@ -167,7 +177,9 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         }
     }
 
-    /** adds a fact into the normative state */
+    /**
+     * adds a fact into the normative state
+     */
     public void addFact(Literal l) {
         if (!l.hasSource())
             l.addSource(NPAtom);
@@ -180,30 +192,72 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     }
 
 
-    /** get active obligations, permissions and prohibitions  */
-    public List<NormInstance> getActive() { return getByState(ACTPI, null); }
-    public List<NormInstance> getFulfilled() { return getByState(FFPI, null);  }
-    public List<NormInstance> getUnFulfilled() { return getByState(UFPI, null); }
-    public List<NormInstance> getInactive() { return getByState(INACPI, null); }
+    /**
+     * get active obligations, permissions and prohibitions
+     */
+    public List<NormInstance> getActive() {
+        return getByState(ACTPI, null);
+    }
 
-    /** get active obligations (those not fulfilled) */
-    public List<NormInstance> getActiveObligations() { return getByState(ACTPI, NormativeProgram.OblFunctor); }
+    public List<NormInstance> getFulfilled() {
+        return getByState(FFPI, null);
+    }
 
-    /** get fulfilled obligations */
-    public List<NormInstance> getFulfilledObligations() { return getByState(FFPI, NormativeProgram.OblFunctor);  }
+    public List<NormInstance> getUnFulfilled() {
+        return getByState(UFPI, null);
+    }
 
-    /** get unfulfilled obligations */
-    public List<NormInstance> getUnFulfilledObligations() { return getByState(UFPI, NormativeProgram.OblFunctor); }
+    public List<NormInstance> getInactive() {
+        return getByState(INACPI, null);
+    }
 
-    /** get fulfilled obligations */
-    public List<NormInstance> getInactiveObligations() { return getByState(INACPI, NormativeProgram.OblFunctor); }
+    /**
+     * get active obligations (those not fulfilled)
+     */
+    public List<NormInstance> getActiveObligations() {
+        return getByState(ACTPI, NormativeProgram.OblFunctor);
+    }
 
-    public List<NormInstance> getActivePermissions() { return getByState(ACTPI, NormativeProgram.PerFunctor); }
+    /**
+     * get fulfilled obligations
+     */
+    public List<NormInstance> getFulfilledObligations() {
+        return getByState(FFPI, NormativeProgram.OblFunctor);
+    }
 
-    public List<NormInstance> getActiveProhibitions() { return getByState(ACTPI, NormativeProgram.ProFunctor); }
-    public List<NormInstance> getFulfilledProhibitions() { return getByState(FFPI, NormativeProgram.ProFunctor);  }
-    public List<NormInstance> getUnFulfilledProhibitions() { return getByState(UFPI, NormativeProgram.ProFunctor); }
-    public List<NormInstance> getInactiveProhibitions() { return getByState(INACPI, NormativeProgram.ProFunctor); }
+    /**
+     * get unfulfilled obligations
+     */
+    public List<NormInstance> getUnFulfilledObligations() {
+        return getByState(UFPI, NormativeProgram.OblFunctor);
+    }
+
+    /**
+     * get fulfilled obligations
+     */
+    public List<NormInstance> getInactiveObligations() {
+        return getByState(INACPI, NormativeProgram.OblFunctor);
+    }
+
+    public List<NormInstance> getActivePermissions() {
+        return getByState(ACTPI, NormativeProgram.PerFunctor);
+    }
+
+    public List<NormInstance> getActiveProhibitions() {
+        return getByState(ACTPI, NormativeProgram.ProFunctor);
+    }
+
+    public List<NormInstance> getFulfilledProhibitions() {
+        return getByState(FFPI, NormativeProgram.ProFunctor);
+    }
+
+    public List<NormInstance> getUnFulfilledProhibitions() {
+        return getByState(UFPI, NormativeProgram.ProFunctor);
+    }
+
+    public List<NormInstance> getInactiveProhibitions() {
+        return getByState(INACPI, NormativeProgram.ProFunctor);
+    }
 
     private List<NormInstance> getByState(PredicateIndicator state, String kind) {
         List<NormInstance> ol = new ArrayList<>();
@@ -213,7 +267,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                 while (i.hasNext()) {
                     Literal b = i.next();
                     if (b.hasSource(NormAtom)) {
-                        NormInstance o = (NormInstance)b.getTerm(0);
+                        NormInstance o = (NormInstance) b.getTerm(0);
                         if (kind == null || o.getFunctor().equals(kind))
                             ol.add(o);
                     }
@@ -227,12 +281,12 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     public boolean isRelevant(PredicateIndicator pi) {
         return pi.equals(ACTPI) || pi.equals(FFPI) || pi.equals(UFPI) || pi.equals(INACPI);
     }
-    
+
     @Override
     public Iterator<Unifier> consult(Literal l, Unifier u) {
         List<Unifier> ol = new ArrayList<>(); // TODO: use an iterator instead of list, lazy approach
         synchronized (syncTransState) {
-            Iterator<Literal> i = ag.getBB().getCandidateBeliefs(l,u);
+            Iterator<Literal> i = ag.getBB().getCandidateBeliefs(l, u);
             if (i != null) {
                 while (i.hasNext()) {
                     Unifier un = u.clone();
@@ -245,8 +299,15 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         return ol.iterator();
     }
 
-    public Agent getAg() {
+    protected Agent getAg() {
         return ag;
+    }
+
+    public List<Literal> getFacts() {
+        var r = new ArrayList<Literal>(ag.getBB().size() + 5);
+        for (Literal l : ag.getBB())
+            r.add(l);
+        return r;
     }
 
     public boolean holds(LogicalFormula l) {
@@ -258,8 +319,23 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             // try again later
             try {
                 Thread.sleep(100);
-            } catch (InterruptedException e1) {            }
+            } catch (InterruptedException e1) {
+            }
             return holds(l);
+        }
+    }
+
+    public Iterator<Unifier> solve(LogicalFormula l) {
+        try {
+            return l.logicalConsequence(ag, new Unifier());
+        } catch (ConcurrentModificationException e) {
+            logger.log(Level.FINE, "*-*-* concurrent exception in NPLI holds method, I'll try again later....");
+            // try again later
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e1) {
+            }
+            return solve(l);
         }
     }
 
@@ -281,16 +357,16 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         List<NormInstance> newObl = new ArrayList<>();
         synchronized (syncTransState) {
             // test all fails first
-            for (INorm n: regimentedNorms.values()) {
+            for (INorm n : regimentedNorms.values()) {
                 Iterator<Unifier> i = n.getCondition().logicalConsequence(ag, new Unifier());
                 while (i.hasNext()) {
                     Unifier u = i.next();
                     //System.out.println("    solution "+u+" for "+n.getCondition());
-                    Literal head = (Literal)n.getConsequence().capply(u);
+                    Literal head = (Literal) n.getConsequence().capply(u);
                     if (head.getFunctor().equals(NormativeProgram.FailFunctor)) {
                         //notifyNormFailure(head);
                         notifier.failure(head);
-                        throw new NormativeFailureException((Structure)head);
+                        throw new NormativeFailureException((Structure) head);
                     }
                 }
             }
@@ -298,18 +374,18 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             List<NormInstance> activeObl = getActive();
 
             // -- computes new obligations, permissions, and prohibitions
-            for (INorm n: regulativeNorms.values()) {
+            for (INorm n : regulativeNorms.values()) {
                 Iterator<Unifier> i = n.getCondition().logicalConsequence(ag, new Unifier());
                 while (i.hasNext()) {
                     Unifier u = i.next();
-                    NormInstance obl = new NormInstance((Literal)n.getConsequence(), u, n);
+                    NormInstance obl = new NormInstance((Literal) n.getConsequence(), u, n);
                     // check if already in BB
                     if (!containsIgnoreDeadline(activeObl, obl)) { // is it a new obligation?
                         if (obl.maintContFromNorm || holds(obl.getMaitenanceCondition())) { // is the maintenance condition true, avoids the creation of unnecessary obligations
-                            if ( (obl.isObligation() && !holds(obl.getAim())) || // that is an obligation not achieved yet
-                                 (obl.isPermission() && !holds(obl.getAim())) || // or a permission not achieved yet
-                                  obl.isProhibition()                            // or a prohibition
-                               ) {
+                            if ((obl.isObligation() && !holds(obl.getAim())) || // that is an obligation not achieved yet
+                                    (obl.isPermission() && !holds(obl.getAim())) || // or a permission not achieved yet
+                                    obl.isProhibition()                            // or a prohibition
+                            ) {
                                 obl.setActive();
                                 if (bb.add(createState(obl))) {
                                     newObl.add(obl);
@@ -388,7 +464,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     }
 
     private boolean containsIgnoreDeadline(Collection<NormInstance> list, NormInstance obl) {
-        for (NormInstance l: list)
+        for (NormInstance l : list)
             if (l.equalsIgnoreDeadline(obl))
                 return true;
         return false;
@@ -396,42 +472,43 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
 
     public String getNormsString() {
         StringBuilder out = new StringBuilder();
-        for (INorm n: regimentedNorms.values())
-            out.append(n+".\n");
-        for (INorm n: regulativeNorms.values())
-            out.append(n+".\n");
+        for (INorm n : regimentedNorms.values())
+            out.append(n + ".\n");
+        for (INorm n : regulativeNorms.values())
+            out.append(n + ".\n");
         return out.toString();
     }
 
     public String getStateString() {
         StringBuilder out = new StringBuilder("--- normative state ---\n\n");
         out.append("active:\n");
-        for (Literal l: getActive()) {
-            out.append("  "+l+"\n");
+        for (Literal l : getActive()) {
+            out.append("  " + l + "\n");
         }
         out.append("\nfulfilled:\n");
-        for (Literal l: getFulfilled()) {
-            out.append("  "+l+"\n");
+        for (Literal l : getFulfilled()) {
+            out.append("  " + l + "\n");
         }
         out.append("\nunfulfilled:\n");
-        for (Literal l: getUnFulfilled()) {
-            out.append("  "+l+"\n");
+        for (Literal l : getUnFulfilled()) {
+            out.append("  " + l + "\n");
         }
         return out.toString();
     }
 
     public Element getAsDOM(Document document) {
         Element ele = (Element) document.createElement("normative-state");
-        for (NormInstance l: getUnFulfilled())
-            ele.appendChild( obligation2dom(document, l, State.unfulfilled, true));
-        for (NormInstance l: getActive())
-            ele.appendChild( obligation2dom(document, l, State.active, true));
-        for (NormInstance l: getFulfilled())
-            ele.appendChild( obligation2dom(document, l, State.fulfilled, false));
-        for (NormInstance l: getInactive())
-            ele.appendChild( obligation2dom(document, l, State.inactive, false));
+        for (NormInstance l : getUnFulfilled())
+            ele.appendChild(obligation2dom(document, l, State.unfulfilled, true));
+        for (NormInstance l : getActive())
+            ele.appendChild(obligation2dom(document, l, State.active, true));
+        for (NormInstance l : getFulfilled())
+            ele.appendChild(obligation2dom(document, l, State.fulfilled, false));
+        for (NormInstance l : getInactive())
+            ele.appendChild(obligation2dom(document, l, State.inactive, false));
         return ele;
     }
+
     private Element obligation2dom(Document document, NormInstance l, State state, boolean reltime) {
         Element oblele = (Element) document.createElement("deontic-modality");
         try {
@@ -439,7 +516,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             oblele.setAttribute("state", state.name());
             oblele.setAttribute("agent", l.getAg().toString());
             if (l.maintContFromNorm && !"true".equals(l.getMaitenanceCondition().toString()))
-                oblele.setAttribute("maintenance", "as in norm "+l.getNorm().getId());
+                oblele.setAttribute("maintenance", "as in norm " + l.getNorm().getId());
             else
                 oblele.setAttribute("maintenance", l.getMaitenanceCondition().toString());
             oblele.setAttribute("aim", l.getAim().toString());
@@ -454,14 +531,14 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                 oblele.setAttribute("done", toff); //TimeTerm.toAbsTimeStr(toff));
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Error adding attribute in DOM for "+l+" "+state, e);
+            logger.log(Level.WARNING, "Error adding attribute in DOM for " + l + " " + state, e);
         }
 
         try {
             if (l.hasAnnot()) {
-                for (Term t: l.getAnnots()) {
+                for (Term t : l.getAnnots()) {
                     if (t instanceof Literal) {
-                        Literal la = (Literal)t;
+                        Literal la = (Literal) t;
                         if (!la.getFunctor().equals("done")) {
                             Element annotele = (Element) document.createElement("annotation");
                             annotele.setAttribute("id", la.getFunctor());
@@ -472,7 +549,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                 }
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Error adding annotations in DOM for "+l+" "+state, e);
+            logger.log(Level.WARNING, "Error adding annotations in DOM for " + l + " " + state, e);
         }
         return oblele;
     }
@@ -486,21 +563,27 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
 
     private int updateInterval = 1000;
 
-    /** sets the update interval for checking the change in obligations' state */
+    /**
+     * sets the update interval for checking the change in obligations' state
+     */
     public void setUpdateInterval(int miliseconds) {
         updateInterval = miliseconds;
     }
 
-    /** this thread updates the state of obligations, permissions and prohibitions (e.g. active -> fulfilled)
-        each second (by default) */
+    /**
+     * this thread updates the state of obligations, permissions and prohibitions (e.g. active -> fulfilled)
+     * each second (by default)
+     */
     class StateTransitions extends Thread {
 
-        private boolean           update = false;
-        private List<NormInstance>  active = null;
-        private BeliefBase        bb;
+        private boolean update = false;
+        private List<NormInstance> active = null;
+        private BeliefBase bb;
         private Queue<NormInstance> toCheckUnfulfilled = new ConcurrentLinkedQueue<>();
 
-        /** update the state of the obligations */
+        /**
+         * update the state of the obligations
+         */
         synchronized void update() {
             update = true;
             notifyAll();
@@ -551,12 +634,12 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         // -- transition active -> (un)fulfilled (based on aim)
         private void updateActive() {
             active = getActive();
-            for (NormInstance o: active) {
+            for (NormInstance o : active) {
                 Literal oasinbb = createState(o);
                 if (o.isObligation()) {
                     // transition active -> fulfilled
                     if (o.getAg().isGround() && holds(o.getAim())) {
-                        if (!bb.remove(oasinbb)) logger.log(Level.FINE,"ooops "+oasinbb+" should be removed 2");
+                        if (!bb.remove(oasinbb)) logger.log(Level.FINE, "ooops " + oasinbb + " should be removed 2");
                         o = o.copy();
                         o.setFulfilled();
                         bb.add(createState(o));
@@ -567,7 +650,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                         Iterator<Unifier> i = o.getAim().logicalConsequence(ag, new Unifier());
                         while (i.hasNext()) {
                             Unifier u = i.next();
-                            NormInstance obl = new NormInstance( new LiteralImpl(o), u, o.getNorm());
+                            NormInstance obl = new NormInstance(new LiteralImpl(o), u, o.getNorm());
                             if (!containsIgnoreDeadline(fuls, obl)) {
                                 o.incAgInstance();
                                 obl.setFulfilled();
@@ -580,7 +663,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                 } else if (o.isProhibition()) {
                     // transition active -> unfulfilled
                     if (o.getAg().isGround() && holds(o.getAim())) { // the case of a prohibition for one agent
-                        if (!bb.remove(oasinbb)) logger.log(Level.FINE,"ooops "+oasinbb+" should be removed 2");
+                        if (!bb.remove(oasinbb)) logger.log(Level.FINE, "ooops " + oasinbb + " should be removed 2");
                         o = o.copy();
                         o.setUnfulfilled();
                         bb.add(createState(o));
@@ -591,7 +674,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                         Iterator<Unifier> i = o.getAim().logicalConsequence(ag, new Unifier());
                         while (i.hasNext()) {
                             Unifier u = i.next();
-                            NormInstance obl = new NormInstance( new LiteralImpl(o), u, o.getNorm());
+                            NormInstance obl = new NormInstance(new LiteralImpl(o), u, o.getNorm());
                             if (!containsIgnoreDeadline(unfuls, obl)) {
                                 o.incAgInstance();
                                 obl.setUnfulfilled();
@@ -609,11 +692,11 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         //                                  (based also on g for per)
         private void updateInactive() {
             active = getActive();
-            for (NormInstance o: active) {
+            for (NormInstance o : active) {
                 if (!holds(o.getMaitenanceCondition()) || (o.isPermission() && holds(o.getAim()))) {
                     Literal oasinbb = createState(o);
-                    if (!bb.remove(oasinbb)) 
-                        logger.log(Level.INFO,"ooops "+oasinbb+" should be removed 1!");
+                    if (!bb.remove(oasinbb))
+                        logger.log(Level.INFO, "ooops " + oasinbb + " should be removed 1!");
                     o.setInactive();
                     //notifyInactive(o);
                     notifier.add(EventType.inactive, o);
@@ -630,7 +713,8 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             while (o != null) {
                 if (containsIgnoreDeadline(active, o)) { // deadline achieved, and still active
                     Literal oasinbb = createState(o);
-                    if (!bb.remove(oasinbb)) logger.log(Level.FINE,"ooops 3 "+o+" should be removed (due the deadline), but it is not in the set of facts.");
+                    if (!bb.remove(oasinbb))
+                        logger.log(Level.FINE, "ooops 3 " + o + " should be removed (due the deadline), but it is not in the set of facts.");
 
                     if (o.isObligation()) {
                         // transition for prohibition (active -> unfulfilled)
@@ -668,55 +752,78 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
 
         private void updateDoneForUnfulfilled() {
             // check done for unfulfilled and inactive
-            List<NormInstance> unfulObl  = getUnFulfilledObligations();
+            List<NormInstance> unfulObl = getUnFulfilledObligations();
             List<NormInstance> unfulPlusInactObls = getInactiveObligations();
             unfulPlusInactObls.addAll(unfulObl);
-            for (NormInstance o: unfulPlusInactObls) {
+            for (NormInstance o : unfulPlusInactObls) {
                 if (holds(o.getAim()) && o.getAnnots("done").isEmpty()) { // if the agent did, even latter...
-                    long ttf = System.currentTimeMillis()-o.getDeadline();
+                    long ttf = System.currentTimeMillis() - o.getDeadline();
                     o.addAnnot(ASSyntax.createStructure("done", new TimeTerm(ttf, "milliseconds")));
                 }
             }
         }
 
     }
-    
-    enum EventType { create, fulfilled, unfulfilled, inactive } ;
-    
+
+    enum EventType {create, fulfilled, unfulfilled, inactive}
+
     class Notifier extends Thread {
         ExecutorService exec = Executors.newFixedThreadPool(4); //SingleThreadExecutor(); //Executors.newCachedThreadPool();
-        
+
         void add(EventType t, NormInstance o) {
+            verifySanction(t, o);
             exec.execute(new Runnable() {
-                @Override 
+                @Override
                 public void run() {
-                    for (NormativeListener l: listeners)
+                    for (NormativeListener l : listeners)
                         try {
                             switch (t) {
-                            case create   :   l.created(o.copy());    break;
-                            case fulfilled:   l.fulfilled(o.copy());  break;
-                            case inactive:    l.inactive(o.copy());   break;
-                            case unfulfilled: l.unfulfilled(o.copy());break;
+                                case create:
+                                    l.created(o.copy());
+                                    break;
+                                case fulfilled:
+                                    l.fulfilled(o.copy());
+                                    break;
+                                case inactive:
+                                    l.inactive(o.copy());
+                                    break;
+                                case unfulfilled:
+                                    l.unfulfilled(o.copy());
+                                    break;
                             }
                         } catch (Exception e) {
-                            logger.log(Level.WARNING, "Error notifying "+t+":"+o+" to normative listener "+l, e);
+                            logger.log(Level.WARNING, "Error notifying " + t + ":" + o + " to normative listener " + l, e);
                         }
                 }
             });
         }
-        void failure(Literal f) { 
+
+        void failure(Literal f) {
             exec.execute(new Runnable() {
-                @Override 
+                @Override
                 public void run() {
-                    for (NormativeListener l: listeners)
+                    for (NormativeListener l : listeners)
                         try {
-                            l.failure((Structure)f.clone());
+                            l.failure((Structure) f.clone());
                         } catch (Exception e) {
-                            logger.log(Level.WARNING, "Error notifying "+f+" to normative listener "+l, e);
+                            logger.log(Level.WARNING, "Error notifying " + f + " to normative listener " + l, e);
                         }
                 }
             });
         }
-        
+
+    }
+
+    void verifySanction(EventType t, NormInstance o) {
+        switch (t) {
+            case fulfilled:
+                break;
+//            case inactive:
+//                l.inactive(o.copy());
+//                break;
+//            case unfulfilled:
+//                l.unfulfilled(o.copy());
+//                break;
+        }
     }
 }

@@ -3,6 +3,8 @@ package npl;
 import jason.asSyntax.Literal;
 import jason.asSyntax.LogicalFormula;
 
+import java.util.List;
+
 /**
  * @author igorcadelima
  *
@@ -33,4 +35,13 @@ public interface INorm {
      * @see NormInstance
      */
     public Literal getConsequence();
+
+    List<Literal> ifUnfulfilledSanction();
+    List<Literal> ifFulfilledSanction();
+    List<Literal> ifInactiveSanction();
+
+    void addFulfilledSanction(Literal sr);
+    void addUnfulfilledSanction(Literal sr);
+    void addInactiveSanction(Literal sr);
+
 }

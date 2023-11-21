@@ -1,10 +1,10 @@
 package npl;
 
-import java.io.StringReader;
-
 import jason.asSyntax.Literal;
 import jason.asSyntax.LogicalFormula;
-import npl.parser.nplp;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Norm extends AbstractNorm {
 
@@ -22,15 +22,39 @@ public class Norm extends AbstractNorm {
         this.id = id;
         this.consequence = consequence;
         this.condition = condition;
+        ifFulfilled = new ArrayList<>();
+        ifUnfulfilled = new ArrayList<>();
+        ifInactive = new ArrayList<>();
     }
 
     @Override
     public Norm clone() {
-        return new Norm(id, consequence.copy(), (LogicalFormula) condition.clone());
+        var n= new Norm(id, consequence.copy(), (LogicalFormula) condition.clone());
+        n.ifFulfilled.addAll(this.ifFulfilled);
+        n.ifUnfulfilled.addAll(this.ifUnfulfilled);
+        n.ifInactive.addAll(this.ifInactive);
+        return n;
     }
 
     @Override
     public String toString() {
-        return "norm " + id + ": " + condition + " -> " + consequence;
+        return "norm " + getId() + ": " + getCondition() + " -> " + getConsequence() +
+                sanctionsToStr(" if fulfilled: ", ifFulfilledSanction()) +
+                sanctionsToStr(" if unfulfilled: ", ifUnfulfilledSanction()) +
+                sanctionsToStr(" if inactive: ", ifInactiveSanction());
+    }
+
+    private String sanctionsToStr(String intro, List<Literal> sList) {
+        var out = new StringBuilder();
+        if (!sList.isEmpty()) {
+            out.append(intro);
+            var v = "";
+            for (Literal sr : sList) {
+                out.append(v);
+                out.append(sr);
+                v = ", ";
+            }
+        }
+        return out.toString();
     }
 }

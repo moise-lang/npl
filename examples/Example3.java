@@ -62,7 +62,7 @@ public class Example3 {
         System.out.println("Formula: "+formula+" = "+interpreter.holds(formula));
         
         // solutions
-        Iterator<Unifier> i = formula.logicalConsequence(interpreter.getAg(), new Unifier());
+        Iterator<Unifier> i = interpreter.solve(formula);
         while (i.hasNext()) {
         	System.out.println("    Solution: "+i.next());
         }

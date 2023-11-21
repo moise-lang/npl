@@ -8,7 +8,7 @@ import npl.parser.nplp;
 import java.io.StringReader;
 import java.util.List;
 
-public class FactoryNPL implements IFactoryNPL {
+public class NPLFactory implements INPLFactory {
     public INorm createNorm(String id, Literal consequence, LogicalFormula activationCondition) {
         boolean consequenceIsFailure = consequence.getFunctor().equals(NormativeProgram.FailFunctor);
         if (!consequenceIsFailure) {

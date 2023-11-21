@@ -106,10 +106,10 @@ public class Scope {
         out.append(s+"scope "+id+" {\n");
         for (Rule r: infRules)
             out.append(s+"  "+r+".\n");
-        for (INorm n: norms.values())
-            out.append(s+"  "+n+".\n");
         for (ISanctionRule sr: sanctionRules.values())
             out.append(s+"  "+sr+".\n");
+        for (INorm n: norms.values())
+            out.append(s+"  "+n+".\n");
         for (Scope sc: scopes.values())
             out.append("\n"+sc);
         out.append(s+"}\n");

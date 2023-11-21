@@ -112,8 +112,8 @@ public class NPLMonitor {
 
             StringBuilder out = new StringBuilder();
             out.append(nengine.getStateString());
-            out.append("\nDump of facts:\n");
-            for (Literal l: nengine.getAg().getBB())
+            out.append("\nAll facts:\n");
+            for (Literal l: nengine.getFacts())
                 out.append("     "+l+"\n");
             curStr = out.toString();
             if (! curStr.equals(lastNFStr))

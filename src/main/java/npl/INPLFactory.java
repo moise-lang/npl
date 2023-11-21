@@ -6,7 +6,7 @@ import jason.asSyntax.VarTerm;
 
 import java.util.List;
 
-public interface IFactoryNPL {
+public interface INPLFactory {
     public INorm createNorm(String id, Literal consequence, LogicalFormula activationCondition);
     public INorm parseNorm(String norm, DynamicFactsProvider dfp) throws Exception;
 

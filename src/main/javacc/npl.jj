@@ -24,12 +24,12 @@ PARSER_BEGIN(nplp) // NPL parser
     private String npSource = null;
     private DynamicFactsProvider dfp;
     private static LiteralFactory lFac = NPLLiteral.getFactory();
-    private static IFactoryNPL    nFac = new FactoryNPL();
+    private static INPLFactory    nFac = new NPLFactory();
 
     public static void setLiteralFactory(LiteralFactory l) {
         lFac = l;
     }
-    public static void setFactoryNPL(IFactoryNPL l) {
+    public static void setNPLFactory(INPLFactory l) {
         nFac = l;
     }
     public void setDFP(DynamicFactsProvider dfp) {
@@ -112,6 +112,10 @@ TOKEN : {
 |  <NORM      : "norm">
 |  <SANCTION  : "sanction">
 |  <FAIL      : "fail">
+|  <IF        : "if">
+|  <FULFILLED   : "fulfilled">
+|  <UNFULFILLED : "unfulfilled">
+|  <INACTIVE    : "inactive">
 |  <OBLIGATION  : "obligation">
 |  <PERMISSION  : "permission">
 |  <PROHIBITION : "prohibition">
@@ -163,7 +167,7 @@ Rule inference_rule() :
 }
 
 INorm norm() :
-{ Literal h; Object b; Token id; }
+{ Literal h; Object b; Token id; INorm n; }
 { <NORM> id = <ATOM> ":"
   b = log_expr()
   "->"
@@ -171,19 +175,45 @@ INorm norm() :
                        {
                          if (b.toString().equals("true"))  b = Literal.LTrue;
                          if (b.toString().equals("false")) b = Literal.LFalse;
-                         return nFac.createNorm(id.image,h,(LogicalFormula)b);
+                         n = nFac.createNorm(id.image,h,(LogicalFormula)b);
                        }
+  ( <IF>
+      (
+          (<FULFILLED> ":"
+             h = literal()        { n.addFulfilledSanction(h); }
+             ( "," h = literal()  { n.addFulfilledSanction(h); }
+             )*
+          )
+          |
+          ( <UNFULFILLED> ":"
+             h = literal()        { n.addUnfulfilledSanction(h); }
+             ( "," h = literal()  { n.addUnfulfilledSanction(h); }
+             )*
+          )
+          |
+          ( <INACTIVE> ":"
+             h = literal()        { n.addInactiveSanction(h); }
+             ( "," h = literal()  { n.addInactiveSanction(h); }
+             )*
+          )
+      )
+  )*
+
+                       { return n; }
 }
 
 ISanctionRule sanction_rule() :
-{ Literal h; Object b; Token id; Term t; List args = new ArrayList(); }
+{ Literal h; Object b = null; Token id; Term t; List args = new ArrayList(); }
 { <SANCTION> id = <ATOM>
-  [ "(" (
+  [ "("
        t = var()       { args.add(t); }
-  )* ")"
+       ( "," t = var() { args.add(t); }
+       )*
+     ")"
   ]
-  ":"
-  b = log_expr()
+  [ ":"
+    b = log_expr()
+  ]
   "->"
   h = literal()
                        {
