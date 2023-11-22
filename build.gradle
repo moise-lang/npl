@@ -90,6 +90,11 @@ task example3 (type: JavaExec, dependsOn: classes) {
     classpath sourceSets.main.runtimeClasspath
 }
 
+task example4 (type: JavaExec, dependsOn: classes) {
+    mainClass = 'Example4'
+    classpath sourceSets.main.runtimeClasspath
+}
+
 /*task javadoc(overwrite: true, dependsOn: compileJava) {
     setDescription('Generates Javadoc API documentation with UMLGraph diagrams')
     setGroup(JavaBasePlugin.DOCUMENTATION_GROUP)

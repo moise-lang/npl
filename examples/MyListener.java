@@ -1,4 +1,5 @@
 import jason.asSyntax.Structure;
+import npl.NPLInterpreter;
 import npl.NormInstance;
 import npl.NormativeListener;
 
@@ -27,5 +28,10 @@ class MyListener implements NormativeListener {
     @Override
     public void failure(Structure f) {
         System.out.println("failure: "+f);
+    }
+
+    @Override
+    public void sanction(String normId, NPLInterpreter.EventType t, Structure s) {
+        System.out.println("sanction for norm "+normId+" ("+t+"): "+s);
     }
 }

@@ -17,7 +17,7 @@ public class SanctionRule extends AbstractSanctionRule {
 
     @Override
     public SanctionRule cloneSanction() {
-        return new SanctionRule(id, this.args, (LogicalFormula) condition.clone(), consequence.copy());
+        return new SanctionRule(id, this.args, (condition==null ? null : (LogicalFormula) condition.clone()), consequence.copy());
     }
 
     @Override

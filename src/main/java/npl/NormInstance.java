@@ -21,7 +21,7 @@ public class NormInstance extends LiteralImpl {
 
     public enum State {
         none, active, fulfilled, unfulfilled, inactive
-    };
+    }
 
     INorm n; // the norm that created this obligation
     Unifier u; // the unifier used in the activation of the norm
@@ -152,15 +152,15 @@ public class NormInstance extends LiteralImpl {
     public void setActive() {
         s = State.active;
         addAnnot(ASSyntax.createStructure("created", new TimeTerm(0, null)));
-        addAnnot(ASSyntax.createStructure("norm", new Atom(n.getId()), getUnifierAsTerm()));
+        addAnnot(ASSyntax.createStructure("norm", new Atom(n.getId()), getUnifierAsTerm(u)));
     }
 
-    public ListTerm getUnifierAsTerm() {
+    public static ListTerm getUnifierAsTerm(Unifier un) {
         ListTerm lf = new ListTermImpl();
         ListTerm tail = lf;
-        for (VarTerm k : u) {
+        for (VarTerm k : un) {
             if (!k.isUnnamedVar()) {
-                Term vl = u.get(k);
+                Term vl = un.get(k);
                 tail = tail.append(ASSyntax.createList(ASSyntax.createString(k), vl));
             }
         }

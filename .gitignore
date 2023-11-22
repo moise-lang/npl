@@ -11,3 +11,4 @@ lib/npl.jar
 .project
 .vscode
 .idea
+.DS_Store

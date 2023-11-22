@@ -17,21 +17,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import jason.asSyntax.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import jason.RevisionFailedException;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Unifier;
-import jason.asSyntax.ASSyntax;
-import jason.asSyntax.Atom;
-import jason.asSyntax.Literal;
-import jason.asSyntax.LiteralImpl;
-import jason.asSyntax.LogicalFormula;
-import jason.asSyntax.PredicateIndicator;
-import jason.asSyntax.Rule;
-import jason.asSyntax.Structure;
-import jason.asSyntax.Term;
 import jason.bb.BeliefBase;
 import jason.util.ToDOM;
 import npl.NormInstance.State;
@@ -46,6 +38,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     private Agent ag = null; // use a Jason agent to store the facts (BB)
     private Map<String, INorm> regimentedNorms = null; // norms with failure consequence
     private Map<String, INorm> regulativeNorms = null; // norms with obligation, permission, prohibition consequence
+    private Map<String, ISanctionRule> sanctionRules = null;
 
     private Object syncTransState = new Object();
 
@@ -65,11 +58,13 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     public final static PredicateIndicator FFPI = new PredicateIndicator(State.fulfilled.name(), 1);
     public final static PredicateIndicator UFPI = new PredicateIndicator(State.unfulfilled.name(), 1);
     public final static PredicateIndicator INACPI = new PredicateIndicator(State.inactive.name(), 1);
+    public final static PredicateIndicator CSANCTION = new PredicateIndicator("sanction", 1);
 
     public void init() {
         ag = new Agent();
         regimentedNorms = new HashMap<>();
         regulativeNorms = new HashMap<>();
+        sanctionRules   = new HashMap<>();
         ag.initAg();
         clearFacts();
         oblUpdateThread = new StateTransitions();
@@ -120,8 +115,12 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             l.addSource(NPAtom);
             bb.add(1, l); // add in the end of the BB to preserve the program order
         }
-        for (INorm n : scope.getNorms()) {
 
+        for (ISanctionRule sr : scope.getSanctionRules()) {
+            sanctionRules.put(sr.getId(), sr.cloneSanction());
+        }
+
+        for (INorm n : scope.getNorms()) {
             // auto id management
             String id = n.getId();
             if (getNorm(id) != null) {
@@ -277,9 +276,25 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         return ol;
     }
 
+    private List<Literal> getCreatedSanctions() {
+        var ol = new ArrayList<Literal>();
+        synchronized (syncTransState) {
+            Iterator<Literal> i = ag.getBB().getCandidateBeliefs(CSANCTION);
+            if (i != null) {
+                while (i.hasNext()) {
+                    Literal b = i.next();
+                    if (b.hasSource(NormAtom)) {
+                        ol.add((Literal) b.getTerm(0));
+                    }
+                }
+            }
+        }
+        return ol;
+    }
+
     @Override
     public boolean isRelevant(PredicateIndicator pi) {
-        return pi.equals(ACTPI) || pi.equals(FFPI) || pi.equals(UFPI) || pi.equals(INACPI);
+        return pi.equals(ACTPI) || pi.equals(FFPI) || pi.equals(UFPI) || pi.equals(INACPI)|| pi.equals(CSANCTION);
     }
 
     @Override
@@ -482,15 +497,19 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     public String getStateString() {
         StringBuilder out = new StringBuilder("--- normative state ---\n\n");
         out.append("active:\n");
-        for (Literal l : getActive()) {
+        for (var l : getActive()) {
             out.append("  " + l + "\n");
         }
         out.append("\nfulfilled:\n");
-        for (Literal l : getFulfilled()) {
+        for (var l : getFulfilled()) {
             out.append("  " + l + "\n");
         }
         out.append("\nunfulfilled:\n");
-        for (Literal l : getUnFulfilled()) {
+        for (var l : getUnFulfilled()) {
+            out.append("  " + l + "\n");
+        }
+        out.append("\nsanctions:\n");
+        for (var l : getCreatedSanctions()) {
             out.append("  " + l + "\n");
         }
         return out.toString();
@@ -611,7 +630,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                         wait(updateInterval);
                     }
                     if (update) {
-                        bb = ag.getBB();
+                        bb = getAg().getBB();
                         synchronized (syncTransState) {
                             update = false;
                             updateActive();
@@ -765,13 +784,17 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
 
     }
 
-    enum EventType {create, fulfilled, unfulfilled, inactive}
+    public enum EventType {create, fulfilled, unfulfilled, inactive}
 
     class Notifier extends Thread {
         ExecutorService exec = Executors.newFixedThreadPool(4); //SingleThreadExecutor(); //Executors.newCachedThreadPool();
 
         void add(EventType t, NormInstance o) {
-            verifySanction(t, o);
+            try {
+                verifySanction(t, o);
+            } catch (NPLInterpreterException e) {
+                logger.warning(e.getMessage());
+            }
             exec.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -812,18 +835,61 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             });
         }
 
+        void sanction(String normId,EventType event, Literal f) {
+            exec.execute(new Runnable() {
+                @Override
+                public void run() {
+                    for (NormativeListener l : listeners)
+                        try {
+                            l.sanction(normId, event, (Structure) f.clone());
+                        } catch (Exception e) {
+                            logger.log(Level.WARNING, "Error notifying " + f + " to normative listener " + l, e);
+                        }
+                }
+            });
+        }
     }
 
-    void verifySanction(EventType t, NormInstance o) {
+    void verifySanction(EventType t, NormInstance o) throws NPLInterpreterException {
         switch (t) {
+            case unfulfilled:
+            case inactive:
             case fulfilled:
+                for (Literal s: o.getNorm().ifUnfulfilledSanction()) {
+                    var sApplied = s.capply(o.getUnifier());
+
+                    // unifies with sanction args
+                    var sRule = sanctionRules.get(s.getFunctor());
+                    if (sRule == null) {
+                        throw new NPLInterpreterException("Sanction id ("+s+") in norm "+o.getNorm().getId()+" was not found!");
+                    }
+                    var sLiteral = ASSyntax.createLiteral(sRule.getId());
+                    for (var v: sRule.getArgs())
+                        sLiteral.addTerm(v);
+                    var un = new Unifier();
+                    if (! un.unifies(sApplied,sLiteral)) {
+                        throw new NPLInterpreterException("Sanction '"+sLiteral+"' does not unify with "+sApplied+" from norm "+o.getNorm().getId());
+                    }
+
+                    Iterator<Unifier> sols = null;
+                    // verify sanction condition
+                    if (sRule.getCondition() == null ||
+                            ((sols = sRule.getCondition().logicalConsequence(getAg(), un)) != null) &&
+                                    sols.hasNext()) {
+                        if (sols != null)
+                            un = sols.next();
+                        //System.out.println("New unifier = "+un);
+
+                        Literal newSaction = (Literal) sRule.getConsequence().capply(un);
+                        newSaction.addAnnot(ASSyntax.createStructure("created", new TimeTerm(0, null)));
+                        newSaction.addAnnot(ASSyntax.createStructure("norm", new Atom(o.getNorm().getId()), new Atom(t.name()), sApplied));
+                        newSaction.addAnnot(ASSyntax.createStructure("sanction", new Atom(sRule.getId()), NormInstance.getUnifierAsTerm(un)));
+                        notifier.sanction(o.getNorm().getId(), t, newSaction);
+                        Literal newSactionBB = ASSyntax.createLiteral(CSANCTION.getFunctor(), newSaction).addSource(NormAtom);
+                        getAg().getBB().add(newSactionBB);
+                    }
+                }
                 break;
-//            case inactive:
-//                l.inactive(o.copy());
-//                break;
-//            case unfulfilled:
-//                l.unfulfilled(o.copy());
-//                break;
         }
     }
 }
