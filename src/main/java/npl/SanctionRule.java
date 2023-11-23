@@ -4,6 +4,7 @@ import jason.asSyntax.Literal;
 import jason.asSyntax.LogicalFormula;
 import jason.asSyntax.VarTerm;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SanctionRule extends AbstractSanctionRule {
@@ -13,11 +14,26 @@ public class SanctionRule extends AbstractSanctionRule {
         this.consequence = consequence;
         this.condition = condition;
         this.args.addAll(args);
+
+        ifFulfilled = new ArrayList<>();
+        ifUnfulfilled = new ArrayList<>();
+        ifInactive = new ArrayList<>();
+    }
+
+    @Override
+    public boolean hasDeonticConsequence() {
+        return getConsequence().getFunctor().equals(NormativeProgram.OblFunctor) ||
+                getConsequence().getFunctor().equals(NormativeProgram.PerFunctor) ||
+                getConsequence().getFunctor().equals(NormativeProgram.ProFunctor);
     }
 
     @Override
     public SanctionRule cloneSanction() {
-        return new SanctionRule(id, this.args, (condition==null ? null : (LogicalFormula) condition.clone()), consequence.copy());
+        var sr = new SanctionRule(id, this.args, (condition==null ? null : (LogicalFormula) condition.clone()), consequence.copy());
+        sr.ifFulfilled.addAll(this.ifFulfilled);
+        sr.ifUnfulfilled.addAll(this.ifUnfulfilled);
+        sr.ifInactive.addAll(this.ifInactive);
+        return sr;
     }
 
     @Override
@@ -38,6 +54,9 @@ public class SanctionRule extends AbstractSanctionRule {
             sCond.append(": ");
             sCond.append(getCondition());
         }
-        return "sanction " + getId() + sArgs + sCond + " -> " + getConsequence();
+        return "sanction " + getId() + sArgs + sCond + " -> " + getConsequence() +
+                sanctionsToStr(" if fulfilled: ", ifFulfilledSanction()) +
+                sanctionsToStr(" if unfulfilled: ", ifUnfulfilledSanction()) +
+                sanctionsToStr(" if inactive: ", ifInactiveSanction());
     }
 }

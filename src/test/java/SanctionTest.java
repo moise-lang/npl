@@ -20,10 +20,16 @@ public class SanctionTest extends TestCase {
                 "   sanction s1(M): empty(M,A)     -> stopMachine(A).\n" +
                 "   sanction s2(A,M): full(M)      -> jail(A).\n" +
                 "   sanction s3 -> stopAll.\n" +
+                "   sanction s4 : b -> obligation(bob,true,fine,`now`)\n " +
+                "        if unfulfilled: s5 \n" +
+                "        if fulfilled: s1(a), s2(alice,M).\n" +
+                "   sanction s5 -> holdAll.\n" +
                 "   norm n1: f1(M) -> obligation(a,n1,c,`now`)\n " +
                 "        if unfulfilled: s3, s1(M) \n" +
                 "        if fulfilled: s1(a), s2(alice,M) \n" +
                 "        if inactive: s3." +
+                "   norm n2: f2 -> obligation(a,n2,c,`now`+`100 milliseconds`)\n " +
+                "        if unfulfilled: s4." +
                 "";
         program = program + "  }";
     }
@@ -31,12 +37,13 @@ public class SanctionTest extends TestCase {
     public void testParser() throws ParseException, Exception {
         NormativeProgram p = new NormativeProgram();
         new nplp(new StringReader(program)).program(p, null);
-        assertEquals(3, p.getRoot().getSanctionRules().size());
+        assertEquals(5, p.getRoot().getSanctionRules().size());
         //System.out.println( p.getRoot().getSanctionRule("s1"));
         assertEquals("sanction s1(M): empty(M,A) -> stopMachine(A)", p.getRoot().getSanctionRule("s1").toString());
         //System.out.println( p.getRoot().getSanctionRule("s2"));
         assertEquals("sanction s2(A,M): full(M) -> jail(A)", p.getRoot().getSanctionRule("s2").toString());
         assertEquals("sanction s3 -> stopAll", p.getRoot().getSanctionRule("s3").toString());
+        assertEquals("sanction s4: b -> obligation(bob,true,fine,`now`) if fulfilled: s1(a), s2(alice,M) if unfulfilled: s5", p.getRoot().getSanctionRule("s4").toString());
 
         //System.out.println(p);
         assertEquals(
@@ -44,7 +51,7 @@ public class SanctionTest extends TestCase {
                 p.getRoot().getNorm("n1").toString());
     }
 
-    public void testSanctionCreation() throws Exception {
+    public void testSanctionCreation1() throws Exception {
         NormativeProgram p = new NormativeProgram();
         new nplp(new StringReader(program)).program(p, null);
 
@@ -55,8 +62,24 @@ public class SanctionTest extends TestCase {
         interpreter.verifyNorms();
 
         //System.out.println("  "+interpreter.getFacts());
-        assertTrue(interpreter.getFacts().toString().contains("sanction(stopMachine(m1))"));
-        assertTrue(interpreter.getFacts().toString().contains("sanction(stopAll)"));
+        assertTrue(interpreter.getFacts().toString().contains("sanction(stopMachine(m1)["));
+        assertTrue(interpreter.getFacts().toString().contains("sanction(stopAll["));
+
+    }
+    public void testSanctionCreation2() throws Exception {
+        NormativeProgram p = new NormativeProgram();
+        new nplp(new StringReader(program)).program(p, null);
+
+        NPLInterpreter interpreter = new NPLInterpreter();
+        interpreter.loadNP(p.getRoot());
+        interpreter.addFact(ASSyntax.parseLiteral("f2"));
+        interpreter.addFact(ASSyntax.parseLiteral("b"));
+        interpreter.verifyNorms();
+        Thread.sleep(300);
+        //System.out.println("  "+interpreter.getActiveObligations());
+        System.out.println("  "+interpreter.getFacts());
+        assertTrue(interpreter.getFacts().toString().contains("obligation(bob,true,fine"));
+        assertTrue(interpreter.getFacts().toString().contains("sanction(holdAll["));
 
     }
 }

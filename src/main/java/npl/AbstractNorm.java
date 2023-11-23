@@ -50,4 +50,17 @@ public abstract class AbstractNorm implements INorm {
     @Override
     public void addInactiveSanction(Literal sr) { ifInactiveSanction().add(sr); }
 
+    protected String sanctionsToStr(String intro, List<Literal> sList) {
+        var out = new StringBuilder();
+        if (!sList.isEmpty()) {
+            out.append(intro);
+            var v = "";
+            for (Literal sr : sList) {
+                out.append(v);
+                out.append(sr);
+                v = ", ";
+            }
+        }
+        return out.toString();
+    }
 }

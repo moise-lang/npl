@@ -368,7 +368,6 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
      * @return list of new obligations, permissions or prohibitions
      */
     public Collection<NormInstance> verifyNorms() throws NormativeFailureException {
-        BeliefBase bb = ag.getBB();
         List<NormInstance> newObl = new ArrayList<>();
         synchronized (syncTransState) {
             // test all fails first
@@ -376,42 +375,21 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                 Iterator<Unifier> i = n.getCondition().logicalConsequence(ag, new Unifier());
                 while (i.hasNext()) {
                     Unifier u = i.next();
-                    //System.out.println("    solution "+u+" for "+n.getCondition());
                     Literal head = (Literal) n.getConsequence().capply(u);
                     if (head.getFunctor().equals(NormativeProgram.FailFunctor)) {
-                        //notifyNormFailure(head);
                         notifier.failure(head);
                         throw new NormativeFailureException((Structure) head);
                     }
                 }
             }
 
-            List<NormInstance> activeObl = getActive();
-
             // -- computes new obligations, permissions, and prohibitions
             for (INorm n : regulativeNorms.values()) {
                 Iterator<Unifier> i = n.getCondition().logicalConsequence(ag, new Unifier());
                 while (i.hasNext()) {
-                    Unifier u = i.next();
-                    NormInstance obl = new NormInstance((Literal) n.getConsequence(), u, n);
-                    // check if already in BB
-                    if (!containsIgnoreDeadline(activeObl, obl)) { // is it a new obligation?
-                        if (obl.maintContFromNorm || holds(obl.getMaitenanceCondition())) { // is the maintenance condition true, avoids the creation of unnecessary obligations
-                            if ((obl.isObligation() && !holds(obl.getAim())) || // that is an obligation not achieved yet
-                                    (obl.isPermission() && !holds(obl.getAim())) || // or a permission not achieved yet
-                                    obl.isProhibition()                            // or a prohibition
-                            ) {
-                                obl.setActive();
-                                if (bb.add(createState(obl))) {
-                                    newObl.add(obl);
-                                    activeObl.add(obl);
-                                    addInSchedule(obl);
-                                    //notifyCreated(obl);
-                                    notifier.add(EventType.create, obl);
-                                }
-                            }
-                        }
-                    }
+                    var ni = new NormInstance((Literal) n.getConsequence(), i.next(), n);
+                    if (checkNewNormInstance(ni))
+                        newObl.add(ni);
                 }
             }
         }
@@ -419,6 +397,25 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         return newObl;
     }
 
+    private boolean checkNewNormInstance(NormInstance ni) {
+        // check if already in BB
+        if (!containsIgnoreDeadline(getActive(), ni)) { // is it a new obligation?
+            if (ni.maintContFromNorm || holds(ni.getMaitenanceCondition())) { // is the maintenance condition true?, avoids the creation of unnecessary obligations
+                if ((ni.isObligation() && !holds(ni.getAim())) || // that is an obligation not achieved yet
+                        (ni.isPermission() && !holds(ni.getAim())) || // or a permission not achieved yet
+                        ni.isProhibition()                             // or a prohibition
+                ) {
+                    ni.setActive();
+                    if (getAg().getBB().add(createState(ni))) {
+                        addInSchedule(ni);
+                        notifier.add(EventType.create, ni);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
     private void addInSchedule(final NormInstance o) {
         long ttf = o.getDeadline() - System.currentTimeMillis();
 
@@ -428,49 +425,6 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             }
         }, ttf, TimeUnit.MILLISECONDS);
     }
-
-    /*
-    private void notifyCreated(DeonticModality o) {
-        for (NormativeListener l: listeners)
-            try {
-                l.created(o.copy());
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "Error notifying normative listener "+l, e);
-            }
-    }
-    private void notifyFulfilled(DeonticModality o) {
-        for (NormativeListener l: listeners)
-            try {
-                l.fulfilled(o.copy());
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "Error notifying normative listener "+l, e);
-            }
-    }
-    private void notifyNormFailure(Literal f) {
-        for (NormativeListener l: listeners)
-            try {
-                l.failure((Structure)f.clone());
-            } catch (Exception e) {
-                logger.log(Level.WARNING,"Error notifying normative listener "+l, e);
-            }
-    }
-    private void notifyUnfulfilled(DeonticModality o) {
-        for (NormativeListener l: listeners)
-            try {
-                l.unfulfilled(o.copy());
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "Error notifying normative listener "+l, e);
-            }
-    }
-    private void notifyInactive(DeonticModality o) {
-        for (NormativeListener l: listeners)
-            try {
-                l.inactive(o.copy());
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "Error notifying normative listener "+l, e);
-            }
-    }
-    */
 
     private Literal createState(NormInstance o) {
         Literal s = ASSyntax.createLiteral(o.getState().name(), o);
@@ -608,9 +562,9 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             notifyAll();
         }
 
-        void setUpdateInterval(int miliseconds) {
-            updateInterval = miliseconds;
-        }
+//        void setUpdateInterval(int miliseconds) {
+//            updateInterval = miliseconds;
+//        }
 
         synchronized void checkUnfulfilled(NormInstance o) {
             toCheckUnfulfilled.offer(o);
@@ -662,7 +616,6 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                         o = o.copy();
                         o.setFulfilled();
                         bb.add(createState(o));
-                        //notifyFulfilled(o);
                         notifier.add(EventType.fulfilled, o);
                     } else {
                         List<NormInstance> fuls = getFulfilledObligations();
@@ -674,7 +627,6 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                                 o.incAgInstance();
                                 obl.setFulfilled();
                                 bb.add(createState(obl));
-                                //notifyFulfilled(obl);
                                 notifier.add(EventType.fulfilled, obl);
                             }
                         }
@@ -686,7 +638,6 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                         o = o.copy();
                         o.setUnfulfilled();
                         bb.add(createState(o));
-                        //notifyUnfulfilled(o);
                         notifier.add(EventType.unfulfilled, o);
                     } else {
                         List<NormInstance> unfuls = getUnFulfilledProhibitions();
@@ -698,7 +649,6 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                                 o.incAgInstance();
                                 obl.setUnfulfilled();
                                 bb.add(createState(obl));
-                                //notifyUnfulfilled(obl);
                                 notifier.add(EventType.unfulfilled, obl);
                             }
                         }
@@ -717,7 +667,6 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                     if (!bb.remove(oasinbb))
                         logger.log(Level.INFO, "ooops " + oasinbb + " should be removed 1!");
                     o.setInactive();
-                    //notifyInactive(o);
                     notifier.add(EventType.inactive, o);
                 }
             }
@@ -740,21 +689,18 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                         if (o.getAgIntances() == 0) { // it is unfulfilled only if no agent instance has fulfilled the prohibition
                             o.setUnfulfilled();
                             bb.add(createState(o));
-                            //notifyUnfulfilled(o);
                             notifier.add(EventType.unfulfilled, o);
                         }
                     } else if (o.isPermission()) {
                         // transition for prohibition (active -> inactive)
                         o.setInactive();
                         bb.add(createState(o));
-                        //notifyInactive(o);
                         notifier.add(EventType.inactive, o);
                     } else {
                         // transition for prohibition (active -> fulfilled)
                         if (o.getAgIntances() == 0) { // it is fulfilled only if no agent instance has unfulfilled the prohibition
                             o.setFulfilled();
                             bb.add(createState(o));
-                            //notifyFulfilled(o);
                             notifier.add(EventType.fulfilled, o);
                         }
                     }
@@ -880,13 +826,25 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                             un = sols.next();
                         //System.out.println("New unifier = "+un);
 
-                        Literal newSaction = (Literal) sRule.getConsequence().capply(un);
-                        newSaction.addAnnot(ASSyntax.createStructure("created", new TimeTerm(0, null)));
-                        newSaction.addAnnot(ASSyntax.createStructure("norm", new Atom(o.getNorm().getId()), new Atom(t.name()), sApplied));
-                        newSaction.addAnnot(ASSyntax.createStructure("sanction", new Atom(sRule.getId()), NormInstance.getUnifierAsTerm(un)));
-                        notifier.sanction(o.getNorm().getId(), t, newSaction);
-                        Literal newSactionBB = ASSyntax.createLiteral(CSANCTION.getFunctor(), newSaction).addSource(NormAtom);
-                        getAg().getBB().add(newSactionBB);
+                        if (sRule.hasDeonticConsequence()) { // a sanction with an obligation as consequence
+                            var ni = new NormInstance(sRule.getConsequence(), un, sRule);
+                            ni.addAnnot(ASSyntax.createStructure("sanction", new Atom(sRule.getId()), NormInstance.getUnifierAsTerm(un)));
+                            if (checkNewNormInstance(ni)) {
+                                notifier.sanction(o.getNorm().getId(), t, ni);
+                                //System.out.println("New o-sanction = "+ni);
+                            }
+
+                        } else {
+                            Literal newSaction = (Literal) sRule.getConsequence().capply(un);
+                            //System.out.println("New r-sanction = "+newSaction);
+                            newSaction.addAnnot(ASSyntax.createStructure("created", new TimeTerm(0, null)));
+                            newSaction.addAnnot(ASSyntax.createStructure("norm", new Atom(o.getNorm().getId()), new Atom(t.name()), sApplied));
+                            newSaction.addAnnot(ASSyntax.createStructure("sanction", new Atom(sRule.getId()), NormInstance.getUnifierAsTerm(un)));
+                            notifier.sanction(o.getNorm().getId(), t, newSaction);
+
+                            Literal newSactionBB = ASSyntax.createLiteral(CSANCTION.getFunctor(), newSaction).addSource(NormAtom);
+                            getAg().getBB().add(newSactionBB);
+                        }
                     }
                 }
                 break;

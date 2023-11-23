@@ -9,28 +9,13 @@ import java.util.List;
 /**
  * @author Jomi
  */
-public interface ISanctionRule {
+public interface ISanctionRule extends INorm {
 
-    public ISanctionRule cloneSanction();
+    ISanctionRule cloneSanction();
 
-    /**
-     * Returns the id of the sanction which was assigned at creation.
-     *
-     * @return id
-     */
-    public String getId();
 
-    public List<VarTerm> getArgs();
+    List<VarTerm> getArgs();
 
-    /**
-     * Returns formula that determines the activation condition for the sanction.
-     *
-     * @return activation condition
-     */
-    public LogicalFormula getCondition();
+    boolean hasDeonticConsequence();
 
-    /**
-     * Returns consequence of the sanction activation as a {@link Literal}.
-     */
-    public Literal getConsequence();
 }

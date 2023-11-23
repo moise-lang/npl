@@ -44,17 +44,4 @@ public class Norm extends AbstractNorm {
                 sanctionsToStr(" if inactive: ", ifInactiveSanction());
     }
 
-    private String sanctionsToStr(String intro, List<Literal> sList) {
-        var out = new StringBuilder();
-        if (!sList.isEmpty()) {
-            out.append(intro);
-            var v = "";
-            for (Literal sr : sList) {
-                out.append(v);
-                out.append(sr);
-                v = ", ";
-            }
-        }
-        return out.toString();
-    }
 }

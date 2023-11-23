@@ -177,6 +177,35 @@ INorm norm() :
                          if (b.toString().equals("false")) b = Literal.LFalse;
                          n = nFac.createNorm(id.image,h,(LogicalFormula)b);
                        }
+  norm_sanctions(n)
+                       { return n; }
+}
+
+ISanctionRule sanction_rule() :
+{ Literal h; Object b = null; Token id; Term t; List args = new ArrayList(); ISanctionRule n; }
+{ <SANCTION> id = <ATOM>
+  [ "("
+       t = var()       { args.add(t); }
+       ( "," t = var() { args.add(t); }
+       )*
+     ")"
+  ]
+  [ ":"
+    b = log_expr()
+  ]
+  "->"
+  (
+    h = deontic_operator() { n = nFac.createSanctionRule(id.image,args,(LogicalFormula)b,h); }
+    norm_sanctions(n)
+  |
+    h = literal()          { n = nFac.createSanctionRule(id.image,args,(LogicalFormula)b,h); }
+  )
+                           { return n; }
+}
+
+void norm_sanctions(INorm n) :
+{ Literal h; }
+{
   ( <IF>
       (
           (<FULFILLED> ":"
@@ -198,27 +227,6 @@ INorm norm() :
           )
       )
   )*
-
-                       { return n; }
-}
-
-ISanctionRule sanction_rule() :
-{ Literal h; Object b = null; Token id; Term t; List args = new ArrayList(); }
-{ <SANCTION> id = <ATOM>
-  [ "("
-       t = var()       { args.add(t); }
-       ( "," t = var() { args.add(t); }
-       )*
-     ")"
-  ]
-  [ ":"
-    b = log_expr()
-  ]
-  "->"
-  h = literal()
-                       {
-                         return nFac.createSanctionRule(id.image,args,(LogicalFormula)b,h);
-                       }
 }
 
 Literal fail() :

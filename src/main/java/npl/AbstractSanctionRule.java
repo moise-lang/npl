@@ -14,4 +14,6 @@ public abstract class AbstractSanctionRule extends AbstractNorm implements ISanc
         return args;
     }
 
+    @Override
+    public boolean hasDeonticConsequence() { return false; }
 }
