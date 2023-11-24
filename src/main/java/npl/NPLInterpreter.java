@@ -319,9 +319,10 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     }
 
     public List<Literal> getFacts() {
-        var r = new ArrayList<Literal>(ag.getBB().size() + 5);
-        for (Literal l : ag.getBB())
+        var r = new ArrayList<Literal>(getAg().getBB().size() + 5);
+        for (var l : getAg().getBB()) {
             r.add(l);
+        }
         return r;
     }
 
@@ -445,6 +446,9 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             out.append(n + ".\n");
         for (INorm n : regulativeNorms.values())
             out.append(n + ".\n");
+        for (var sr: sanctionRules.values()) {
+            out.append(sr + ".\n");
+        }
         return out.toString();
     }
 
@@ -682,17 +686,17 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                 if (containsIgnoreDeadline(active, o)) { // deadline achieved, and still active
                     Literal oasinbb = createState(o);
                     if (!bb.remove(oasinbb))
-                        logger.log(Level.FINE, "ooops 3 " + o + " should be removed (due the deadline), but it is not in the set of facts.");
+                        logger.log(Level.INFO, "ooops 3 " + o + " should be removed (due the deadline), but it is not in the set of facts.");
 
                     if (o.isObligation()) {
-                        // transition for prohibition (active -> unfulfilled)
+                        // transition for obligation (active -> unfulfilled)
                         if (o.getAgIntances() == 0) { // it is unfulfilled only if no agent instance has fulfilled the prohibition
                             o.setUnfulfilled();
                             bb.add(createState(o));
                             notifier.add(EventType.unfulfilled, o);
                         }
                     } else if (o.isPermission()) {
-                        // transition for prohibition (active -> inactive)
+                        // transition for permission (active -> inactive)
                         o.setInactive();
                         bb.add(createState(o));
                         notifier.add(EventType.inactive, o);
@@ -736,11 +740,6 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         ExecutorService exec = Executors.newFixedThreadPool(4); //SingleThreadExecutor(); //Executors.newCachedThreadPool();
 
         void add(EventType t, NormInstance o) {
-            try {
-                verifySanction(t, o);
-            } catch (NPLInterpreterException e) {
-                logger.warning(e.getMessage());
-            }
             exec.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -765,6 +764,13 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                         }
                 }
             });
+
+            try {
+                verifySanction(t, o);
+            } catch (NPLInterpreterException e) {
+                logger.warning(e.getMessage());
+            }
+
         }
 
         void failure(Literal f) {

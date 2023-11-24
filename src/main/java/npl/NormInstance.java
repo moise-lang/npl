@@ -155,6 +155,10 @@ public class NormInstance extends LiteralImpl {
         addAnnot(ASSyntax.createStructure("norm", new Atom(n.getId()), getUnifierAsTerm(u)));
     }
 
+    public ListTerm getUnifierAsTerm() {
+        return getUnifierAsTerm(this.u);
+    }
+
     public static ListTerm getUnifierAsTerm(Unifier un) {
         ListTerm lf = new ListTermImpl();
         ListTerm tail = lf;
