@@ -4,6 +4,6 @@
 
 - Language and the interpreter support for _sanctions_. See link:../examples/e4.npl[example4] and JaCaMo link:https://github.com/jacamo-lang/jacamo/tree/develop/demos/sanction[demo].
 
-- API changes
-  - class DeonticModality is renamed to NormInstance
-  - class NormFactory is renamed to NPLFactory
+- API changes:
+  * class DeonticModality is renamed to NormInstance
+  * class NormFactory is renamed to NPLFactory
