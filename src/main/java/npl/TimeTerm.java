@@ -26,6 +26,11 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
         unit = null;
     }
 
+    public TimeTerm(Date time) {
+        this();
+        this.time = time;
+    }
+
     public TimeTerm(long t, String unit) {
         this.t    = t;
         this.unit = unit;
@@ -69,9 +74,7 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
         if (time == null) { // now
             return new TimeTerm(t,unit);
         } else {
-            TimeTerm c = new TimeTerm();
-            c.time = this.time;
-            return c;
+            return new TimeTerm(this.time);
         }
     }
 
@@ -105,14 +108,15 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
 
     @SuppressWarnings("deprecation")
     public static String toTimeStamp(long time) {
-        Date t = new Date(time); //(time == null ? new Date() : time);
+        Date t = new Date(time);
         if (t.getYear() > 20000000)
             return "--";
-        else
-            return (1900+t.getYear())+"-"+t.getMonth()+"-"+t.getDay()+" "+t.getHours()+":"+t.getMinutes()+":"+t.getSeconds();
+        if (time < 1000000)
+            return toTimeSliceStr(time);
+        return (1900+t.getYear())+"-"+(t.getMonth()+1)+"-"+t.getDate()+" "+t.getHours()+":"+t.getMinutes()+":"+t.getSeconds();
     }
 
-    public static String toRealTimeStr(long time) {
+    public static String toRelativeTimeStr(long time) {
         long elap = time - System.currentTimeMillis();
         String s = "";
         if (elap < 0) {
@@ -144,7 +148,7 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
         else
             return s+t+" "+u;
     }
-    public static String toAbsTimeStr(long time) {
+    public static String toTimeSliceStr(long time) {
         String s = "";
         if (time < 0) {
             s = "-";

@@ -99,13 +99,13 @@ public class NormInstance extends LiteralImpl {
         return (LogicalFormula) getTerm(2);
     }
 
-    /** gets the deadline (in milliseconds) */
+    /** gets the deadline (as a precise moment) */
     public long getTimeDeadline() {
         try {
             var time = (long) ((NumberTerm) getTerm(3)).solve();
             var now  = new Date().getTime();
             if (time < (now - (12*24*60*1000))) {
-                // the deadline is too on the past, no `now` + in the deadline expression
+                // the deadline is too on the past, no `now` + in the deadline expression: add `now`
                 time = time + new Date().getTime();
             }
             return time;
@@ -128,7 +128,7 @@ public class NormInstance extends LiteralImpl {
             Structure annot = (Structure) al.get(0);
             try {
                 toff = (long) ((NumberTerm) annot.getTerm(0)).solve();
-                return TimeTerm.toAbsTimeStr(toff);
+                return TimeTerm.toTimeSliceStr(toff);
             } catch (NoValueException e) {
             }
         }
@@ -151,6 +151,12 @@ public class NormInstance extends LiteralImpl {
         state = State.active;
         addAnnot(ASSyntax.createStructure("created", new TimeTerm(0, null)));
         addAnnot(ASSyntax.createStructure("norm", new Atom(norm.getId()), getUnifierAsTerm(un)));
+        // compute the timestamp of deadline
+        long ttf = getTimeDeadline();
+        if (ttf >= 0) { // the deadline is a moment/time
+            setTerm(3, new TimeTerm(new Date(ttf)));
+            resetHashCodeCache();
+        }
     }
 
     public ListTerm getUnifierAsTerm() {
@@ -223,17 +229,7 @@ public class NormInstance extends LiteralImpl {
         so.append(getFunctor() + "(" + getAg() + ",");
         so.append(getMaintenanceCondition());
         so.append("," + getAim()+",");
-        if (getTimeDeadline() >= 0) {
-            so.append("\"");
-            if (state == State.active) {
-                so.append(TimeTerm.toRealTimeStr(getTimeDeadline()));
-            } else {
-                so.append(TimeTerm.toTimeStamp(getTimeDeadline()));
-            }
-            so.append("\"");
-        } else {
-            so.append(getStateDeadline().toString());
-        }
+        so.append(getTerm(3));
         so.append(")");
         if (hasAnnot()) {
             so.append(getAnnots());

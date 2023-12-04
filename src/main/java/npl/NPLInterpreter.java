@@ -484,7 +484,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         return ele;
     }
 
-    private Element obligation2dom(Document document, NormInstance l, State state, boolean realtime) {
+    private Element obligation2dom(Document document, NormInstance l, State state, boolean relativeTime) {
         Element oblele = (Element) document.createElement("deontic-modality");
         try {
             oblele.setAttribute("modality", l.getFunctor());
@@ -497,8 +497,8 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             oblele.setAttribute("aim", l.getAim().toString());
             long ttf = l.getTimeDeadline();
             if (ttf >= 0) {
-                if (realtime)
-                    oblele.setAttribute("ttf", TimeTerm.toRealTimeStr(ttf));
+                if (relativeTime)
+                    oblele.setAttribute("ttf", TimeTerm.toRelativeTimeStr(ttf));
                 else
                     oblele.setAttribute("ttf", TimeTerm.toTimeStamp(ttf));
             } else {
