@@ -36,7 +36,7 @@ The syntax for a norm that creates obligations is:
 
 ```
 norm <id>
-   : <trigger condition>
+   : <when>
   -> obligation(<who>, <while>, <what>, <deadline>)
      [if fulfulled <sanction-rules>]
      [if unfulfulled <sanction-rules>]
@@ -44,7 +44,7 @@ norm <id>
   .
 ```
 
-Informal semantics: when _<trigger conditions>_ is true, an obligation for _<who>_ is created and its initial state is _active_ (link:./doc/npl-states.pdf[see states]). As soon as _<what>_ is true, the obligation is  _fulfilled_. As soon as _<while>_ is false, the obligation is  _inactive_. As soon as _<deadline>_ is true, the obligation is _unfulfilled_. The deadline can be a temporal expression as `2 seconds` after active or a state condition as `full(room)` (in the sense ``is obliged to ... before the room is full").
+Informal semantics: As soon as _<when>_ is true, an obligation for _<who>_ is created and its initial state is _active_ (link:./doc/npl-states.pdf[see states]). As soon as _<what>_ is true, the obligation is  _fulfilled_. As soon as _<while>_ is false, the obligation is  _inactive_. As soon as _<deadline>_ is true, the obligation is _unfulfilled_. The deadline can be a temporal expression as `2 seconds` after active or a state condition as `full(room)` (in the sense ``is obliged to ... before the room is full").
 
 
 When the obligation is in a final state (fulfilled, unfulfilled, or inactive), sanction rules, if specified, are evaluated (link:./examples/e4.npl[example]).
@@ -68,7 +68,7 @@ NPL also provides a special type of norm that produces failures (useful for regi
 
 ```
 norm <id>
-   : <trigger condition>
+   : <condition>
   -> fail(<description>).
 ```
 
@@ -80,12 +80,12 @@ Facts are used to evaluate _<conditions>_, _<while>_, _<what>_, _<deadline>_, ..
 
 Facts produced by NPL interpreter are:
 
-- obligations, permissions, and prohibitions for agents as the result of triggering norms. For example `obligation(bob,in_room(bob),present(paper),23h00)`.
+- obligations, permissions, and prohibitions for agents as the result of activation of norms. For example `obligation(bob,in_room(bob),present(paper),23h00)`.
 - fulfillments and unfulfillments as the result of obligations being in a final state. For example `unfulfilled(obligation(bob,in_room(bob),present(paper),23h00))`
 
 - sanctions as the result of sanction rules. For example: `sanction(fine(bob,100))`.
 
-- failures as the result of triggering norms. For example `fail(in(bob,room))`.
+- failures as the result of activation of norms. For example `fail(in(bob,room))`.
 
 ---
 Developed by Jomi F. Hubner, Rafael H. Bordini, and Olivier Boissier.
