@@ -24,7 +24,7 @@ public class Example0 {
         // parsing (from a string)
         nplp parser = new nplp(new StringReader(
                   "scope ex0 {\n"
-                + "   norm n1: a(X) & X > 5 -> obligation(bob,true,b(10),`now`+`1 minute`)."
+                + "   norm n1: a(X) & X > 5 -> obligation(bob,true,b(10),`1 minute`)."
                 + "}"));
         parser.program(np, null);
 

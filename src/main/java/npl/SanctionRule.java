@@ -54,7 +54,7 @@ public class SanctionRule extends AbstractSanctionRule {
             sCond.append(": ");
             sCond.append(getCondition());
         }
-        return "sanction " + getId() + sArgs + sCond + " -> " + getConsequence() +
+        return "sanction-rule " + getId() + sArgs + sCond + " -> " + getConsequence() +
                 sanctionsToStr(" if fulfilled: ", ifFulfilledSanction()) +
                 sanctionsToStr(" if unfulfilled: ", ifUnfulfilledSanction()) +
                 sanctionsToStr(" if inactive: ", ifInactiveSanction());

@@ -1,5 +1,6 @@
 package npl;
 
+import java.util.Date;
 import java.util.List;
 
 import jason.NoValueException;
@@ -23,74 +24,59 @@ public class NormInstance extends LiteralImpl {
         none, active, fulfilled, unfulfilled, inactive
     }
 
-    INorm n; // the norm that created this obligation
-    Unifier u; // the unifier used in the activation of the norm
-    State s = State.none;
+    INorm norm; // the norm that created this obligation
+    Unifier un; // the unifier used in the activation of the norm
+    State state = State.none;
     int agInstances = 0; // when the Ag is a var, this field count how many
                             // agent instances where created
-    boolean maintContFromNorm = false;
+    boolean isMaintenanceCondFromNorm = false;
 
     private static Unifier emptyUnif = new Unifier();
 
-    public NormInstance(Literal l, Unifier u, INorm n) {
+    public NormInstance(Literal l, Unifier un, INorm n) {
         super(l.getFunctor());
-        maintContFromNorm = l.getTerm(1).equals(n.getCondition());
+        isMaintenanceCondFromNorm = l.getTerm(1).equals(n.getCondition());
 
-        Literal lc = (Literal) l.capply(u);
-        // Unifier newu = new Unifier();
-        // newu.unifies(l.getTerm(0), lc.getTerm(0)); // unifies agent
-        // newu.unifies(l.getTerm(2), lc.getTerm(2)); // unifies aim, this
-        // unifier is used for the maint. cond.
+        Literal lc = (Literal) l.capply(un);
         addTerm(lc.getTerm(0));
-        // addTerm(l.getTerm(1).capply(newu));
         addTerm(lc.getTerm(1));
         addTerm(lc.getTerm(2));
         addTerm(lc.getTerm(3));
         if (lc.hasAnnot())
             setAnnots(lc.getAnnots());
-        this.n = n;
-        if (u == null)
-            this.u = emptyUnif;
+        this.norm = n;
+        if (un == null)
+            this.un = emptyUnif;
         else
-            this.u = u.clone();
+            this.un = un.clone();
     }
 
     // used by capply
-    private NormInstance(NormInstance l, Unifier u) {
+    private NormInstance(NormInstance l, Unifier un) {
         super(l.getFunctor());
         for (Term t : l.getTerms())
-            addTerm(t.capply(u));
+            addTerm(t.capply(un));
         if (l.hasAnnot())
-            setAnnots((ListTerm) l.getAnnots().capply(u));
-        /*
-         * Literal lc = (Literal)l.capply(u); Unifier newu = new Unifier();
-         * newu.unifies(l.getTerm(0), lc.getTerm(0)); // unifies agent
-         * newu.unifies(l.getTerm(2), lc.getTerm(2)); // unifies aim, this
-         * unifier is used for the maint. cond. addTerm(lc.getTerm(0));
-         * addTerm(l.getTerm(1).capply(newu)); addTerm(lc.getTerm(2));
-         * addTerm(lc.getTerm(3)); if (lc.hasAnnot()) setAnnots( lc.getAnnots()
-         * );
-         */
-
-        this.n = l.n;
-        this.s = l.s;
-        this.u = u;
-        u.compose(l.u);
-        this.maintContFromNorm = l.maintContFromNorm;
+            setAnnots((ListTerm) l.getAnnots().capply(un));
+        this.norm = l.norm;
+        this.state = l.state;
+        this.un = un;
+        un.compose(l.un);
+        this.isMaintenanceCondFromNorm = l.isMaintenanceCondFromNorm;
     }
 
     // used by copy
     private NormInstance(NormInstance d) {
         super(d);
-        this.n = d.n;
-        this.s = d.s;
-        this.u = d.u;
-        this.maintContFromNorm = d.maintContFromNorm;
+        this.norm = d.norm;
+        this.state = d.state;
+        this.un = d.un;
+        this.isMaintenanceCondFromNorm = d.isMaintenanceCondFromNorm;
     }
 
     /** returns the norms used to create this obligation */
     public INorm getNorm() {
-        return n;
+        return norm;
     }
 
     /**
@@ -98,14 +84,14 @@ public class NormInstance extends LiteralImpl {
      * obligation
      */
     public Unifier getUnifier() {
-        return u;
+        return un;
     }
 
     public Literal getAg() {
         return (Literal) getTerm(0);
     }
 
-    public LogicalFormula getMaitenanceCondition() {
+    public LogicalFormula getMaintenanceCondition() {
         return (Literal) getTerm(1);
     }
 
@@ -114,12 +100,24 @@ public class NormInstance extends LiteralImpl {
     }
 
     /** gets the deadline (in milliseconds) */
-    public long getDeadline() {
+    public long getTimeDeadline() {
         try {
-            return (long) ((NumberTerm) getTerm(3)).solve();
-        } catch (NoValueException e) {
-            e.printStackTrace();
-            return 0;
+            var time = (long) ((NumberTerm) getTerm(3)).solve();
+            var now  = new Date().getTime();
+            if (time < (now - (12*24*60*1000))) {
+                // the deadline is too on the past, no `now` + in the deadline expression
+                time = time + new Date().getTime();
+            }
+            return time;
+        } catch (NoValueException|ClassCastException e) {
+            return -1;
+        }
+    }
+    public LogicalFormula getStateDeadline() {
+        try {
+            return (LogicalFormula)getTerm(3);
+        } catch (ClassCastException e) {
+            return null;
         }
     }
 
@@ -138,7 +136,7 @@ public class NormInstance extends LiteralImpl {
     }
 
     public State getState() {
-        return s;
+        return state;
     }
 
     public void incAgInstance() {
@@ -150,13 +148,13 @@ public class NormInstance extends LiteralImpl {
     }
 
     public void setActive() {
-        s = State.active;
+        state = State.active;
         addAnnot(ASSyntax.createStructure("created", new TimeTerm(0, null)));
-        addAnnot(ASSyntax.createStructure("norm", new Atom(n.getId()), getUnifierAsTerm(u)));
+        addAnnot(ASSyntax.createStructure("norm", new Atom(norm.getId()), getUnifierAsTerm(un)));
     }
 
     public ListTerm getUnifierAsTerm() {
-        return getUnifierAsTerm(this.u);
+        return getUnifierAsTerm(this.un);
     }
 
     public static ListTerm getUnifierAsTerm(Unifier un) {
@@ -172,19 +170,19 @@ public class NormInstance extends LiteralImpl {
     }
 
     public void setFulfilled() {
-        s = State.fulfilled;
-        long ttf = System.currentTimeMillis() - getDeadline();
+        state = State.fulfilled;
+        long ttf = System.currentTimeMillis() - getTimeDeadline();
         addAnnot(ASSyntax.createStructure("done", ASSyntax.createNumber(ttf)));
         addAnnot(ASSyntax.createStructure("fulfilled", new TimeTerm(0, null)));
     }
 
     public void setUnfulfilled() {
-        s = State.unfulfilled;
+        state = State.unfulfilled;
         addAnnot(ASSyntax.createStructure("unfulfilled", new TimeTerm(0, null)));
     }
 
     public void setInactive() {
-        s = State.inactive;
+        state = State.inactive;
         addAnnot(ASSyntax.createStructure("inactive", new TimeTerm(0, null)));
     }
 
@@ -223,17 +221,20 @@ public class NormInstance extends LiteralImpl {
     public String toString() {
         StringBuilder so = new StringBuilder();
         so.append(getFunctor() + "(" + getAg() + ",");
-        // if (maintContFromNorm)
-        // so.append(getNorm().getId());
-        // else
-        so.append(getMaitenanceCondition());
-        so.append("," + getAim() + ",\"");
-		if (s == State.active) {
-			so.append(TimeTerm.toRelTimeStr(getDeadline()));
-		} else { // if (s == State.fulfilled) {
-			so.append(TimeTerm.toTimeStamp(getDeadline()));
-		}
-		so.append("\")");
+        so.append(getMaintenanceCondition());
+        so.append("," + getAim()+",");
+        if (getTimeDeadline() >= 0) {
+            so.append("\"");
+            if (state == State.active) {
+                so.append(TimeTerm.toRealTimeStr(getTimeDeadline()));
+            } else {
+                so.append(TimeTerm.toTimeStamp(getTimeDeadline()));
+            }
+            so.append("\"");
+        } else {
+            so.append(getStateDeadline().toString());
+        }
+        so.append(")");
         if (hasAnnot()) {
             so.append(getAnnots());
         }

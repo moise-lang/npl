@@ -13,9 +13,9 @@ scope main {                               // definition of a scope of norms
 
     // alice has 4 seconds to achieve a value of b < 0
     norm n1: vl(X) & X >= 5
-       -> obligation(alice,n1, b(Y) & Y<0, `now`+`4 seconds`).
+       -> obligation(alice,n1, b(Y) & Y<0, `4 seconds`).
 
     // bob and carlos are obliged to fine
     norm n2: vl(X) & X > 10 & student(A,V)
-       -> obligation(A,student(A,_),fine(X*V),`now`+`15 seconds`).
+       -> obligation(A,student(A,_),fine(X*V),`15 seconds`).
 }

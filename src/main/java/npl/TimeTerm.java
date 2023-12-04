@@ -13,9 +13,6 @@ import jason.asSyntax.DefaultTerm;
 import jason.asSyntax.NumberTerm;
 import jason.asSyntax.Term;
 
-import javax.json.Json;
-import javax.json.JsonValue;
-
 /** A Jason Term that represent a moment on time */
 public class TimeTerm extends DefaultTerm implements NumberTerm {
     private static final long serialVersionUID = -5935273329840616372L;
@@ -53,7 +50,7 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
     @Override
     protected int calcHashCode() {
         if (time == null) // now
-            return "now".hashCode(); //new Date().hashCode();
+            return "now".hashCode();
         else
             return time.hashCode();
     }
@@ -115,11 +112,11 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
             return (1900+t.getYear())+"-"+t.getMonth()+"-"+t.getDay()+" "+t.getHours()+":"+t.getMinutes()+":"+t.getSeconds();
     }
 
-    public static String toRelTimeStr(long time) {
+    public static String toRealTimeStr(long time) {
         long elap = time - System.currentTimeMillis();
-        String s = " + ";
+        String s = "";
         if (elap < 0) {
-            s = " - ";
+            s = "-";
             elap = elap * -1;
         }
         long t = 0;
@@ -145,7 +142,7 @@ public class TimeTerm extends DefaultTerm implements NumberTerm {
         if (t == 0)
             return "now";
         else
-            return "now"+s+t+" "+u;
+            return s+t+" "+u;
     }
     public static String toAbsTimeStr(long time) {
         String s = "";

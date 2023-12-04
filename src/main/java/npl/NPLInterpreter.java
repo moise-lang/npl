@@ -401,7 +401,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     private boolean checkNewNormInstance(NormInstance ni) {
         // check if already in BB
         if (!containsIgnoreDeadline(getActive(), ni)) { // is it a new obligation?
-            if (ni.maintContFromNorm || holds(ni.getMaitenanceCondition())) { // is the maintenance condition true?, avoids the creation of unnecessary obligations
+            if (ni.isMaintenanceCondFromNorm || holds(ni.getMaintenanceCondition())) { // is the maintenance condition true?, avoids the creation of unnecessary obligations
                 if ((ni.isObligation() && !holds(ni.getAim())) || // that is an obligation not achieved yet
                         (ni.isPermission() && !holds(ni.getAim())) || // or a permission not achieved yet
                         ni.isProhibition()                             // or a prohibition
@@ -418,13 +418,11 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         return false;
     }
     private void addInSchedule(final NormInstance o) {
-        long ttf = o.getDeadline() - System.currentTimeMillis();
-
-        scheduler.schedule(new Runnable() {
-            public void run() {
-                oblUpdateThread.checkUnfulfilled(o);
-            }
-        }, ttf, TimeUnit.MILLISECONDS);
+        long ttf = o.getTimeDeadline();
+        if (ttf >= 0) { // the deadline is a moment/time
+            ttf = ttf - System.currentTimeMillis();
+            scheduler.schedule(() -> oblUpdateThread.checkUnfulfilled(o), ttf, TimeUnit.MILLISECONDS);
+        }
     }
 
     private Literal createState(NormInstance o) {
@@ -486,22 +484,26 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         return ele;
     }
 
-    private Element obligation2dom(Document document, NormInstance l, State state, boolean reltime) {
+    private Element obligation2dom(Document document, NormInstance l, State state, boolean realtime) {
         Element oblele = (Element) document.createElement("deontic-modality");
         try {
             oblele.setAttribute("modality", l.getFunctor());
             oblele.setAttribute("state", state.name());
             oblele.setAttribute("agent", l.getAg().toString());
-            if (l.maintContFromNorm && !"true".equals(l.getMaitenanceCondition().toString()))
+            if (l.isMaintenanceCondFromNorm && !"true".equals(l.getMaintenanceCondition().toString()))
                 oblele.setAttribute("maintenance", "as in norm " + l.getNorm().getId());
             else
-                oblele.setAttribute("maintenance", l.getMaitenanceCondition().toString());
+                oblele.setAttribute("maintenance", l.getMaintenanceCondition().toString());
             oblele.setAttribute("aim", l.getAim().toString());
-            long ttf = l.getDeadline();
-            if (reltime)
-                oblele.setAttribute("ttf", TimeTerm.toRelTimeStr(ttf));
-            else
-                oblele.setAttribute("ttf", TimeTerm.toTimeStamp(ttf));
+            long ttf = l.getTimeDeadline();
+            if (ttf >= 0) {
+                if (realtime)
+                    oblele.setAttribute("ttf", TimeTerm.toRealTimeStr(ttf));
+                else
+                    oblele.setAttribute("ttf", TimeTerm.toTimeStamp(ttf));
+            } else {
+                oblele.setAttribute("ttf", l.getStateDeadline().toString());
+            }
 
             String toff = l.getDoneStr();
             if (toff != null) {
@@ -661,12 +663,12 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             }
         }
 
-        // -- transition active -> inactive (based on r for obl/pro/per)
-        //                                  (based also on g for per)
+        // -- transition active -> inactive (based on while for obl/pro/per)
+        //                                  (based also on what for per)
         private void updateInactive() {
             active = getActive();
             for (NormInstance o : active) {
-                if (!holds(o.getMaitenanceCondition()) || (o.isPermission() && holds(o.getAim()))) {
+                if (!holds(o.getMaintenanceCondition()) || (o.isPermission() && holds(o.getAim()))) {
                     Literal oasinbb = createState(o);
                     if (!bb.remove(oasinbb))
                         logger.log(Level.INFO, "ooops " + oasinbb + " should be removed 1!");
@@ -676,46 +678,59 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             }
         }
 
-        // -- transition active -> unfulfilled (for obl) (based on d)
+        // -- transition active -> unfulfilled (for obl) (based on deadline)
         //               active -> inactive (for per)
         //               active -> fulfilled (for pro)
         private void updateDeadline() {
             active = getActive();
-            NormInstance o = toCheckUnfulfilled.poll();
+            NormInstance o = toCheckUnfulfilled.poll(); // norm instances that have a time based deadline, if they are still active (i.e., not fulfilled), they should be moved to unfulfilled
             while (o != null) {
                 if (containsIgnoreDeadline(active, o)) { // deadline achieved, and still active
-                    Literal oasinbb = createState(o);
-                    if (!bb.remove(oasinbb))
-                        logger.log(Level.INFO, "ooops 3 " + o + " should be removed (due the deadline), but it is not in the set of facts.");
-
-                    if (o.isObligation()) {
-                        // transition for obligation (active -> unfulfilled)
-                        if (o.getAgIntances() == 0) { // it is unfulfilled only if no agent instance has fulfilled the prohibition
-                            o.setUnfulfilled();
-                            bb.add(createState(o));
-                            notifier.add(EventType.unfulfilled, o);
-                        }
-                    } else if (o.isPermission()) {
-                        // transition for permission (active -> inactive)
-                        o.setInactive();
-                        bb.add(createState(o));
-                        notifier.add(EventType.inactive, o);
-                    } else {
-                        // transition for prohibition (active -> fulfilled)
-                        if (o.getAgIntances() == 0) { // it is fulfilled only if no agent instance has unfulfilled the prohibition
-                            o.setFulfilled();
-                            bb.add(createState(o));
-                            notifier.add(EventType.fulfilled, o);
-                        }
-                    }
-                    try {
-                        verifyNorms();
-                    } catch (NormativeFailureException e) {
-                        //System.err.println("Error to set obligation "+o+" to unfulfilled!");
-                        //e.printStackTrace();
-                    }
+                    niAchievedDeadline(o);
                 }
                 o = toCheckUnfulfilled.poll();
+            }
+
+            // test deadline that are logical expressions
+            for (var ni: active) {
+                if (ni.getStateDeadline() != null) {
+                    if (holds(ni.getStateDeadline())) {
+                        niAchievedDeadline(ni);
+                    }
+                }
+            }
+        }
+
+        private void niAchievedDeadline(NormInstance o) {
+            Literal oasinbb = createState(o);
+            if (!bb.remove(oasinbb))
+                logger.log(Level.INFO, "ooops 3 " + o + " should be removed (due the deadline), but it is not in the set of facts.");
+
+            if (o.isObligation()) {
+                // transition for obligation (active -> unfulfilled)
+                if (o.getAgIntances() == 0) { // it is unfulfilled only if no agent instance has fulfilled the prohibition
+                    o.setUnfulfilled();
+                    bb.add(createState(o));
+                    notifier.add(EventType.unfulfilled, o);
+                }
+            } else if (o.isPermission()) {
+                // transition for permission (active -> inactive)
+                o.setInactive();
+                bb.add(createState(o));
+                notifier.add(EventType.inactive, o);
+            } else {
+                // transition for prohibition (active -> fulfilled)
+                if (o.getAgIntances() == 0) { // it is fulfilled only if no agent instance has unfulfilled the prohibition
+                    o.setFulfilled();
+                    bb.add(createState(o));
+                    notifier.add(EventType.fulfilled, o);
+                }
+            }
+            try {
+                verifyNorms();
+            } catch (NormativeFailureException e) {
+                //System.err.println("Error to set obligation "+o+" to unfulfilled!");
+                //e.printStackTrace();
             }
         }
 
@@ -726,7 +741,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             unfulPlusInactObls.addAll(unfulObl);
             for (NormInstance o : unfulPlusInactObls) {
                 if (holds(o.getAim()) && o.getAnnots("done").isEmpty()) { // if the agent did, even latter...
-                    long ttf = System.currentTimeMillis() - o.getDeadline();
+                    long ttf = System.currentTimeMillis() - o.getTimeDeadline();
                     o.addAnnot(ASSyntax.createStructure("done", new TimeTerm(ttf, "milliseconds")));
                 }
             }

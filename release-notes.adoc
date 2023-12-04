@@ -1,5 +1,23 @@
 = Release Notes for NPL
 
+== Version 0.6
+
+- Language and the interpreter support for _sanctions_. See link:../examples/e4.npl[example4] and JaCaMo link:https://github.com/jacamo-lang/jacamo/tree/develop/demos/sanction[demo]. Core ideas:
+* Final state of norm instances (fulfilled, unfulfilled or inactive) may trigger sanctions
+* Two kinds of sanction procedures: obligation and (institutional) fact of type sanction. In the former, an agent is obliged to do something as the consequence of the (un)fulfillment, as a kind of chain of norms. In the latter, the fact can be read either by an agent that decides how to proceed or by an artifact that _regiments_ the consequence of the (un)fulfillment.
+
+- Deadline can be written without `now +`. For example, `obligation(bob,true,b(10),1 minute)` that means, 1 minute after the creation of the obligation.
+
+- Support for state based deadlines (besides previous temporal conditions). For example: `norm n1: when -> obligation(who, while, what, full(room))`, in the sense "obliged to something before the room is full".
+
+- API changes:
+* class DeonticModality is renamed to NormInstance
+* class NormFactory is renamed to NPLFactory
+
+== Versino 0.5
+
+- stable version for JaCaMo 1.2
+
 == Version 0.4
 
 - minor improvements in the API

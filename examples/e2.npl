@@ -13,7 +13,7 @@ scope main {
 
     // alice is permitted to set b < 0 for 4 seconds, while a >= 2
     norm n1: vl(X) & X >= 5
-       -> permission(alice,a(N) & N >=2, b(Y) & Y<0, `now`+`4 seconds`).
+       -> permission(alice,a(N) & N >=2, b(Y) & Y<0, `4 seconds`).
 
     // it is prohibited to set a > 30, for all agents, while there is a student
     norm n2: true

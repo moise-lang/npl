@@ -46,12 +46,12 @@ public class Example4 {
         interpreter.addFact(ASSyntax.parseLiteral("c(10)"));
         // sanctions start to be created
 
+        Thread.sleep(2000);
         interpreter.addFact(ASSyntax.parseLiteral("b(0)")); // no more obligations for alice
 
         for (int i=0; i<10; i++) {
         	Thread.sleep(2000);
         	interpreter.verifyNorms();
         }
-        System.exit(0);
     }
 }

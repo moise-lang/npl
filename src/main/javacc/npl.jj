@@ -110,7 +110,7 @@ TOKEN : {
 |  <NP        : "np">
 |  <SCOPE     : "scope">
 |  <NORM      : "norm">
-|  <SANCTION  : "sanction">
+|  <SANCTION  : "sanction-rule">
 |  <FAIL      : "fail">
 |  <IF        : "if">
 |  <FULFILLED   : "fulfilled">
@@ -259,7 +259,7 @@ Literal deontic_operator() :
    ) ","
    o = log_expr() ","  { r.addTerm( changeToAtom(o) ); }
    o = log_expr() ","  { r.addTerm( changeToAtom(o) ); }
-   o = log_expr()      { r.addTerm( changeToAtom(o) ); }
+   o = log_expr()      { r.addTerm( changeToAtom(o) ); } // deadline
    ")"
                        { if (dfp != null) { // && dfp.isRelevant(r.getPredicateIndicator())) {
                             return lFac.createNPLLiteral(r,dfp);
