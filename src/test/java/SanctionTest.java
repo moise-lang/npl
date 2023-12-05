@@ -3,6 +3,7 @@ import junit.framework.TestCase;
 import npl.NPLInterpreter;
 import npl.NormInstance;
 import npl.NormativeProgram;
+import npl.StateTransitions;
 import npl.parser.ParseException;
 import npl.parser.nplp;
 
@@ -28,7 +29,7 @@ public class SanctionTest extends TestCase {
                 "        if unfulfilled: s3, s1(M) \n" +
                 "        if fulfilled: s1(a), s2(alice,M) \n" +
                 "        if inactive: s3." +
-                "   norm n2: f2 -> obligation(a,n2,c,`now`+`100 milliseconds`)\n " +
+                "   norm n2: f2 -> obligation(a,n2,c,`100 milliseconds`)\n " +
                 "        if unfulfilled: s4." +
                 "";
         program = program + "  }";
@@ -71,6 +72,7 @@ public class SanctionTest extends TestCase {
         new nplp(new StringReader(program)).program(p, null);
 
         NPLInterpreter interpreter = new NPLInterpreter();
+        interpreter.setStateManager(new StateTransitions(interpreter));
         interpreter.loadNP(p.getRoot());
         interpreter.addFact(ASSyntax.parseLiteral("f2"));
         interpreter.addFact(ASSyntax.parseLiteral("b"));

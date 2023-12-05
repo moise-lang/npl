@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,14 +38,14 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     private Map<String, INorm> regulativeNorms = null; // norms with obligation, permission, prohibition consequence
     private Map<String, ISanctionRule> sanctionRules = null;
 
-    private Object syncTransState = new Object();
+    protected Object syncTransState = new Object();
 
     List<NormativeListener> listeners = new CopyOnWriteArrayList<>();
 
     private ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1); // a thread that checks deadlines of obligations, permissions, ...
-    private StateTransitions oblUpdateThread;
+    private StateTransitions oblTransitions;
 
-    private Notifier notifier;
+    protected Notifier notifier;
 
     protected Logger logger = Logger.getLogger(NPLInterpreter.class.getName());
 
@@ -67,16 +65,22 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         sanctionRules   = new HashMap<>();
         ag.initAg();
         clearFacts();
-        oblUpdateThread = new StateTransitions();
-        oblUpdateThread.start();
+        setStateManager(new StateTransitionsThread(this,1000));
 
         notifier = new Notifier();
     }
 
+    public void setStateManager(StateTransitions t) {
+        if (oblTransitions != null)
+            oblTransitions.stop();
+        oblTransitions = t;
+        oblTransitions.start();
+    }
+
     public void stop() {
         scheduler.shutdownNow();
-        if (oblUpdateThread != null)
-            oblUpdateThread.interrupt();
+        if (oblTransitions != null)
+            oblTransitions.stop();
     }
 
     public void addListener(NormativeListener ol) {
@@ -157,7 +161,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
      */
     public void clearFacts() {
         ag.getBB().clear();
-        if (oblUpdateThread != null) oblUpdateThread.update();
+        if (oblTransitions != null) oblTransitions.update();
     }
 
     /**
@@ -394,7 +398,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                 }
             }
         }
-        oblUpdateThread.update();
+        oblTransitions.update();
         return newObl;
     }
 
@@ -421,17 +425,17 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         long ttf = o.getTimeDeadline();
         if (ttf >= 0) { // the deadline is a moment/time
             ttf = ttf - System.currentTimeMillis();
-            scheduler.schedule(() -> oblUpdateThread.checkUnfulfilled(o), ttf, TimeUnit.MILLISECONDS);
+            scheduler.schedule(() -> oblTransitions.deadlineAchieved(o), ttf, TimeUnit.MILLISECONDS);
         }
     }
 
-    private Literal createState(NormInstance o) {
+    protected Literal createState(NormInstance o) {
         Literal s = ASSyntax.createLiteral(o.getState().name(), o);
         s.addSource(NormAtom);
         return s;
     }
 
-    private boolean containsIgnoreDeadline(Collection<NormInstance> list, NormInstance obl) {
+    protected boolean containsIgnoreDeadline(Collection<NormInstance> list, NormInstance obl) {
         for (NormInstance l : list)
             if (l.equalsIgnoreDeadline(obl))
                 return true;
@@ -539,214 +543,11 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         return "normative interpreter";
     }
 
-
-    private int updateInterval = 1000;
-
     /**
      * sets the update interval for checking the change in obligations' state
      */
     public void setUpdateInterval(int miliseconds) {
-        updateInterval = miliseconds;
-    }
-
-    /**
-     * this thread updates the state of obligations, permissions and prohibitions (e.g. active -> fulfilled)
-     * each second (by default)
-     */
-    class StateTransitions extends Thread {
-
-        private boolean update = false;
-        private List<NormInstance> active = null;
-        private BeliefBase bb;
-        private Queue<NormInstance> toCheckUnfulfilled = new ConcurrentLinkedQueue<>();
-
-        /**
-         * update the state of the obligations
-         */
-        synchronized void update() {
-            update = true;
-            notifyAll();
-        }
-
-//        void setUpdateInterval(int miliseconds) {
-//            updateInterval = miliseconds;
-//        }
-
-        synchronized void checkUnfulfilled(NormInstance o) {
-            toCheckUnfulfilled.offer(o);
-            update = true;
-            notifyAll();
-        }
-
-        @Override
-        synchronized public void run() {
-            boolean concModifExp = false;
-            while (true) {
-                try {
-                    if (concModifExp) {
-                        sleep(50);
-                        concModifExp = false;
-                    } else {
-                        wait(updateInterval);
-                    }
-                    if (update) {
-                        bb = getAg().getBB();
-                        synchronized (syncTransState) {
-                            update = false;
-                            updateActive();
-                            updateInactive();
-                            updateDeadline();
-                            updateDoneForUnfulfilled();
-                        }
-                    }
-                } catch (ConcurrentModificationException e) {
-                    // sleeps a while and try again
-                    concModifExp = true;
-                } catch (InterruptedException e) {
-                    return;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        // -- transition active -> (un)fulfilled (based on aim)
-        private void updateActive() {
-            active = getActive();
-            for (NormInstance o : active) {
-                Literal oasinbb = createState(o);
-                if (o.isObligation()) {
-                    // transition active -> fulfilled
-                    if (o.getAg().isGround() && holds(o.getAim())) {
-                        if (!bb.remove(oasinbb)) logger.log(Level.FINE, "ooops " + oasinbb + " should be removed 2");
-                        o = o.copy();
-                        o.setFulfilled();
-                        bb.add(createState(o));
-                        notifier.add(EventType.fulfilled, o);
-                    } else {
-                        List<NormInstance> fuls = getFulfilledObligations();
-                        Iterator<Unifier> i = o.getAim().logicalConsequence(ag, new Unifier());
-                        while (i.hasNext()) {
-                            Unifier u = i.next();
-                            NormInstance obl = new NormInstance(new LiteralImpl(o), u, o.getNorm());
-                            if (!containsIgnoreDeadline(fuls, obl)) {
-                                o.incAgInstance();
-                                obl.setFulfilled();
-                                bb.add(createState(obl));
-                                notifier.add(EventType.fulfilled, obl);
-                            }
-                        }
-                    }
-                } else if (o.isProhibition()) {
-                    // transition active -> unfulfilled
-                    if (o.getAg().isGround() && holds(o.getAim())) { // the case of a prohibition for one agent
-                        if (!bb.remove(oasinbb)) logger.log(Level.FINE, "ooops " + oasinbb + " should be removed 2");
-                        o = o.copy();
-                        o.setUnfulfilled();
-                        bb.add(createState(o));
-                        notifier.add(EventType.unfulfilled, o);
-                    } else {
-                        List<NormInstance> unfuls = getUnFulfilledProhibitions();
-                        Iterator<Unifier> i = o.getAim().logicalConsequence(ag, new Unifier());
-                        while (i.hasNext()) {
-                            Unifier u = i.next();
-                            NormInstance obl = new NormInstance(new LiteralImpl(o), u, o.getNorm());
-                            if (!containsIgnoreDeadline(unfuls, obl)) {
-                                o.incAgInstance();
-                                obl.setUnfulfilled();
-                                bb.add(createState(obl));
-                                notifier.add(EventType.unfulfilled, obl);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // -- transition active -> inactive (based on while for obl/pro/per)
-        //                                  (based also on what for per)
-        private void updateInactive() {
-            active = getActive();
-            for (NormInstance o : active) {
-                if (!holds(o.getMaintenanceCondition()) || (o.isPermission() && holds(o.getAim()))) {
-                    Literal oasinbb = createState(o);
-                    if (!bb.remove(oasinbb))
-                        logger.log(Level.INFO, "ooops " + oasinbb + " should be removed 1!");
-                    o.setInactive();
-                    notifier.add(EventType.inactive, o);
-                }
-            }
-        }
-
-        // -- transition active -> unfulfilled (for obl) (based on deadline)
-        //               active -> inactive (for per)
-        //               active -> fulfilled (for pro)
-        private void updateDeadline() {
-            active = getActive();
-            NormInstance o = toCheckUnfulfilled.poll(); // norm instances that have a time based deadline, if they are still active (i.e., not fulfilled), they should be moved to unfulfilled
-            while (o != null) {
-                if (containsIgnoreDeadline(active, o)) { // deadline achieved, and still active
-                    niAchievedDeadline(o);
-                }
-                o = toCheckUnfulfilled.poll();
-            }
-
-            // test deadline that are logical expressions
-            for (var ni: active) {
-                if (ni.getStateDeadline() != null) {
-                    if (holds(ni.getStateDeadline())) {
-                        niAchievedDeadline(ni);
-                    }
-                }
-            }
-        }
-
-        private void niAchievedDeadline(NormInstance o) {
-            Literal oasinbb = createState(o);
-            if (!bb.remove(oasinbb))
-                logger.log(Level.INFO, "ooops 3 " + o + " should be removed (due the deadline), but it is not in the set of facts.");
-
-            if (o.isObligation()) {
-                // transition for obligation (active -> unfulfilled)
-                if (o.getAgIntances() == 0) { // it is unfulfilled only if no agent instance has fulfilled the prohibition
-                    o.setUnfulfilled();
-                    bb.add(createState(o));
-                    notifier.add(EventType.unfulfilled, o);
-                }
-            } else if (o.isPermission()) {
-                // transition for permission (active -> inactive)
-                o.setInactive();
-                bb.add(createState(o));
-                notifier.add(EventType.inactive, o);
-            } else {
-                // transition for prohibition (active -> fulfilled)
-                if (o.getAgIntances() == 0) { // it is fulfilled only if no agent instance has unfulfilled the prohibition
-                    o.setFulfilled();
-                    bb.add(createState(o));
-                    notifier.add(EventType.fulfilled, o);
-                }
-            }
-            try {
-                verifyNorms();
-            } catch (NormativeFailureException e) {
-                //System.err.println("Error to set obligation "+o+" to unfulfilled!");
-                //e.printStackTrace();
-            }
-        }
-
-        private void updateDoneForUnfulfilled() {
-            // check done for unfulfilled and inactive
-            List<NormInstance> unfulObl = getUnFulfilledObligations();
-            List<NormInstance> unfulPlusInactObls = getInactiveObligations();
-            unfulPlusInactObls.addAll(unfulObl);
-            for (NormInstance o : unfulPlusInactObls) {
-                if (holds(o.getAim()) && o.getAnnots("done").isEmpty()) { // if the agent did, even latter...
-                    long ttf = System.currentTimeMillis() - o.getTimeDeadline();
-                    o.addAnnot(ASSyntax.createStructure("done", new TimeTerm(ttf, "milliseconds")));
-                }
-            }
-        }
-
+        oblTransitions.setUpdateInterval(miliseconds);
     }
 
     public enum EventType {create, fulfilled, unfulfilled, inactive}

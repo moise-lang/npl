@@ -2,6 +2,7 @@ import jason.asSyntax.ASSyntax;
 import junit.framework.TestCase;
 import npl.NPLInterpreter;
 import npl.NormativeProgram;
+import npl.StateTransitions;
 import npl.parser.nplp;
 
 import java.io.StringReader;
@@ -53,6 +54,7 @@ public class DeadLineTest extends TestCase {
         new nplp(new StringReader(program)).program(p, null);
 
         NPLInterpreter interpreter = new NPLInterpreter();
+        interpreter.setStateManager(new StateTransitions(interpreter));
         interpreter.loadNP(p.getRoot());
         interpreter.addFact(ASSyntax.parseLiteral("f1(machine1)"));
         interpreter.addFact(ASSyntax.parseLiteral("f2(machine1)"));
@@ -78,7 +80,5 @@ public class DeadLineTest extends TestCase {
         //System.out.println("U: "+unfulfilled.size());
         assertTrue(unfulfilled.size()>2);
         assertTrue(unfulfilled.toString().contains("obligation(b,f2(machine1),d,open(door)"));
-
     }
-
 }
