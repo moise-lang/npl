@@ -48,49 +48,54 @@ public class StateTransitions {
     private void updateActive() {
         var active = engine.getActive();
         var bb = engine.getAg().getBB();
-        for (NormInstance o : active) {
-            var oasinbb = engine.createState(o);
-            if (o.isObligation()) {
+        for (NormInstance ni : active) {
+            var oasinbb = engine.createState(ni);
+            if (ni.isObligation()) {
                 // transition active -> fulfilled
-                if (o.getAg().isGround() && engine.holds(o.getAim())) {
+                if (ni.getAg().isGround() && engine.holds(ni.getAim())) {
                     if (!bb.remove(oasinbb)) engine.logger.log(Level.FINE, "ooops " + oasinbb + " should be removed 2");
-                    o = o.copy();
-                    o.setFulfilled();
-                    bb.add(engine.createState(o));
-                    engine.notifier.add(NPLInterpreter.EventType.fulfilled, o);
+                    ni = ni.copy();
+                    ni.setFulfilled();
+                    bb.add(engine.createState(ni));
+                    engine.notifier.add(NPLInterpreter.EventType.fulfilled, ni);
                 } else {
                     List<NormInstance> fuls = engine.getFulfilledObligations();
-                    Iterator<Unifier> i = o.getAim().logicalConsequence(engine.getAg(), new Unifier());
+                    Iterator<Unifier> i = ni.getAim().logicalConsequence(engine.getAg(), new Unifier());
                     while (i.hasNext()) {
                         Unifier u = i.next();
-                        NormInstance obl = new NormInstance(new LiteralImpl(o), u, o.getNorm());
+                        NormInstance obl = new NormInstance(new LiteralImpl(ni), u, ni.getNorm());
                         if (!engine.containsIgnoreDeadline(fuls, obl)) {
-                            o.incAgInstance();
+                            ni.incAgInstance();
                             obl.setFulfilled();
                             bb.add(engine.createState(obl));
                             engine.notifier.add(NPLInterpreter.EventType.fulfilled, obl);
                         }
                     }
                 }
-            } else if (o.isProhibition()) {
+            } else if (ni.isProhibition()) {
                 // transition active -> unfulfilled
-                if (o.getAg().isGround() && engine.holds(o.getAim())) { // the case of a prohibition for one agent
-                    if (!bb.remove(oasinbb)) engine.logger.log(Level.FINE, "ooops " + oasinbb + " should be removed 2");
-                    o = o.copy();
-                    o.setUnfulfilled();
-                    bb.add(engine.createState(o));
-                    engine.notifier.add(NPLInterpreter.EventType.unfulfilled, o);
+                if (ni.getAg().isGround() && engine.holds(ni.getAim())) { // the case of a prohibition for one agent
+                    try {
+                        if (!bb.remove(oasinbb))
+                            engine.logger.log(Level.FINE, "ooops " + oasinbb + " should be removed 2");
+                    } catch (Exception e) {
+                        engine.logger.log(Level.FINE, "ooops " + oasinbb + " should be removed 2 "+e.getMessage());
+                    }
+                    ni = ni.copy();
+                    ni.setUnfulfilled();
+                    bb.add(engine.createState(ni));
+                    engine.notifier.add(NPLInterpreter.EventType.unfulfilled, ni);
                 } else {
-                    List<NormInstance> unfuls = engine.getUnFulfilledProhibitions();
-                    Iterator<Unifier> i = o.getAim().logicalConsequence(engine.getAg(), new Unifier());
+                    var unfuls = engine.getUnFulfilledProhibitions();
+                    var i = ni.getAim().logicalConsequence(engine.getAg(), new Unifier());
                     while (i.hasNext()) {
-                        Unifier u = i.next();
-                        NormInstance obl = new NormInstance(new LiteralImpl(o), u, o.getNorm());
-                        if (!engine.containsIgnoreDeadline(unfuls, obl)) {
-                            o.incAgInstance();
-                            obl.setUnfulfilled();
-                            bb.add(engine.createState(obl));
-                            engine.notifier.add(NPLInterpreter.EventType.unfulfilled, obl);
+                        var un = i.next();
+                        var pro = new NormInstance(new LiteralImpl(ni), un, ni.getNorm());
+                        if (!engine.containsIgnoreDeadline(unfuls, pro)) {
+                            ni.incAgInstance();
+                            pro.setUnfulfilled();
+                            bb.add(engine.createState(pro));
+                            engine.notifier.add(NPLInterpreter.EventType.unfulfilled, pro);
                         }
                     }
                 }

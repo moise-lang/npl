@@ -43,7 +43,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     List<NormativeListener> listeners = new CopyOnWriteArrayList<>();
 
     private ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1); // a thread that checks deadlines of obligations, permissions, ...
-    private StateTransitions oblTransitions;
+    private StateTransitions oblTransitions = null;
 
     protected Notifier notifier;
 
@@ -65,7 +65,8 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         sanctionRules   = new HashMap<>();
         ag.initAg();
         clearFacts();
-        setStateManager(new StateTransitionsThread(this,1000));
+        if (oblTransitions == null)
+            setStateManager(new StateTransitionsThread(this,1000));
 
         notifier = new Notifier();
     }
@@ -107,7 +108,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
 
         logger = Logger.getLogger(NPLInterpreter.class.getName() + "_" + scope.getId());
 
-        BeliefBase bb = ag.getBB();
+        var bb = ag.getBB();
 
         for (Rule r : scope.getInferenceRules()) {
             // normalise rules with empty body
@@ -161,7 +162,8 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
      */
     public void clearFacts() {
         ag.getBB().clear();
-        if (oblTransitions != null) oblTransitions.update();
+        if (oblTransitions != null)
+            oblTransitions.update();
     }
 
     /**
