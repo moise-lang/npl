@@ -38,9 +38,9 @@ The syntax for a norm that creates obligations is:
 norm <id>
    : <when>
   -> obligation(<who>, <while>, <what>, <deadline>)
-     [if fulfulled <sanction-rules>]
-     [if unfulfulled <sanction-rules>]
-     [if inactive <sanction-rules>]
+     [if fulfilled: <sanction-rules>]
+     [if unfulfilled: <sanction-rules>]
+     [if inactive: <sanction-rules>]
   .
 ```
 
