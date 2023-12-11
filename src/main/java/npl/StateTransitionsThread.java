@@ -1,6 +1,8 @@
 package npl;
 
 import java.util.ConcurrentModificationException;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class StateTransitionsThread extends StateTransitions implements Runnable {
 
@@ -9,6 +11,8 @@ public class StateTransitionsThread extends StateTransitions implements Runnable
     private boolean running = true;
 
     private Thread myThread;
+
+    private final ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(2); // a thread that checks deadlines of obligations, permissions, ...;
 
     public StateTransitionsThread(NPLInterpreter engine, int updateInterval) {
         super(engine);
@@ -33,6 +37,7 @@ public class StateTransitionsThread extends StateTransitions implements Runnable
     @Override
     public void stop() {
         myThread.interrupt();
+        scheduler.shutdownNow();
         running = false;
     }
 
@@ -80,4 +85,12 @@ public class StateTransitionsThread extends StateTransitions implements Runnable
         }
     }
 
+    @Override
+    public void addInSchedule(NormInstance o) {
+        long ttf = o.getTimeDeadline();
+        if (ttf >= 0) { // the deadline is a moment/time
+            ttf = ttf - System.currentTimeMillis();
+            scheduler.schedule(() -> deadlineAchieved(o), ttf, TimeUnit.MILLISECONDS);
+        }
+    }
 }

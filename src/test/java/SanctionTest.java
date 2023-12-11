@@ -1,10 +1,8 @@
 import jason.asSyntax.ASSyntax;
 import junit.framework.TestCase;
 import npl.NPLInterpreter;
-import npl.NormInstance;
 import npl.NormativeProgram;
 import npl.StateTransitions;
-import npl.parser.ParseException;
 import npl.parser.nplp;
 
 import java.io.StringReader;
@@ -15,7 +13,7 @@ public class SanctionTest extends TestCase {
     String program = "";
 
     @Override
-    protected void setUp() throws Exception {
+    protected void setUp()  {
         program = program + "  scope organisation(xx) { ";
         program = program +
                 "   sanction-rule s1(M): empty(M,A)     -> stopMachine(A).\n" +
@@ -35,7 +33,7 @@ public class SanctionTest extends TestCase {
         program = program + "  }";
     }
 
-    public void testParser() throws ParseException, Exception {
+    public void testParser() throws Exception {
         NormativeProgram p = new NormativeProgram();
         new nplp(new StringReader(program)).program(p, null);
         assertEquals(5, p.getRoot().getSanctionRules().size());
@@ -62,7 +60,7 @@ public class SanctionTest extends TestCase {
         interpreter.addFact(ASSyntax.parseLiteral("empty(machine1,m1)"));
         interpreter.verifyNorms();
 
-        //System.out.println("  "+interpreter.getFacts());
+        System.out.println("  "+interpreter.getFacts());
         assertTrue(interpreter.getFacts().toString().contains("sanction(stopMachine(m1)["));
         assertTrue(interpreter.getFacts().toString().contains("sanction(stopAll["));
 
@@ -78,8 +76,9 @@ public class SanctionTest extends TestCase {
         interpreter.addFact(ASSyntax.parseLiteral("b"));
         interpreter.verifyNorms();
         Thread.sleep(300);
+        interpreter.verifyNorms();
         //System.out.println("  "+interpreter.getActiveObligations());
-        System.out.println("  "+interpreter.getFacts());
+        //System.out.println("  "+interpreter.getFacts());
         assertTrue(interpreter.getFacts().toString().contains("obligation(bob,true,fine"));
         assertTrue(interpreter.getFacts().toString().contains("sanction(holdAll["));
 

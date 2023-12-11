@@ -44,7 +44,7 @@ public class DeadLineTest extends TestCase {
 
         var ni3 = nis.next(); // third instance
         assertTrue(ni3.getTimeDeadline() > 1000000);
-        System.out.println(ni3.getTimeDeadline());
+        //System.out.println(ni3.getTimeDeadline());
         assertTrue(ni3.getStateDeadline() == null);
 
     }
@@ -65,6 +65,7 @@ public class DeadLineTest extends TestCase {
 
         // after 2 seconds, two unfulfilled
         Thread.sleep(3000);
+        interpreter.verifyNorms();
         var unfulfilled = interpreter.getUnFulfilled();
         //System.out.println("U: "+unfulfilled);
         assertEquals(2,unfulfilled.size());

@@ -39,8 +39,8 @@ public class Example4 {
 
         // verifies if some norm is applicable (none in this example)
         interpreter.verifyNorms();
+        interpreter.addFact(ASSyntax.parseLiteral("c(10)"));
 
-        // sanctions not triggered until here because there is no c value
         Thread.sleep(5000);
 
         interpreter.addFact(ASSyntax.parseLiteral("c(10)"));

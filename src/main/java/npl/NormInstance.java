@@ -52,7 +52,7 @@ public class NormInstance extends LiteralImpl {
     }
 
     // used by capply
-    private NormInstance(NormInstance l, Unifier un) {
+    protected NormInstance(NormInstance l, Unifier un) {
         super(l.getFunctor());
         for (Term t : l.getTerms())
             addTerm(t.capply(un));
@@ -72,6 +72,10 @@ public class NormInstance extends LiteralImpl {
         this.state = d.state;
         this.un = d.un;
         this.isMaintenanceCondFromNorm = d.isMaintenanceCondFromNorm;
+    }
+
+    String getActivatedNormUniqueId() {
+        return norm.getId() + un.toString();
     }
 
     /** returns the norms used to create this obligation */

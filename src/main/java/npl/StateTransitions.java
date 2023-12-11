@@ -60,10 +60,10 @@ public class StateTransitions {
                     engine.notifier.add(NPLInterpreter.EventType.fulfilled, ni);
                 } else {
                     List<NormInstance> fuls = engine.getFulfilledObligations();
-                    Iterator<Unifier> i = ni.getAim().logicalConsequence(engine.getAg(), new Unifier());
+                    Iterator<Unifier> i = ni.getAim().logicalConsequence(engine.getAg(), ni.getUnifier().clone());
                     while (i.hasNext()) {
-                        Unifier u = i.next();
-                        NormInstance obl = new NormInstance(new LiteralImpl(ni), u, ni.getNorm());
+                        var un = i.next();
+                        var obl = new NormInstance(ni, un);
                         if (!engine.containsIgnoreDeadline(fuls, obl)) {
                             ni.incAgInstance();
                             obl.setFulfilled();
@@ -87,10 +87,10 @@ public class StateTransitions {
                     engine.notifier.add(NPLInterpreter.EventType.unfulfilled, ni);
                 } else {
                     var unfuls = engine.getUnFulfilledProhibitions();
-                    var i = ni.getAim().logicalConsequence(engine.getAg(), new Unifier());
+                    var i = ni.getAim().logicalConsequence(engine.getAg(), ni.getUnifier().clone());
                     while (i.hasNext()) {
                         var un = i.next();
-                        var pro = new NormInstance(new LiteralImpl(ni), un, ni.getNorm());
+                        var pro = new NormInstance(ni, un);
                         if (!engine.containsIgnoreDeadline(unfuls, pro)) {
                             ni.incAgInstance();
                             pro.setUnfulfilled();
@@ -124,22 +124,36 @@ public class StateTransitions {
     //               active -> fulfilled (for pro)
     private void updateDeadline() {
         var active = engine.getActive();
+        var updateAct = false;
         var o = toCheckUnfulfilledByDeadline.poll(); // norm instances that have a time based deadline, if they are still active (i.e., not fulfilled), they should be moved to unfulfilled
         while (o != null) {
             if (engine.containsIgnoreDeadline(active, o)) { // deadline achieved, and still active
                 niAchievedDeadline(o);
+                updateAct = true;
             }
             o = toCheckUnfulfilledByDeadline.poll();
         }
+
+        if (updateAct)
+            active = engine.getActive(); // update active
 
         // test deadline that are logical expressions
         for (var ni: active) {
             if (ni.getStateDeadline() != null) {
                 if (engine.holds(ni.getStateDeadline())) {
+                    // TODO: create new instance with agent arg ground, if possible
+                    //engine.logger.info("unfulfilled by state deadline "+ni);
                     niAchievedDeadline(ni);
                 }
+            } else {
+                // check also deadline of NI (4th argument), in case there is no scheduler and the argument is time based
+                if (ni.getTimeDeadline() >= 0) {
+                    //engine.logger.info("check deadline "+ni.getTimeDeadline()+" now is "+System.currentTimeMillis());
+                    if (System.currentTimeMillis() > ni.getTimeDeadline()) {
+                        niAchievedDeadline(ni);
+                    }
+                }
             }
-            // TODO: check also deadline of NI (4th argument), in case there is no schedule
         }
     }
 
@@ -180,15 +194,19 @@ public class StateTransitions {
 
     private void updateDoneForUnfulfilled() {
         // check done for unfulfilled and inactive
-        List<NormInstance> unfulObl = engine.getUnFulfilledObligations();
-        List<NormInstance> unfulPlusInactObls = engine.getInactiveObligations();
+        var unfulObl = engine.getUnFulfilledObligations();
+        var unfulPlusInactObls = engine.getInactiveObligations();
         unfulPlusInactObls.addAll(unfulObl);
         for (NormInstance o : unfulPlusInactObls) {
             if (engine.holds(o.getAim()) && o.getAnnots("done").isEmpty()) { // if the agent did, even latter...
                 long ttf = System.currentTimeMillis() - o.getTimeDeadline();
                 o.addAnnot(ASSyntax.createStructure("done", new TimeTerm(ttf, "milliseconds")));
+                engine.logger.info("**** done too late "+o);
             }
         }
     }
 
+    public void addInSchedule(final NormInstance o) {
+        // do nothing, should be overridden by subclasses
+    }
 }
