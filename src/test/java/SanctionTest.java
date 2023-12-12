@@ -55,6 +55,8 @@ public class SanctionTest extends TestCase {
         new nplp(new StringReader(program)).program(p, null);
 
         NPLInterpreter interpreter = new NPLInterpreter();
+        interpreter.setStateManager(new StateTransitions(interpreter));
+
         interpreter.loadNP(p.getRoot());
         interpreter.addFact(ASSyntax.parseLiteral("f1(machine1)"));
         interpreter.addFact(ASSyntax.parseLiteral("empty(machine1,m1)"));
