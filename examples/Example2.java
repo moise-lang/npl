@@ -79,7 +79,7 @@ public class Example2 {
         	Thread.sleep(1000);
         	interpreter.verifyNorms();
         }
-        System.exit(0);
+        //System.exit(0);
     }
 
     void printState() {

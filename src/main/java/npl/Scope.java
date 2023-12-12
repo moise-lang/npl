@@ -17,7 +17,8 @@ public class Scope {
     private Map<String,INorm>   norms  = new HashMap<>();
     private Map<Literal,Scope> scopes = new HashMap<>();
 
-    private Map<String, ISanctionRule> sanctionRules = new HashMap<>();
+    //private Map<String, ISanctionRule> sanctionRules = new HashMap<>();
+    private List<ISanctionRule> sanctionRules = new ArrayList<>();
 
     public Scope(Literal id, NormativeProgram np) {
         this.id = id;
@@ -51,12 +52,9 @@ public class Scope {
     }
 
     public void addSanctionRule(ISanctionRule sr) throws Exception {
-        if (sanctionRules.containsKey(sr.getId()))
-            throw new Exception("sanction with id="+sr.getId()+" exists already!");
-        sanctionRules.put(sr.getId(),sr);
+        sanctionRules.add(sr);
     }
-    public Collection<ISanctionRule> getSanctionRules() {  return sanctionRules.values();  }
-    public ISanctionRule getSanctionRule(String id) { return sanctionRules.get(id);  }
+    public Collection<ISanctionRule> getSanctionRules() {  return sanctionRules;  }
 
 
     public void addScope(Scope s) {
@@ -106,7 +104,7 @@ public class Scope {
         out.append(s+"scope "+id+" {\n");
         for (Rule r: infRules)
             out.append(s+"  "+r+".\n");
-        for (ISanctionRule sr: sanctionRules.values())
+        for (ISanctionRule sr: sanctionRules)
             out.append(s+"  "+sr+".\n");
         for (INorm n: norms.values())
             out.append(s+"  "+n+".\n");

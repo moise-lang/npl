@@ -1,3 +1,4 @@
+import jason.asSyntax.Literal;
 import jason.asSyntax.Structure;
 import npl.NPLInterpreter;
 import npl.NormInstance;
@@ -31,7 +32,7 @@ class MyListener implements NormativeListener {
     }
 
     @Override
-    public void sanction(String normId, NPLInterpreter.EventType t, Structure s) {
+    public void sanction(String normId, NPLInterpreter.EventType t, Literal s) {
         System.out.println("sanction for norm "+normId+" ("+t+"): "+s);
     }
 }

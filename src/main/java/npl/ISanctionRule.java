@@ -2,20 +2,17 @@ package npl;
 
 import jason.asSyntax.Literal;
 import jason.asSyntax.LogicalFormula;
-import jason.asSyntax.VarTerm;
-
-import java.util.List;
 
 /**
  * @author Jomi
  */
-public interface ISanctionRule extends INorm {
+public interface ISanctionRule {
+
+    Literal getTrigger();
+
+    LogicalFormula getCondition();
+
+    Literal getConsequence();
 
     ISanctionRule cloneSanction();
-
-
-    List<VarTerm> getArgs();
-
-    boolean hasDeonticConsequence();
-
 }

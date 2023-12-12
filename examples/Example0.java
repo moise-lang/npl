@@ -24,7 +24,7 @@ public class Example0 {
         // parsing (from a string)
         nplp parser = new nplp(new StringReader(
                   "scope ex0 {\n"
-                + "   norm n1: a(X) & X > 5 -> obligation(bob,true,b(10),`1 minute`)."
+                + "   norm n1: a(X) & X > 5 -> obligation(bob,true,b(X),`30 seconds`)."
                 + "}"));
         parser.program(np, null);
 
@@ -41,9 +41,6 @@ public class Example0 {
         // verifies if some norm is applicable
         interpreter.verifyNorms();
 
-        // removes the fact that triggered the norm
-        interpreter.removeFact(ASSyntax.parseLiteral("a(10)"));
-
         Thread.sleep(5000);
 
         // simulates that bob has fulfilled the norm
@@ -53,10 +50,7 @@ public class Example0 {
 
         // triggers it again
         interpreter.addFact(ASSyntax.parseLiteral("a(20)"));
-        interpreter.removeFact(ASSyntax.parseLiteral("b(10)")); // we need to remove it, otherwise the norms is already fulfilled
         interpreter.verifyNorms();
-
-        // since the activation condition remains, new obligations will be created for bob as soon as the previous becomes unfulfilled
     }
 
 }

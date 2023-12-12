@@ -2,11 +2,10 @@ package npl;
 
 import jason.asSyntax.Literal;
 import jason.asSyntax.LogicalFormula;
-import jason.asSyntax.VarTerm;
+import npl.parser.ParseException;
 import npl.parser.nplp;
 
 import java.io.StringReader;
-import java.util.List;
 
 public class NPLFactory implements INPLFactory {
     public INorm createNorm(String id, Literal consequence, LogicalFormula activationCondition) {
@@ -26,7 +25,7 @@ public class NPLFactory implements INPLFactory {
     }
 
     @Override
-    public ISanctionRule createSanctionRule(String id, List<VarTerm> args, LogicalFormula activationCondition, Literal consequence) {
-        return new SanctionRule(id, args, activationCondition, consequence);
+    public ISanctionRule createSanctionRule(Literal trigger, LogicalFormula condition, Literal consequence) throws ParseException {
+        return new SanctionRule(trigger, condition, consequence);
     }
 }

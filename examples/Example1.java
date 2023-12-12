@@ -57,7 +57,7 @@ public class Example1 {
         interpreter.verifyNorms();
         printObl();
 
-        Thread.sleep(10000); // wait some time to see what happens
+        Thread.sleep(1000); // wait some time to see what happens
 
         // alice fulfills her obligation
         facts.setBValue(-1);
@@ -76,7 +76,7 @@ public class Example1 {
         	interpreter.verifyNorms();
             printObl();
         }
-        System.exit(0);
+        //System.exit(0);
     }
 
     void printObl() {

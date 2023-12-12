@@ -1,5 +1,6 @@
 package npl;
 
+import jason.asSyntax.Literal;
 import jason.asSyntax.Structure;
 
 public interface NormativeListener {
@@ -8,6 +9,6 @@ public interface NormativeListener {
     default void unfulfilled(NormInstance o) {}
     default void inactive(NormInstance o) {}
     default void failure(Structure f) {}
-    default void sanction(String normId, NPLInterpreter.EventType event, Structure sanction) {}
+    default void sanction(String normId, NPLInterpreter.EventType event, Literal sanction) {}
 
 }

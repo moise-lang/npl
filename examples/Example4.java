@@ -37,17 +37,8 @@ public class Example4 {
         NPLMonitor m = new NPLMonitor();
         m.add("example 4", interpreter);
 
-        // verifies if some norm is applicable (none in this example)
-        interpreter.verifyNorms();
-        interpreter.addFact(ASSyntax.parseLiteral("c(10)"));
-
-        Thread.sleep(5000);
-
-        interpreter.addFact(ASSyntax.parseLiteral("c(10)"));
+        interpreter.addFact(ASSyntax.parseLiteral("extra(10)"));
         // sanctions start to be created
-
-        Thread.sleep(2000);
-        interpreter.addFact(ASSyntax.parseLiteral("b(0)")); // no more obligations for alice
 
         for (int i=0; i<10; i++) {
         	Thread.sleep(2000);

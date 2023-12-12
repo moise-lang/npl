@@ -24,7 +24,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     private Agent ag = null; // use a Jason agent to store the facts (BB)
     private Map<String, INorm> regimentedNorms = null; // norms with failure consequence
     private Map<String, INorm> regulativeNorms = null; // norms with obligation, permission, prohibition consequence
-    private Map<String, ISanctionRule> sanctionRules = null;
+    private List<ISanctionRule> sanctionRules = null;
 
     protected Object syncTransState = new Object();
 
@@ -46,7 +46,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     public final static PredicateIndicator FFPI = new PredicateIndicator(State.fulfilled.name(), 1);
     public final static PredicateIndicator UFPI = new PredicateIndicator(State.unfulfilled.name(), 1);
     public final static PredicateIndicator INACPI = new PredicateIndicator(State.inactive.name(), 1);
-    public final static PredicateIndicator CSANCTION = new PredicateIndicator("sanction", 1);
+    public final static PredicateIndicator CSANCTION = new PredicateIndicator("sanction", 2);
 
     public void init() {
         if (ag == null) {
@@ -55,7 +55,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         }
         regimentedNorms = new HashMap<>();
         regulativeNorms = new HashMap<>();
-        sanctionRules   = new HashMap<>();
+        sanctionRules   = new ArrayList<>();
         //clearFacts();
         if (oblTransitions == null)
             setStateManager(new StateTransitionsThread(this,1000));
@@ -117,7 +117,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         }
 
         for (ISanctionRule sr : scope.getSanctionRules()) {
-            sanctionRules.put(sr.getId(), sr.cloneSanction());
+            sanctionRules.add(sr.cloneSanction());
         }
 
         for (INorm n : scope.getNorms()) {
@@ -293,7 +293,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                 while (i.hasNext()) {
                     Literal b = i.next();
                     if (b.hasSource(NormAtom)) {
-                        ol.add((Literal) b.getTerm(0));
+                        ol.add(b);
                     }
                 }
             }
@@ -471,7 +471,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             out.append(n + ".\n");
         for (INorm n : regulativeNorms.values())
             out.append(n + ".\n");
-        for (var sr: sanctionRules.values()) {
+        for (var sr: sanctionRules) {
             out.append(sr + ".\n");
         }
         return out.toString();
@@ -637,7 +637,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                 exec.execute(() -> {
                     for (NormativeListener l : listeners)
                         try {
-                            l.sanction(normId, event, (Structure) f.clone());
+                            l.sanction(normId, event, f.copy());
                         } catch (Exception e) {
                             logger.log(Level.WARNING, "Error notifying " + f + " to normative listener " + l, e);
                         }
@@ -647,65 +647,59 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     }
 
     void verifySanction(EventType t, NormInstance o) throws NPLInterpreterException {
-        List<Literal> sanctionRules = null;
+        List<Literal> oSanctionRules = null;
         switch (t) {
             case unfulfilled:
-                sanctionRules = o.getNorm().ifUnfulfilledSanction();
+                oSanctionRules = o.getNorm().ifUnfulfilledSanction();
                 break;
             case inactive:
-                sanctionRules = o.getNorm().ifInactiveSanction();
+                oSanctionRules = o.getNorm().ifInactiveSanction();
                 break;
             case fulfilled:
-                sanctionRules = o.getNorm().ifFulfilledSanction();
+                oSanctionRules = o.getNorm().ifFulfilledSanction();
                 break;
         }
-        if (sanctionRules != null) {
+        if (oSanctionRules != null) {
             //logger.info("checking sanction rules: "+sanctionRules);
-            for (Literal s: sanctionRules) {
+            for (Literal s: oSanctionRules) {
                 var sApplied = s.capply(o.getUnifier());
 
-                // unifies with sanction args
-                var sRule = this.sanctionRules.get(s.getFunctor());
-                if (sRule == null) {
-                    throw new NPLInterpreterException("Sanction id ("+s+") in norm "+o.getNorm().getId()+" was not found!");
-                }
-                var sLiteral = ASSyntax.createLiteral(sRule.getId());
-                for (var v: sRule.getArgs())
-                    sLiteral.addTerm(v);
-                var un = new Unifier();
-                if (! un.unifies(sApplied,sLiteral)) {
-                    throw new NPLInterpreterException("Sanction '"+sLiteral+"' does not unify with "+sApplied+" from norm "+o.getNorm().getId());
-                }
+                // find sanction rules
+                var found = false;
 
-                Iterator<Unifier> sols = null;
-                // verify sanction condition
-                if (sRule.getCondition() == null ||
-                        ((sols = sRule.getCondition().logicalConsequence(getAg(), un)) != null) &&
-                                sols.hasNext()) {
-                    if (sols != null)
-                        un = sols.next();
-                    //System.out.println("New unifier = "+un);
+                for (var sRule : sanctionRules) {
+                    var un = new Unifier();
+                    if (un.unifies(sApplied, sRule.getTrigger())) {
+                        // verify sanction-rule condition
+                        Iterator<Unifier> sols = null;
+                        if (sRule.getCondition() == null) // no condition
+                            sols = new Iterator<Unifier>() {
+                                boolean has = true;
+                                @Override public boolean hasNext() { return has; }
+                                @Override public Unifier next() { has = false; return un; }
+                            };
+                        else
+                            sols = sRule.getCondition().logicalConsequence(getAg(), un);
 
-                    if (sRule.hasDeonticConsequence()) { // a sanction with an obligation as consequence
-                        var ni = new NormInstance(sRule.getConsequence(), un, sRule);
-                        ni.addAnnot(ASSyntax.createStructure("sanction", new Atom(sRule.getId()), NormInstance.getUnifierAsTerm(un)));
-                        if (checkNewNormInstance(ni)) {
-                            notifier.sanction(o.getNorm().getId(), t, ni);
-                            //System.out.println("New o-sanction = "+ni);
+                        while (sols.hasNext()) {
+                            found = true;
+                            var unSR = sols.next();
+
+                            Literal newSaction = (Literal)sRule.getConsequence().capply(unSR);
+                            //System.out.println("New r-sanction = "+newSaction);
+                            newSaction.addAnnot(ASSyntax.createStructure("created", new TimeTerm(0, null)));
+                            newSaction.addAnnot(ASSyntax.createStructure("norm", new Atom(o.getNorm().getId()), new Atom(t.name()), sApplied));
+                            newSaction.addAnnot(ASSyntax.createStructure("sanction_rule", sRule.getTrigger().capply(unSR), NormInstance.getUnifierAsTerm(un)));
+                            newSaction.addSource(NormAtom);
+                            notifier.sanction(o.getNorm().getId(), t, newSaction);
+
+                            getAg().getBB().add(newSaction);
                         }
-
-                    } else {
-                        Literal newSaction = (Literal) sRule.getConsequence().capply(un);
-                        //System.out.println("New r-sanction = "+newSaction);
-                        newSaction.addAnnot(ASSyntax.createStructure("created", new TimeTerm(0, null)));
-                        newSaction.addAnnot(ASSyntax.createStructure("norm", new Atom(o.getNorm().getId()), new Atom(t.name()), sApplied));
-                        newSaction.addAnnot(ASSyntax.createStructure("sanction", new Atom(sRule.getId()), NormInstance.getUnifierAsTerm(un)));
-                        notifier.sanction(o.getNorm().getId(), t, newSaction);
-
-                        var newSactionBB = ASSyntax.createLiteral(CSANCTION.getFunctor(), newSaction).addSource(NormAtom);
-                        getAg().getBB().add(newSactionBB);
                     }
                 }
+                //if (!found) {
+                //    throw new NPLInterpreterException("Sanction '" + sApplied + "' of norm "+o.getNorm().getId()+" has no applicable sanction rule.");
+                //}
             }
         }
     }

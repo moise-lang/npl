@@ -53,16 +53,9 @@ The syntax for sanction rules is:
 ```
 sanction-rule <id>(<args>)
    : <condition>
-  -> obligation(...).
+  -> sanction(<agent>,<description>).
 ```
-that means ``if _<condition>_ holds, an obligation for someone is created as the consequence of the sanction application.''
-Another option for the consequence of sanction rules is:
-```
-sanction-rule <id>(<args>)
-   : <condition>
-  -> <fact>.
-```
-that means ``if _<condition>_ holds, a sanction, represented by _<fact>_, is created and someone/something is supposed to handle that.'' The NPL just produces the sanction fact, its _implementation_ is done by some agent, by the environment, ... This kind of sanction can be used to regiment sanctions.
+that means ``if _<condition>_ holds, a sanction _<description>_ for _<agent>_ is created. NPL just produces the sanction facts, its _implementation_ is done by some agent, by the environment, ...
 
 NPL also provides a special type of norm that produces failures (useful for regimentation of norms). A failure means an unacceptable set of facts that should be reverted. The syntax:
 

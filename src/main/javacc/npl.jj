@@ -182,6 +182,17 @@ INorm norm() :
 }
 
 ISanctionRule sanction_rule() :
+{ Literal h; Object b = null; Literal id; Term t; List args = new ArrayList(); ISanctionRule n; }
+{ <SANCTION> id = literal()
+  [ ":"
+    b = log_expr()
+  ]
+  "->"
+  h = literal()          { n = nFac.createSanctionRule(id,(LogicalFormula)b,h); }
+                         { return n; }
+}
+
+/*ISanctionRule sanction_rule() :
 { Literal h; Object b = null; Token id; Term t; List args = new ArrayList(); ISanctionRule n; }
 { <SANCTION> id = <ATOM>
   [ "("
@@ -201,7 +212,7 @@ ISanctionRule sanction_rule() :
     h = literal()          { n = nFac.createSanctionRule(id.image,args,(LogicalFormula)b,h); }
   )
                            { return n; }
-}
+}*/
 
 void norm_sanctions(INorm n) :
 { Literal h; }

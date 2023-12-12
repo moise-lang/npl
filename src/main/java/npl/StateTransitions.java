@@ -201,7 +201,7 @@ public class StateTransitions {
             if (engine.holds(o.getAim()) && o.getAnnots("done").isEmpty()) { // if the agent did, even latter...
                 long ttf = System.currentTimeMillis() - o.getTimeDeadline();
                 o.addAnnot(ASSyntax.createStructure("done", new TimeTerm(ttf, "milliseconds")));
-                engine.logger.info("**** done too late "+o);
+                //engine.logger.info("**** done too late "+o);
             }
         }
     }
