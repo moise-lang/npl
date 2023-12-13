@@ -11,13 +11,12 @@ scope main {
           if unfulfilled: sr1(alice,X).
 
     // bob is obliged to apply fines in two seconds
-    // (value of C is provide by an external source)
     norm n2: sanction(A,fine(X)) & extra(C)
        -> obligation(bob,true,apply_fine(A,X*C),`2 seconds`)
           if unfulfilled: sr2.
 
-    sanction-rule sr1(A,V) -> sanction(A,fine(V)).
+    sanction-rule sr1(A,V) : not emergency(A) -> sanction(A,fine(V)).
+    // 'not emergency(_)' is a system condition for applying a fine sanction
 
     sanction-rule sr2 -> sanction(bob,remove_from_systems).
-    // remove_from_systems(bob) is a "regimented sanction", it is instrumented in the environment
 }
