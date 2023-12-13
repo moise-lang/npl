@@ -3,8 +3,10 @@
 == Version 0.6
 
 - Language and the interpreter support for _sanctions_. See link:../examples/e4.npl[example4] and JaCaMo link:https://github.com/jacamo-lang/jacamo/tree/develop/demos/sanction[demo]. Core ideas:
-* Final state of norm instances (fulfilled, unfulfilled or inactive) may trigger sanctions
-* Two kinds of sanction procedures: obligation and (institutional) fact of type sanction. In the former, an agent is obliged to do something as the consequence of the (un)fulfillment, as a kind of chain of norms. In the latter, the fact can be read either by an agent that decides how to proceed or by an artifact that _regiments_ the consequence of the (un)fulfillment.
+* Final state of norm instances (fulfilled, unfulfilled or inactive) may create sanctions
+* Sanctions are produced by sanction-rules, which, based on context, select the proper sanction fact to be created.
+* Sanction fact is a pair (agent, sanction_description).
+* Something else (agents, artifacts, ...) outside NPL is supposed to implement the sanctions. NPL scope is to compute sanction facts.
 
 - Deadline can be written without `now +`. For example, `obligation(bob,true,b(10),1 minute)` that means, 1 minute after the creation of the obligation.
 

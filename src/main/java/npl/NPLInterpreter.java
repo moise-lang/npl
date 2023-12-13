@@ -688,8 +688,8 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                             Literal newSaction = (Literal)sRule.getConsequence().capply(unSR);
                             //System.out.println("New r-sanction = "+newSaction);
                             newSaction.addAnnot(ASSyntax.createStructure("created", new TimeTerm(0, null)));
-                            newSaction.addAnnot(ASSyntax.createStructure("norm", new Atom(o.getNorm().getId()), new Atom(t.name()), sApplied));
-                            newSaction.addAnnot(ASSyntax.createStructure("sanction_rule", sRule.getTrigger().capply(unSR), NormInstance.getUnifierAsTerm(un)));
+                            newSaction.addAnnot(ASSyntax.createStructure("norm", new Atom(o.getNorm().getId()), new Atom(t.name())));
+                            newSaction.addAnnot(ASSyntax.createStructure("sanction_rule", sApplied, NormInstance.getUnifierAsTerm(un)));
                             newSaction.addSource(NormAtom);
                             notifier.sanction(o.getNorm().getId(), t, newSaction);
 

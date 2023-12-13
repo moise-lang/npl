@@ -62,8 +62,9 @@ public class SanctionTest extends TestCase {
         interpreter.addFact(ASSyntax.parseLiteral("empty(machine1,m1)"));
         interpreter.addFact(ASSyntax.parseLiteral("empty(machine1,m2)"));
         interpreter.verifyNorms();
+        interpreter.verifyNorms();
 
-        //System.out.println("  **"+interpreter.getFacts());
+        System.out.println("  **"+interpreter.getFacts());
         assertTrue(interpreter.getFacts().toString().contains("sanction(m1,stopMachine)["));
         assertTrue(interpreter.getFacts().toString().contains("sanction(m2,stopMachine)["));
         assertTrue(interpreter.getFacts().toString().contains("sanction(all,stopAll)["));
