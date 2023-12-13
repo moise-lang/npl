@@ -11,11 +11,10 @@ import java.io.FileReader;
 import java.util.Collection;
 
 /** agent that has a Normative Reasoning Module in its mind */
-class NormativeAg extends Agent {
+public class NormativeAg extends Agent {
 
     protected NPLInterpreter interpreter = new NPLInterpreter();
     private NormativeProgram program;
-
     @Override
     public void initAg() {
         super.initAg();
@@ -23,14 +22,15 @@ class NormativeAg extends Agent {
             var agC = ((AgentParameters)getTS().getSettings().getUserParameters().get(Settings.PROJECT_PARAMETER)).agClass;
             if (!agC.getParameters().isEmpty()) {
                 var nplFileName = agC.getParameters().iterator().next();
-                nplFileName = nplFileName.substring(1,nplFileName.length() - 2);
+                nplFileName = nplFileName.substring(1,nplFileName.length() - 1);
                 logger.info("*** loading norms from "+nplFileName);
 
                 program = new NormativeProgram();
                 new nplp(new FileReader(nplFileName)).program(program, null);
             }
-            interpreter.setStateManager(new StateTransitions(interpreter));
+            //interpreter.setStateManager(new StateTransitions(interpreter));
             interpreter.setAg(this);
+            interpreter.setProduceAddBelEvents(true);
             interpreter.init();
             interpreter.loadNP(program.getRoot());
         } catch (Exception e) {

@@ -52,6 +52,7 @@ public class StateTransitions {
     private void updateActive() throws JasonException {
         var active = engine.getActive();
         var bb = engine.getAg().getBB();
+
         for (NormInstance ni : active) {
             var oasinbb = engine.createState(ni);
             if (ni.isObligation()) {
@@ -60,7 +61,7 @@ public class StateTransitions {
                     if (!bb.remove(oasinbb)) engine.logger.log(Level.FINE, "ooops " + oasinbb + " should be removed 2");
                     ni = ni.copy();
                     ni.setFulfilled();
-                    bb.add(engine.createState(ni));
+                    engine.addAgBel(engine.createState(ni));
                     engine.notifier.add(NPLInterpreter.EventType.fulfilled, ni);
                 } else {
                     List<NormInstance> fuls = engine.getFulfilledObligations();
@@ -71,7 +72,7 @@ public class StateTransitions {
                         if (!engine.containsIgnoreDeadline(fuls, obl)) {
                             ni.incAgInstance();
                             obl.setFulfilled();
-                            bb.add(engine.createState(obl));
+                            engine.addAgBel(engine.createState(obl));
                             engine.notifier.add(NPLInterpreter.EventType.fulfilled, obl);
                         }
                     }
@@ -87,7 +88,7 @@ public class StateTransitions {
                     }
                     ni = ni.copy();
                     ni.setUnfulfilled();
-                    bb.add(engine.createState(ni));
+                    engine.addAgBel(engine.createState(ni));
                     engine.notifier.add(NPLInterpreter.EventType.unfulfilled, ni);
                 } else {
                     var unfuls = engine.getUnFulfilledProhibitions();
@@ -98,7 +99,7 @@ public class StateTransitions {
                         if (!engine.containsIgnoreDeadline(unfuls, pro)) {
                             ni.incAgInstance();
                             pro.setUnfulfilled();
-                            bb.add(engine.createState(pro));
+                            engine.addAgBel(engine.createState(pro));
                             engine.notifier.add(NPLInterpreter.EventType.unfulfilled, pro);
                         }
                     }
@@ -161,7 +162,7 @@ public class StateTransitions {
         }
     }
 
-    private void niAchievedDeadline(NormInstance o) throws JasonException {
+    private void niAchievedDeadline(NormInstance o) {
         var oasinbb = engine.createState(o);
         var bb = engine.getAg().getBB();
 
@@ -172,19 +173,19 @@ public class StateTransitions {
             // transition for obligation (active -> unfulfilled)
             if (o.getAgIntances() == 0) { // it is unfulfilled only if no agent instance has fulfilled the prohibition
                 o.setUnfulfilled();
-                bb.add(engine.createState(o));
+                engine.addAgBel(engine.createState(o));
                 engine.notifier.add(NPLInterpreter.EventType.unfulfilled, o);
             }
         } else if (o.isPermission()) {
             // transition for permission (active -> inactive)
             o.setInactive();
-            bb.add(engine.createState(o));
+            engine.addAgBel(engine.createState(o));
             engine.notifier.add(NPLInterpreter.EventType.inactive, o);
         } else {
             // transition for prohibition (active -> fulfilled)
             if (o.getAgIntances() == 0) { // it is fulfilled only if no agent instance has unfulfilled the prohibition
                 o.setFulfilled();
-                bb.add(engine.createState(o));
+                engine.addAgBel(engine.createState(o));
                 engine.notifier.add(NPLInterpreter.EventType.fulfilled, o);
             }
         }

@@ -68,6 +68,21 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
         this.ag = a;
     }
 
+    private boolean produceAddBelEvents = false;
+    public void setProduceAddBelEvents(boolean b) {
+        produceAddBelEvents = b;
+    }
+    protected boolean addAgBel(Literal l) {
+        try {
+            if (produceAddBelEvents)
+                return ag.addBel(l);
+            else
+                return ag.getBB().add(l);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void setStateManager(StateTransitions t) {
         if (oblTransitions != null)
             oblTransitions.stop();
@@ -196,12 +211,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     public void addFact(Literal l) {
         if (!l.hasSource())
             l.addSource(NPAtom);
-        try {
-            ag.addBel(l);
-            // better to use explicit "verifyNorms" to trigger the update
-            //if (oblUpdateThread != null) oblUpdateThread.update();
-        } catch (RevisionFailedException e) {
-        }
+        addAgBel(l);
     }
 
 
@@ -422,18 +432,6 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     }
 
 
-    /*public void setAllCreatedNI() {
-        allCreatedNI.clear();
-        for(var ni: getActive())
-            allCreatedNI.add(ni);
-        for(var ni: getFulfilled())
-            allCreatedNI.add(ni);
-        for(var ni: getUnFulfilled())
-            allCreatedNI.add(ni);
-        for(var ni: getInactive())
-            allCreatedNI.add(ni);
-    }*/
-
     private boolean checkNewNormInstance(NormInstance ni) {
         //if (!containsIgnoreDeadline(getActive(), ni)) { // is it a new obligation?
         //if (containsIgnoreDeadline(allCreatedNI,ni)) { // new implementation to avoid tons of NI
@@ -446,15 +444,11 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                  ni.isProhibition()                           // or a prohibition
             ) {
                 ni.setActive();
-                try {
-                    if (getAg().getBB().add(createState(ni))) {
-                        oblTransitions.addInSchedule(ni);
-                        notifier.add(EventType.create, ni);
-                        allActivatedNorms.add(ni.getActivatedNormUniqueId());
-                        return true;
-                    }
-                } catch (JasonException e) {
-                    e.printStackTrace();
+                if (addAgBel(createState(ni))) {
+                    oblTransitions.addInSchedule(ni);
+                    notifier.add(EventType.create, ni);
+                    allActivatedNorms.add(ni.getActivatedNormUniqueId());
+                    return true;
                 }
             }
         }
@@ -702,11 +696,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                             newSaction.addSource(NormAtom);
                             notifier.sanction(o.getNorm().getId(), t, newSaction);
 
-                            try {
-                                getAg().getBB().add(newSaction);
-                            } catch (JasonException e) {
-                                e.printStackTrace();
-                            }
+                            addAgBel(newSaction);
                         }
                     }
                 }
