@@ -1,5 +1,6 @@
 package npl;
 
+import jason.JasonException;
 import jason.RevisionFailedException;
 import jason.asSemantics.Agent;
 import jason.asSemantics.Unifier;
@@ -113,7 +114,11 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
             else
                 l = r.clone();
             l.addSource(NPAtom);
-            bb.add(1, l); // add in the end of the BB to preserve the program order
+            try {
+                bb.add(1, l); // add in the end of the BB to preserve the program order
+            } catch (JasonException e) {
+                e.printStackTrace();
+            }
         }
 
         for (ISanctionRule sr : scope.getSanctionRules()) {
@@ -441,11 +446,15 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                  ni.isProhibition()                           // or a prohibition
             ) {
                 ni.setActive();
-                if (getAg().getBB().add(createState(ni))) {
-                    oblTransitions.addInSchedule(ni);
-                    notifier.add(EventType.create, ni);
-                    allActivatedNorms.add(ni.getActivatedNormUniqueId());
-                    return true;
+                try {
+                    if (getAg().getBB().add(createState(ni))) {
+                        oblTransitions.addInSchedule(ni);
+                        notifier.add(EventType.create, ni);
+                        allActivatedNorms.add(ni.getActivatedNormUniqueId());
+                        return true;
+                    }
+                } catch (JasonException e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -665,7 +674,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                 var sApplied = s.capply(o.getUnifier());
 
                 // find sanction rules
-                var found = false;
+                //var found = false;
 
                 for (var sRule : sanctionRules) {
                     var un = new Unifier();
@@ -682,7 +691,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                             sols = sRule.getCondition().logicalConsequence(getAg(), un);
 
                         while (sols.hasNext()) {
-                            found = true;
+                            //found = true;
                             var unSR = sols.next();
 
                             Literal newSaction = (Literal)sRule.getConsequence().capply(unSR);
@@ -693,7 +702,11 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                             newSaction.addSource(NormAtom);
                             notifier.sanction(o.getNorm().getId(), t, newSaction);
 
-                            getAg().getBB().add(newSaction);
+                            try {
+                                getAg().getBB().add(newSaction);
+                            } catch (JasonException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }

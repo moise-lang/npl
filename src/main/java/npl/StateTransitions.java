@@ -1,9 +1,9 @@
 package npl;
 
+import jason.JasonException;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
-import jason.asSyntax.LiteralImpl;
 
 import java.util.Iterator;
 import java.util.List;
@@ -34,10 +34,14 @@ public class StateTransitions {
      * update the state of the obligations
      */
     void update() {
-        updateActive();
-        updateInactive();
-        updateDeadline();
-        updateDoneForUnfulfilled();
+        try {
+            updateActive();
+            updateInactive();
+            updateDeadline();
+            updateDoneForUnfulfilled();
+        } catch (JasonException e) {
+            e.printStackTrace();
+        }
     }
 
     synchronized void deadlineAchieved(NormInstance o) {
@@ -45,7 +49,7 @@ public class StateTransitions {
     }
 
     // -- transition active -> (un)fulfilled (based on aim)
-    private void updateActive() {
+    private void updateActive() throws JasonException {
         var active = engine.getActive();
         var bb = engine.getAg().getBB();
         for (NormInstance ni : active) {
@@ -122,7 +126,7 @@ public class StateTransitions {
     // -- transition active -> unfulfilled (for obl) (based on deadline)
     //               active -> inactive (for per)
     //               active -> fulfilled (for pro)
-    private void updateDeadline() {
+    private void updateDeadline() throws JasonException {
         var active = engine.getActive();
         var updateAct = false;
         var o = toCheckUnfulfilledByDeadline.poll(); // norm instances that have a time based deadline, if they are still active (i.e., not fulfilled), they should be moved to unfulfilled
@@ -157,7 +161,7 @@ public class StateTransitions {
         }
     }
 
-    private void niAchievedDeadline(NormInstance o) {
+    private void niAchievedDeadline(NormInstance o) throws JasonException {
         var oasinbb = engine.createState(o);
         var bb = engine.getAg().getBB();
 
