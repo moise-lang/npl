@@ -13,6 +13,7 @@ PARSER_BEGIN(nplp) // NPL parser
 
   import npl.*;
   import jason.asSyntax.*;
+  import jason.asSyntax.directives.*;
   import jason.asSyntax.ArithExpr.ArithmeticOp;
   import jason.asSyntax.LogExpr.LogicalOp;
   import jason.asSyntax.RelExpr.RelationalOp;
@@ -53,6 +54,11 @@ PARSER_BEGIN(nplp) // NPL parser
         else
             return "[]";
     }
+
+    private ArithFunction getArithFunction(Literal l) {
+        return FunctionRegister.getFunction(l.getFunctor(), l.getArity());
+    }
+
     private Term changeToAtom(Object o) {
         Term u = (Term)o;
         if (u == Literal.LTrue)
@@ -476,7 +482,7 @@ Object arithm_expr_factor():
 
 
 Object arithm_expr_simple():
-                                { Token K; Object t; VarTerm v; }
+                                { Token K; Object t; VarTerm v; Literal l; }
 {
  ( K = <NUMBER>                 { NumberTerm ni = ASSyntax.parseNumber(K.image);
                                   ni.setSrcInfo(new SourceInfo(npSource, K.beginLine));
@@ -489,7 +495,18 @@ Object arithm_expr_simple():
                                 }
  | "(" t = log_expr() ")"       { return t; }
  | v = var()                    { return v; }
- | t = literal()                { return t; }
+ | l = literal()
+                           { ArithFunction af = getArithFunction(l);
+                             if (af == null) {
+                                return l;
+                             } else {
+                                ArithFunctionTerm at = new ArithFunctionTerm(af);
+                                at.setSrcInfo(l.getSrcInfo());
+                                at.setTerms(l.getTerms());
+                                //at.setAgent(curAg);
+                                return at;
+                             }
+                           }
  | t = time()                   { return t; }
  )
 }
