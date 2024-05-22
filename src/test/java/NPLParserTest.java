@@ -62,4 +62,14 @@ public class NPLParserTest extends TestCase {
         assertTrue(obl.toString().contains("norm(n2,[[\"Y\",20],[\"X\",10]])")
                 || obl.toString().contains("norm(n2,[[\"X\",10],[\"Y\",20]])"));
     }
+
+    public void testStefanoBug() throws ParseException, Exception {
+
+        NormativeProgram p = new NormativeProgram();
+        p.setSrc("test1");
+        new nplp(new StringReader("scope main {\n" +
+                "   notificationPolicy(npWindowDelay,windows_fitted,(scheme_id(S) & unfulfilled(obligation(_,_,done(S,windows_fitted,_),_)))).\n" +
+                "}")).program(p, null);
+        assertEquals(0, p.getRoot().getNorms().size());
+    }
 }

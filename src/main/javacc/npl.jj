@@ -287,11 +287,10 @@ Literal deontic_operator() :
 }
 
 
-
 Literal literal() :
 { Token k; List l = null; Literal r; ListTerm lt; }
 {
-  ( k=<ATOM> | k=<FAIL> | k=<OBLIGATION> | k=<PERMISSION> | k=<PROHIBITION> )
+  ( k=<ATOM> | k=<FAIL> | k=<OBLIGATION> | k=<PERMISSION> | k=<PROHIBITION> | k=<FULFILLED>  | k=<UNFULFILLED>  | k=<INACTIVE> )
                        { r = ASSyntax.createLiteral(k.image);
                          r.setSrcInfo(new SourceInfo(npSource, k.beginLine));
                          if (k.image.equals("true"))  r = Literal.LTrue;

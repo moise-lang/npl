@@ -255,6 +255,7 @@ task zipRel(type: Zip, dependsOn: copyRel) {
 }
 
 task publishMavenGitHub(dependsOn: [ 'build', 'publishToMavenLocal']) {
+  group "publishing"
   doLast {
     def wdir = System.getProperty("user.home")+'/.m2/repository/org/jacamo/npl'
     def rdir = '../jacamo-mvn-repo'
