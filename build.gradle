@@ -33,12 +33,10 @@ dependencies {
     api('io.github.jason-lang:jason-interpreter:3.2.2') {
        exclude group: 'net.sf.ingenias', module: 'jade'
     }
-    testImplementation('junit:junit:4.12')
+    testImplementation('junit:junit:4.13.1')
 
     implementation group: 'javax.json', name: 'javax.json-api', version: '1.1.4'
     implementation group: 'org.glassfish', name: 'javax.json', version: '1.1.4'
-
-    //umljavadoc 'org.umlgraph:umlgraph:5.6'
 }
 
 sourceSets {

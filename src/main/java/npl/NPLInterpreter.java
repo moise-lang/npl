@@ -425,7 +425,9 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
 
     public void setAllActivatedNorms(Collection<String> nis) {
         allActivatedNorms.clear();
-        allActivatedNorms.addAll(nis);
+        if (nis != null) {
+            allActivatedNorms.addAll(nis);
+        }
     }
     public Collection<String> getActivatedNorms() {
         return allActivatedNorms;
@@ -435,7 +437,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
     private boolean checkNewNormInstance(NormInstance ni) {
         //if (!containsIgnoreDeadline(getActive(), ni)) { // is it a new obligation?
         //if (containsIgnoreDeadline(allCreatedNI,ni)) { // new implementation to avoid tons of NI
-        if (allActivatedNorms.contains(ni.getActivatedNormUniqueId())) { // do not trigger a norm twice for the same circuntance
+        if (allActivatedNorms.contains(ni.getActivatedNormContextId())) { // do not trigger a norm twice for the same circumstance
             return false;
         }
         if (ni.isMaintenanceCondFromNorm || holds(ni.getMaintenanceCondition())) { // is the maintenance condition true?, avoids the creation of unnecessary obligations
@@ -447,7 +449,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                 if (addAgBel(createState(ni))) {
                     oblTransitions.addInSchedule(ni);
                     notifier.add(EventType.create, ni);
-                    allActivatedNorms.add(ni.getActivatedNormUniqueId());
+                    allActivatedNorms.add(ni.getActivatedNormContextId());
                     return true;
                 }
             }

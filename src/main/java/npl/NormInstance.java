@@ -74,7 +74,7 @@ public class NormInstance extends LiteralImpl {
         this.isMaintenanceCondFromNorm = d.isMaintenanceCondFromNorm;
     }
 
-    String getActivatedNormUniqueId() {
+    String getActivatedNormContextId() {
         return norm.getId() + un.toString();
     }
 
