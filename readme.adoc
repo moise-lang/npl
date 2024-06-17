@@ -44,7 +44,7 @@ norm <id>
   .
 ```
 
-Informal semantics: As soon as _<when>_ is true, an obligation for _<who>_ is created and its initial state is _active_ (link:./doc/npl-states.pdf[see states]). As soon as _<what>_ is true, the obligation is  _fulfilled_. As soon as _<while>_ is false, the obligation is  _inactive_. As soon as _<deadline>_ is true, the obligation is _unfulfilled_. The deadline can be a temporal expression as `2 seconds` after active or a state condition as `full(room)` (in the sense ``is obliged to ... before the room is full").
+Informal semantics: As soon as _<when>_ is true, an obligation for _<who>_ is created and its initial state is _active_ (link:./doc/npl-states.pdf[see states]). As soon as _<what>_ is true, the obligation is  _fulfilled_. As soon as _<while>_ is false, the obligation is  _inactive_. As soon as _<deadline>_ is true, the obligation is _unfulfilled_. The deadline can be a temporal expression as `2 seconds` after active or a state condition as `full(room)` (in the sense ``is obliged to _<what>_ before the room is full").
 
 
 When the obligation is in a final state (fulfilled, unfulfilled, or inactive), sanction rules, if specified, are evaluated (link:./examples/e4.npl[example]).

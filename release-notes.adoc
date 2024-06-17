@@ -16,7 +16,7 @@
 * class DeonticModality is renamed to NormInstance
 * class NormFactory is renamed to NPLFactory
 
-== Versino 0.5
+== Version 0.5
 
 - stable version for JaCaMo 1.2
 
@@ -43,7 +43,7 @@ the norm was `n3` and variable `S` (from the activation condition) value was `sc
 - add deontic operators for prohibition and permission
 - move to gradle
 
-= Version 0.1
+== Version 0.1
 
 - initial version of NPL, as published in some papers
   (see doc/publications)
