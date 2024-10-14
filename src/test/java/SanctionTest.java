@@ -64,7 +64,7 @@ public class SanctionTest extends TestCase {
         interpreter.verifyNorms();
         interpreter.verifyNorms();
 
-        System.out.println("  **"+interpreter.getFacts());
+        //System.out.println("  **"+interpreter.getFacts());
         assertTrue(interpreter.getFacts().toString().contains("sanction(m1,stopMachine)["));
         assertTrue(interpreter.getFacts().toString().contains("sanction(m2,stopMachine)["));
         assertTrue(interpreter.getFacts().toString().contains("sanction(all,stopAll)["));
