@@ -13,7 +13,10 @@ public class NPLFactory implements INPLFactory {
         if (!consequenceIsFailure) {
             String maintenanceConditionFunctor = ((Literal) consequence.getTerm(1)).getFunctor();
             if (maintenanceConditionFunctor.equals(id)) {
+                // copy norms activation condition into consequence maintenance condition
                 consequence.setTerm(1, activationCondition);
+            } else if (maintenanceConditionFunctor.startsWith("n")) {
+                System.err.println("The maintenance condition of norm "+id+" seems to point to a norm id ("+maintenanceConditionFunctor+") that does not exit. Therefore '"+maintenanceConditionFunctor+"' is considered literally as the maintenance condition!");
             }
         }
         return new Norm(id, consequence, activationCondition);

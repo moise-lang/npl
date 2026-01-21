@@ -38,10 +38,10 @@ public class NormInstance extends LiteralImpl {
         isMaintenanceCondFromNorm = l.getTerm(1).equals(n.getCondition());
 
         Literal lc = (Literal) l.capply(un);
-        addTerm(lc.getTerm(0));
-        addTerm(lc.getTerm(1));
-        addTerm(lc.getTerm(2));
-        addTerm(lc.getTerm(3));
+        addTerm(lc.getTerm(0)); // who
+        addTerm(lc.getTerm(1)); // maintenance condition
+        addTerm(lc.getTerm(2)); // what
+        addTerm(lc.getTerm(3)); // drop condition
         if (lc.hasAnnot())
             setAnnots(lc.getAnnots());
         this.norm = n;

@@ -130,7 +130,7 @@ public class NPLInterpreter implements ToDOM, DynamicFactsProvider {
                 l = r.clone();
             l.addSource(NPAtom);
             try {
-                bb.add(1, l); // add in the end of the BB to preserve the program order
+                bb.add(1, l); // add at the end of the BB to preserve the program order
             } catch (JasonException e) {
                 e.printStackTrace();
             }
